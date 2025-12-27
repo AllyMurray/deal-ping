@@ -18,7 +18,7 @@ describe("DashboardHomePage", () => {
 
     it("renders the page title", () => {
       render(<DashboardHomePage stats={defaultStats} />);
-      expect(screen.getByTestId("page-title")).toHaveTextContent("Dashboard");
+      expect(screen.getByTestId("page-title")).toHaveTextContent("Command Centre");
     });
   });
 
