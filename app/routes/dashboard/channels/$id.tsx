@@ -7,6 +7,7 @@ import {
   DeleteConfigModal,
   type ConfigFormValues,
 } from "~/components/configs";
+import { RouteErrorBoundary } from "~/components/ui";
 import { notifications } from "@mantine/notifications";
 import { requireUser } from "~/lib/auth";
 import {
@@ -292,5 +293,16 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
         />
       )}
     </>
+  );
+}
+
+export function ErrorBoundary() {
+  return (
+    <RouteErrorBoundary
+      backPath="/dashboard/channels"
+      backLabel="Back to Channels"
+      notFoundTitle="Channel Not Found"
+      notFoundMessage="This channel doesn't exist or you don't have access to it."
+    />
   );
 }

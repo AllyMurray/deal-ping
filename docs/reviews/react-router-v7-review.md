@@ -68,17 +68,20 @@ Comprehensive fix across the application to use React Router's `Link` component 
 
 **Note:** External links (e.g., deal URLs in `DealCard.tsx`) correctly remain as native anchors with `target="_blank"`.
 
-#### Issue 3: Missing error boundaries
+#### ~~Issue 3: Missing error boundaries~~ ✅ RESOLVED
 
-No route-level error boundaries found. React Router v7 supports `ErrorBoundary` exports in route files.
+Added route-level error boundaries to critical routes using a reusable `RouteErrorBoundary` component.
 
-**Recommendation:** Add error boundaries to critical routes:
-```typescript
-export function ErrorBoundary() {
-  const error = useRouteError();
-  return <ErrorPage error={error} />;
-}
-```
+**New component created:** `app/components/ui/RouteErrorBoundary.tsx`
+- Handles both 404 errors and generic errors
+- Shows contextual messages and navigation options
+- Displays stack traces in development mode
+
+**Routes updated with ErrorBoundary exports:**
+- `app/routes/_dashboard.tsx` - Dashboard layout (catches all dashboard errors)
+- `app/routes/dashboard/channels/$id.tsx` - Channel detail page
+- `app/routes/dashboard/channels/index.tsx` - Channels list
+- `app/routes/dashboard/deals.tsx` - Deals page
 
 #### ~~Issue 4: Layout route type pattern~~ ✅ RESOLVED
 
@@ -287,7 +290,7 @@ All test assertions have been updated to match the current UI implementation.
 
 ### Low Priority
 
-8. **Add error boundaries** - Improve error handling UX
+8. ~~**Add error boundaries**~~ ✅ RESOLVED - Added `RouteErrorBoundary` component to critical routes
 9. **Add integration tests** - Test full user flows with MSW
 
 ---
@@ -296,13 +299,13 @@ All test assertions have been updated to match the current UI implementation.
 
 | Criterion | Score | Notes |
 |-----------|-------|-------|
-| React Router v7 patterns | 8/10 | Good structure, minor issues |
+| React Router v7 patterns | 9/10 | Good structure with error boundaries ✅ |
 | Presentational pattern | 9/10 | Well implemented |
 | Loader/Action testing | 1/10 | Critical gap |
 | Component testing | 7/10 | Page components fully covered ✅ |
 | Type safety | 8/10 | Good use of generated types |
 | Code organization | 9/10 | Clean separation |
-| **Overall** | **6/10** | Solid architecture, needs tests |
+| **Overall** | **7/10** | Solid architecture, needs tests |
 
 ---
 
