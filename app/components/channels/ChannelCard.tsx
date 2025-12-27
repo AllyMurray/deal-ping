@@ -131,7 +131,7 @@ export function ChannelCard({
       <Group gap="md" mb="md">
         <Group gap="xs">
           <IconSearch size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />
-          <Text size="sm" c="dimmed">
+          <Text size="sm" c="dimmed" data-testid="config-count">
             <Text component="span" fw={600} c="inherit">
               {configCount}
             </Text>{" "}

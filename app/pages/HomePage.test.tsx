@@ -13,15 +13,15 @@ describe("HomePage", () => {
     it("renders the hero title", () => {
       render(<HomePage isAuthenticated={false} />);
       expect(screen.getByTestId("hero-title")).toHaveTextContent(
-        "HotUKDeals Notifier"
+        "Never Miss a Hot Deal"
       );
     });
 
     it("renders feature cards", () => {
       render(<HomePage isAuthenticated={false} />);
-      expect(screen.getByTestId("feature-channels")).toBeInTheDocument();
-      expect(screen.getByTestId("feature-search")).toBeInTheDocument();
-      expect(screen.getByTestId("feature-notifications")).toBeInTheDocument();
+      expect(screen.getByTestId("feature-multiple-channels")).toBeInTheDocument();
+      expect(screen.getByTestId("feature-smart-filters")).toBeInTheDocument();
+      expect(screen.getByTestId("feature-real-time-alerts")).toBeInTheDocument();
     });
   });
 
@@ -38,7 +38,7 @@ describe("HomePage", () => {
       render(<HomePage isAuthenticated={true} />);
       expect(screen.getByTestId("dashboard-button")).toBeInTheDocument();
       expect(screen.getByTestId("dashboard-button")).toHaveTextContent(
-        "Go to Dashboard"
+        "Open Dashboard"
       );
     });
   });

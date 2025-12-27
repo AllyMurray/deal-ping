@@ -34,13 +34,15 @@ interface StatCardProps {
   suffix?: React.ReactNode;
   accentColor?: string;
   delay?: number;
+  testId?: string;
 }
 
-function StatCard({ icon, value, label, suffix, accentColor, delay = 0 }: StatCardProps) {
+function StatCard({ icon, value, label, suffix, accentColor, delay = 0, testId }: StatCardProps) {
   return (
     <Box
       className="stat-card card-glass"
       p="xl"
+      data-testid={testId}
       style={{
         animation: `fadeInUp 0.5s ease-out ${delay}s forwards`,
         opacity: 0,
@@ -117,6 +119,7 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
           value={stats.channelCount}
           label="Discord Channels"
           delay={0.1}
+          testId="stat-channels"
         />
 
         <StatCard
@@ -131,6 +134,7 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
             ) : null
           }
           delay={0.15}
+          testId="stat-search-terms"
         />
 
         <StatCard
@@ -138,6 +142,7 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
           value="--"
           label="Deals Today"
           delay={0.2}
+          testId="stat-deals-today"
         />
       </SimpleGrid>
 
