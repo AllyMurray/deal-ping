@@ -1,6 +1,7 @@
 import { Outlet } from "react-router";
 import type { Route } from "./+types/_dashboard";
 import { DashboardLayout } from "~/components/layout";
+import { RouteErrorBoundary } from "~/components/ui";
 import { requireUser } from "~/lib/auth";
 import { isUserAdmin } from "~/db/repository.server";
 
@@ -20,5 +21,15 @@ export default function DashboardLayoutRoute({
     <DashboardLayout user={user} isAdmin={isAdmin}>
       <Outlet context={{ user, isAdmin }} />
     </DashboardLayout>
+  );
+}
+
+export function ErrorBoundary() {
+  return (
+    <RouteErrorBoundary
+      backPath="/"
+      backLabel="Go Home"
+      notFoundMessage="The dashboard page you're looking for doesn't exist."
+    />
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate, useFetcher } from "react-router";
 import type { Route } from "./+types/index";
 import { ChannelsListPage, type ChannelWithStats } from "~/pages/dashboard";
 import { DeleteChannelModal } from "~/components/channels";
+import { RouteErrorBoundary } from "~/components/ui";
 import { requireUser } from "~/lib/auth";
 import {
   getChannelsByUser,
@@ -108,5 +109,15 @@ export default function ChannelsIndex({ loaderData }: Route.ComponentProps) {
         />
       )}
     </>
+  );
+}
+
+export function ErrorBoundary() {
+  return (
+    <RouteErrorBoundary
+      backPath="/dashboard"
+      backLabel="Back to Dashboard"
+      errorMessage="Failed to load your channels. Please try again."
+    />
   );
 }

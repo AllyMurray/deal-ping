@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSearchParams } from "react-router";
 import type { Route } from "./+types/deals";
 import { DealsPage } from "~/pages/dashboard";
+import { RouteErrorBoundary } from "~/components/ui";
 import { requireUser } from "~/lib/auth";
 import { getConfigsByUser } from "~/db/repository.server";
 import { HotUKDealsService } from "../../../src/db/service";
@@ -119,6 +120,16 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
         // Simple implementation - could be improved with cursor-based pagination
         console.log("Load more not yet implemented");
       }}
+    />
+  );
+}
+
+export function ErrorBoundary() {
+  return (
+    <RouteErrorBoundary
+      backPath="/dashboard"
+      backLabel="Back to Dashboard"
+      errorMessage="Failed to load deals. Please try again."
     />
   );
 }
