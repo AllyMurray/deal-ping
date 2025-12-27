@@ -47,29 +47,14 @@ All repository imports have been standardized to use the `~/db/repository.server
 - `app/routes/dashboard/channels/$id.edit.tsx`
 - `app/routes/dashboard/channels/index.tsx`
 
-#### Issue 2: Direct `window.location.href` navigation
+#### ~~Issue 2: Direct `window.location.href` navigation~~ ✅ RESOLVED
 
-**Location:** `app/routes/dashboard/deals.tsx:102-105`
+Updated `app/routes/dashboard/deals.tsx` to use React Router's `useSearchParams()` hook instead of `window.location.href`, preserving the SPA experience and avoiding full page reloads.
 
-```typescript
-if (value) {
-  window.location.href = `/dashboard/deals?searchTerm=${encodeURIComponent(value)}`;
-}
-```
-
-This bypasses React Router's navigation, losing the SPA experience and triggering a full page reload.
-
-**Recommendation:** Use `useSearchParams()`:
-```typescript
-const [searchParams, setSearchParams] = useSearchParams();
-const handleSearchTermChange = (value: string | null) => {
-  if (value) {
-    setSearchParams({ searchTerm: value });
-  } else {
-    setSearchParams({});
-  }
-};
-```
+**Changes made:**
+- Imported `useSearchParams` from `react-router`
+- Replaced local state with URL-derived search term: `const searchTerm = searchParams.get("searchTerm")`
+- Updated `handleSearchTermChange` to use `setSearchParams()` for navigation
 
 #### Issue 3: Missing error boundaries
 
@@ -280,7 +265,7 @@ The following tests are failing due to UI changes:
 4. **Add missing page tests** - `ChannelDetailPage`, `DealsPage`, `AdminPage`
 5. **Add form component tests** - Test validation, submission, error states
 6. ~~**Fix repository import inconsistencies**~~ ✅ RESOLVED
-7. **Replace `window.location.href`** - Use React Router navigation
+7. ~~**Replace `window.location.href`**~~ ✅ RESOLVED - Now uses `useSearchParams()`
 
 ### Low Priority
 

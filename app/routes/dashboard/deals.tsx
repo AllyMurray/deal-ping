@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router";
 import type { Route } from "./+types/deals";
 import { DealsPage } from "~/pages/dashboard";
 import { requireUser } from "~/lib/auth";
@@ -80,7 +81,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function Deals({ loaderData }: Route.ComponentProps) {
-  const [searchTerm, setSearchTerm] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchTerm = searchParams.get("searchTerm");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter deals client-side for search query
@@ -96,12 +98,10 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
   });
 
   const handleSearchTermChange = (value: string | null) => {
-    setSearchTerm(value);
-    // Reload with new search term filter
     if (value) {
-      window.location.href = `/dashboard/deals?searchTerm=${encodeURIComponent(value)}`;
+      setSearchParams({ searchTerm: value });
     } else {
-      window.location.href = "/dashboard/deals";
+      setSearchParams({});
     }
   };
 
