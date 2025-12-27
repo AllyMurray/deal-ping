@@ -47,29 +47,26 @@ All repository imports have been standardized to use the `~/db/repository.server
 - `app/routes/dashboard/channels/$id.edit.tsx`
 - `app/routes/dashboard/channels/index.tsx`
 
-#### Issue 2: Direct `window.location.href` navigation
+#### ~~Issue 2: Full page reloads instead of SPA navigation~~ ✅ RESOLVED
 
-**Location:** `app/routes/dashboard/deals.tsx:102-105`
+Comprehensive fix across the application to use React Router's `Link` component instead of native anchor tags (`<a href>`), preserving the SPA experience and avoiding full page reloads.
 
-```typescript
-if (value) {
-  window.location.href = `/dashboard/deals?searchTerm=${encodeURIComponent(value)}`;
-}
-```
+**Changes made:**
 
-This bypasses React Router's navigation, losing the SPA experience and triggering a full page reload.
+1. **Route-level fix** (`app/routes/dashboard/deals.tsx`):
+   - Replaced `window.location.href` with `useSearchParams()` hook for search term filtering
 
-**Recommendation:** Use `useSearchParams()`:
-```typescript
-const [searchParams, setSearchParams] = useSearchParams();
-const handleSearchTermChange = (value: string | null) => {
-  if (value) {
-    setSearchParams({ searchTerm: value });
-  } else {
-    setSearchParams({});
-  }
-};
-```
+2. **Component-level fixes** - Updated all Mantine components to use `Link` instead of native anchors:
+   - `app/components/channels/ChannelCard.tsx` - Card link to channel detail
+   - `app/components/layout/DashboardLayout.tsx` - All nav items, logo, and logout links
+   - `app/components/ui/EmptyState.tsx` - Action button with conditional Link
+   - `app/pages/HomePage.tsx` - Dashboard and login buttons
+   - `app/pages/dashboard/ChannelsListPage.tsx` - Add channel button
+   - `app/pages/dashboard/DashboardHomePage.tsx` - All quick action buttons
+   - `app/pages/dashboard/ChannelDetailPage.tsx` - Breadcrumb and edit button
+   - `app/pages/dashboard/ChannelEditPage.tsx` - Breadcrumb link
+
+**Note:** External links (e.g., deal URLs in `DealCard.tsx`) correctly remain as native anchors with `target="_blank"`.
 
 #### Issue 3: Missing error boundaries
 
@@ -280,7 +277,7 @@ The following tests are failing due to UI changes:
 4. **Add missing page tests** - `ChannelDetailPage`, `DealsPage`, `AdminPage`
 5. **Add form component tests** - Test validation, submission, error states
 6. ~~**Fix repository import inconsistencies**~~ ✅ RESOLVED
-7. **Replace `window.location.href`** - Use React Router navigation
+7. ~~**Replace `window.location.href`**~~ ✅ RESOLVED - Now uses `useSearchParams()`
 
 ### Low Priority
 

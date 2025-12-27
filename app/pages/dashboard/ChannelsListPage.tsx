@@ -7,6 +7,7 @@ import {
   SimpleGrid,
 } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
+import { Link } from "react-router";
 import { ChannelCard } from "~/components/channels";
 import { EmptyState } from "~/components/ui";
 
@@ -39,8 +40,8 @@ export function ChannelsListPage({
           <Text c="dimmed">Manage your Discord webhook channels</Text>
         </div>
         <Button
-          component="a"
-          href="/dashboard/channels/new"
+          component={Link}
+          to="/dashboard/channels/new"
           leftSection={<IconPlus size={18} />}
           data-testid="add-channel-button"
         >

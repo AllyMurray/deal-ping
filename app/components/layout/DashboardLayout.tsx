@@ -26,7 +26,7 @@ import {
   IconChevronRight,
   IconShield,
 } from "@tabler/icons-react";
-import { useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import type { User } from "~/lib/auth";
 
 export interface DashboardLayoutProps {
@@ -74,8 +74,8 @@ export function DashboardLayout({ user, children, isAdmin = false }: DashboardLa
       {navItems.map((item, index) => (
         <NavLink
           key={item.href}
-          component="a"
-          href={item.href}
+          component={Link}
+          to={item.href}
           onClick={onNavigate}
           label={
             <Text size="sm" fw={500}>
@@ -124,8 +124,8 @@ export function DashboardLayout({ user, children, isAdmin = false }: DashboardLa
 
             {/* Logo */}
             <Box
-              component="a"
-              href="/"
+              component={Link}
+              to="/"
               className="app-logo"
               style={{ textDecoration: "none", color: "inherit" }}
             >
@@ -189,8 +189,8 @@ export function DashboardLayout({ user, children, isAdmin = false }: DashboardLa
                 </Box>
                 <Menu.Divider />
                 <Menu.Item
-                  component="a"
-                  href="/auth/logout"
+                  component={Link}
+                  to="/auth/logout"
                   leftSection={<IconLogout size={16} stroke={1.5} />}
                   color="red"
                   data-testid="logout-button"
@@ -272,8 +272,8 @@ export function DashboardLayout({ user, children, isAdmin = false }: DashboardLa
             </Group>
 
             <NavLink
-              component="a"
-              href="/auth/logout"
+              component={Link}
+              to="/auth/logout"
               label="Sign out"
               leftSection={<IconLogout size={18} stroke={1.5} />}
               color="red"

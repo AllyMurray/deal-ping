@@ -1,5 +1,6 @@
 import { Title, Text, Stack, Paper, Anchor, Group } from "@mantine/core";
 import { IconArrowLeft } from "@tabler/icons-react";
+import { Link } from "react-router";
 import { ChannelForm } from "~/components/channels";
 
 export interface ChannelEditPageProps {
@@ -17,7 +18,7 @@ export function ChannelEditPage({
 }: ChannelEditPageProps) {
   return (
     <Stack gap="lg" data-testid="channel-edit-page">
-      <Anchor href={`/dashboard/channels/${channel.id}`} c="dimmed" size="sm">
+      <Anchor component={Link} to={`/dashboard/channels/${channel.id}`} c="dimmed" size="sm">
         <Group gap="xs">
           <IconArrowLeft size={16} />
           Back to Channel

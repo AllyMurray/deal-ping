@@ -15,6 +15,7 @@ import {
   IconSearch,
   IconChevronRight,
 } from "@tabler/icons-react";
+import { Link } from "react-router";
 
 export interface ChannelCardProps {
   id: string;
@@ -42,8 +43,8 @@ export function ChannelCard({
 
   return (
     <Box
-      component="a"
-      href={`/dashboard/channels/${id}`}
+      component={Link}
+      to={`/dashboard/channels/${id}`}
       className="channel-card"
       p="lg"
       data-testid={`channel-card-${id}`}

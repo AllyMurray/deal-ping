@@ -1,5 +1,6 @@
 import { Stack, Text, Button, ThemeIcon } from "@mantine/core";
 import { IconInbox } from "@tabler/icons-react";
+import { Link } from "react-router";
 
 export interface EmptyStateProps {
   title: string;
@@ -33,8 +34,8 @@ export function EmptyState({
       </Stack>
       {actionLabel && (actionHref || onAction) && (
         <Button
-          component={actionHref ? "a" : "button"}
-          href={actionHref}
+          component={actionHref ? Link : "button"}
+          to={actionHref}
           onClick={onAction}
           data-testid="empty-state-action"
         >
