@@ -14,6 +14,7 @@ import {
   IconEdit,
   IconBell,
 } from "@tabler/icons-react";
+import { Link } from "react-router";
 import { ConfigCard, type ConfigCardProps } from "~/components/configs";
 import { EmptyState } from "~/components/ui";
 
@@ -49,7 +50,7 @@ export function ChannelDetailPage({
 
   return (
     <Stack gap="lg" data-testid="channel-detail-page">
-      <Anchor href="/dashboard/channels" c="dimmed" size="sm">
+      <Anchor component={Link} to="/dashboard/channels" c="dimmed" size="sm">
         <Group gap="xs">
           <IconArrowLeft size={16} />
           Back to Channels
@@ -76,8 +77,8 @@ export function ChannelDetailPage({
             Test
           </Button>
           <Button
-            component="a"
-            href={`/dashboard/channels/${channel.id}/edit`}
+            component={Link}
+            to={`/dashboard/channels/${channel.id}/edit`}
             variant="light"
             leftSection={<IconEdit size={18} />}
             data-testid="edit-channel-button"

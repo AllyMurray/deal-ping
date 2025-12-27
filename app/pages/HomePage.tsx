@@ -25,6 +25,7 @@ import {
   IconSparkles,
   IconLock,
 } from "@tabler/icons-react";
+import { Link } from "react-router";
 
 export interface HomePageProps {
   isAuthenticated: boolean;
@@ -279,8 +280,8 @@ export function HomePage({ isAuthenticated, error }: HomePageProps) {
             >
               {isAuthenticated ? (
                 <Button
-                  component="a"
-                  href="/dashboard"
+                  component={Link}
+                  to="/dashboard"
                   size="xl"
                   radius="xl"
                   leftSection={<IconSettings size={22} />}
@@ -331,8 +332,8 @@ export function HomePage({ isAuthenticated, error }: HomePageProps) {
                 </Box>
               ) : (
                 <Button
-                  component="a"
-                  href="/auth/login"
+                  component={Link}
+                  to="/auth/login"
                   size="xl"
                   radius="xl"
                   leftSection={<IconBrandDiscord size={24} />}

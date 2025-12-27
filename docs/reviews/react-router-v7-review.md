@@ -47,14 +47,26 @@ All repository imports have been standardized to use the `~/db/repository.server
 - `app/routes/dashboard/channels/$id.edit.tsx`
 - `app/routes/dashboard/channels/index.tsx`
 
-#### ~~Issue 2: Direct `window.location.href` navigation~~ ✅ RESOLVED
+#### ~~Issue 2: Full page reloads instead of SPA navigation~~ ✅ RESOLVED
 
-Updated `app/routes/dashboard/deals.tsx` to use React Router's `useSearchParams()` hook instead of `window.location.href`, preserving the SPA experience and avoiding full page reloads.
+Comprehensive fix across the application to use React Router's `Link` component instead of native anchor tags (`<a href>`), preserving the SPA experience and avoiding full page reloads.
 
 **Changes made:**
-- Imported `useSearchParams` from `react-router`
-- Replaced local state with URL-derived search term: `const searchTerm = searchParams.get("searchTerm")`
-- Updated `handleSearchTermChange` to use `setSearchParams()` for navigation
+
+1. **Route-level fix** (`app/routes/dashboard/deals.tsx`):
+   - Replaced `window.location.href` with `useSearchParams()` hook for search term filtering
+
+2. **Component-level fixes** - Updated all Mantine components to use `Link` instead of native anchors:
+   - `app/components/channels/ChannelCard.tsx` - Card link to channel detail
+   - `app/components/layout/DashboardLayout.tsx` - All nav items, logo, and logout links
+   - `app/components/ui/EmptyState.tsx` - Action button with conditional Link
+   - `app/pages/HomePage.tsx` - Dashboard and login buttons
+   - `app/pages/dashboard/ChannelsListPage.tsx` - Add channel button
+   - `app/pages/dashboard/DashboardHomePage.tsx` - All quick action buttons
+   - `app/pages/dashboard/ChannelDetailPage.tsx` - Breadcrumb and edit button
+   - `app/pages/dashboard/ChannelEditPage.tsx` - Breadcrumb link
+
+**Note:** External links (e.g., deal URLs in `DealCard.tsx`) correctly remain as native anchors with `target="_blank"`.
 
 #### Issue 3: Missing error boundaries
 

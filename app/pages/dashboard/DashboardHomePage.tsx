@@ -15,6 +15,7 @@ import {
   IconPlus,
   IconArrowRight,
 } from "@tabler/icons-react";
+import { Link } from "react-router";
 
 export interface DashboardStats {
   channelCount: number;
@@ -153,8 +154,8 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
 
         <Group gap="md">
           <Button
-            component="a"
-            href="/dashboard/channels/new"
+            component={Link}
+            to="/dashboard/channels/new"
             variant="light"
             leftSection={<IconPlus size={18} />}
             radius="md"
@@ -163,8 +164,8 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
           </Button>
 
           <Button
-            component="a"
-            href="/dashboard/channels"
+            component={Link}
+            to="/dashboard/channels"
             variant="subtle"
             rightSection={<IconArrowRight size={16} />}
             radius="md"
@@ -173,8 +174,8 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
           </Button>
 
           <Button
-            component="a"
-            href="/dashboard/deals"
+            component={Link}
+            to="/dashboard/deals"
             variant="subtle"
             rightSection={<IconArrowRight size={16} />}
             radius="md"
@@ -204,8 +205,8 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
             You'll need a Discord webhook URL.
           </Text>
           <Button
-            component="a"
-            href="/dashboard/channels/new"
+            component={Link}
+            to="/dashboard/channels/new"
             size="lg"
             radius="xl"
             className="btn-flame"
