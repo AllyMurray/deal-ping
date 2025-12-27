@@ -80,21 +80,23 @@ export function ErrorBoundary() {
 }
 ```
 
-#### Issue 4: Layout route type pattern
+#### ~~Issue 4: Layout route type pattern~~ ✅ RESOLVED
 
-**Location:** `app/routes/_dashboard.tsx:16`
+Updated `app/routes/_dashboard.tsx` to use the standard React Router v7 pattern:
+- Removed custom `LoaderData` interface
+- Removed `useLoaderData<LoaderData>()` hook usage
+- Now uses `Route.ComponentProps` to receive typed `loaderData` directly as a prop
 
+**Before:**
 ```typescript
-return Response.json({ user, isAdmin }, { headers });
+export default function DashboardLayoutRoute() {
+  const { user, isAdmin } = useLoaderData<LoaderData>();
 ```
 
-The component uses `useLoaderData<LoaderData>()` with a custom type instead of `Route.ComponentProps`.
-
-**Recommendation:** Use the standard pattern:
+**After:**
 ```typescript
 export default function DashboardLayoutRoute({ loaderData }: Route.ComponentProps) {
-  // loaderData is already typed
-}
+  const { user, isAdmin } = loaderData;
 ```
 
 ---
