@@ -39,6 +39,3 @@ jobs:
 
       - name: Deploy to production
         run: npx sst deploy --stage prod
-        env:
-          DISCORD_WEBHOOK_URL: ${{ vars.DISCORD_WEBHOOK_URL }}
-          SEARCH_TERMS: ${{ vars.SEARCH_TERMS }}
