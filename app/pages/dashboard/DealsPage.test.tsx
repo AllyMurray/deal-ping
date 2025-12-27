@@ -1,0 +1,188 @@
+import { describe, it, expect, vi } from "vitest";
+import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { render } from "~/test-utils";
+import { DealsPage } from "./DealsPage";
+
+const mockDeals = [
+  {
+    id: "deal-1",
+    title: "PlayStation 5 Console",
+    link: "https://example.com/deal/1",
+    price: "£399",
+    merchant: "Amazon",
+    searchTerm: "PS5",
+    timestamp: Date.now(),
+  },
+  {
+    id: "deal-2",
+    title: "Xbox Series X",
+    link: "https://example.com/deal/2",
+    price: "£449",
+    merchant: "Argos",
+    searchTerm: "Xbox",
+    timestamp: Date.now(),
+  },
+];
+
+const mockStats = {
+  totalDeals: 150,
+  dealsToday: 12,
+  topSearchTerm: "PS5",
+};
+
+const defaultProps = {
+  deals: mockDeals,
+  stats: mockStats,
+  searchTerms: ["PS5", "Xbox", "Nintendo Switch"],
+  selectedSearchTerm: null,
+  onSearchTermChange: vi.fn(),
+  searchQuery: "",
+  onSearchQueryChange: vi.fn(),
+  hasMore: false,
+  onLoadMore: vi.fn(),
+  isLoadingMore: false,
+};
+
+describe("DealsPage", () => {
+  describe("rendering", () => {
+    it("renders the page container", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("deals-page")).toBeInTheDocument();
+    });
+
+    it("renders the page title", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("page-title")).toHaveTextContent("Deal History");
+    });
+
+    it("renders page description", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(
+        screen.getByText("View processed deals and notification history")
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("stats display", () => {
+    it("renders deal stats component", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("deal-stats")).toBeInTheDocument();
+    });
+
+    it("displays total deals count", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("total-deals")).toHaveTextContent("150");
+    });
+
+    it("displays deals today count", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("deals-today")).toHaveTextContent("12");
+    });
+
+    it("displays top search term", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("top-search-term")).toHaveTextContent("PS5");
+    });
+  });
+
+  describe("filters", () => {
+    it("renders deal filters component", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("deal-filters")).toBeInTheDocument();
+    });
+
+    it("renders search term filter", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("search-term-filter")).toBeInTheDocument();
+    });
+
+    it("renders search query input", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("search-query-input")).toBeInTheDocument();
+    });
+  });
+
+  describe("deals list", () => {
+    it("renders deals list when deals exist", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("deals-list")).toBeInTheDocument();
+    });
+
+    it("renders deal cards for each deal", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("deal-card-deal-1")).toBeInTheDocument();
+      expect(screen.getByTestId("deal-card-deal-2")).toBeInTheDocument();
+    });
+
+    it("does not show load more button when hasMore is false", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.queryByTestId("load-more-button")).not.toBeInTheDocument();
+    });
+
+    it("shows load more button when hasMore is true", () => {
+      render(<DealsPage {...defaultProps} hasMore={true} />);
+      expect(screen.getByTestId("load-more-button")).toBeInTheDocument();
+    });
+
+    it("calls onLoadMore when load more button clicked", async () => {
+      const user = userEvent.setup();
+      render(<DealsPage {...defaultProps} hasMore={true} />);
+      await user.click(screen.getByTestId("load-more-button"));
+      expect(defaultProps.onLoadMore).toHaveBeenCalled();
+    });
+
+    it("shows loading state on load more button", () => {
+      render(<DealsPage {...defaultProps} hasMore={true} isLoadingMore={true} />);
+      expect(screen.getByTestId("load-more-button")).toHaveAttribute(
+        "data-loading",
+        "true"
+      );
+    });
+  });
+
+  describe("empty state", () => {
+    it("shows empty state when no deals", () => {
+      render(<DealsPage {...defaultProps} deals={[]} />);
+      expect(screen.getByTestId("empty-state")).toBeInTheDocument();
+    });
+
+    it("shows default empty message when no filters applied", () => {
+      render(<DealsPage {...defaultProps} deals={[]} />);
+      expect(screen.getByTestId("empty-state-description")).toHaveTextContent(
+        "Deals will appear here once the notifier processes them."
+      );
+    });
+
+    it("shows filter hint when filters are applied", () => {
+      render(
+        <DealsPage
+          {...defaultProps}
+          deals={[]}
+          selectedSearchTerm="PS5"
+        />
+      );
+      expect(screen.getByTestId("empty-state-description")).toHaveTextContent(
+        "Try adjusting your filters to see more deals."
+      );
+    });
+
+    it("shows filter hint when search query is applied", () => {
+      render(
+        <DealsPage
+          {...defaultProps}
+          deals={[]}
+          searchQuery="console"
+        />
+      );
+      expect(screen.getByTestId("empty-state-description")).toHaveTextContent(
+        "Try adjusting your filters to see more deals."
+      );
+    });
+
+    it("does not show empty state when deals exist", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.queryByTestId("empty-state")).not.toBeInTheDocument();
+    });
+  });
+});
