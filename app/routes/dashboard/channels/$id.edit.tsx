@@ -4,7 +4,7 @@ import { notifications } from "@mantine/notifications";
 import type { Route } from "./+types/$id.edit";
 import { ChannelEditPage } from "~/pages/dashboard";
 import { requireUser } from "~/lib/auth";
-import { getChannel, updateChannel } from "../../../../src/db/repository";
+import { getChannel, updateChannel } from "~/db/repository.server";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user } = await requireUser(request);

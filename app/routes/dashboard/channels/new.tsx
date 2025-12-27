@@ -4,7 +4,7 @@ import { notifications } from "@mantine/notifications";
 import type { Route } from "./+types/new";
 import { ChannelNewPage } from "~/pages/dashboard";
 import { requireUser } from "~/lib/auth";
-import { createChannel } from "../../../../src/db/repository";
+import { createChannel } from "~/db/repository.server";
 
 export async function action({ request }: Route.ActionArgs) {
   const { user } = await requireUser(request);

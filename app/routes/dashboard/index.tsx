@@ -1,7 +1,7 @@
 import type { Route } from "./+types/index";
 import { DashboardHomePage, type DashboardStats } from "~/pages/dashboard";
 import { requireUser } from "~/lib/auth";
-import { getChannelsByUser, getConfigsByUser } from "../../../src/db/repository";
+import { getChannelsByUser, getConfigsByUser } from "~/db/repository.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
