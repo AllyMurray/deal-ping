@@ -9,7 +9,7 @@ import {
   getChannel,
   getConfigsByChannel,
   deleteChannel,
-} from "../../../../src/db/repository";
+} from "~/db/repository.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUser(request);

@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Route } from "./+types/deals";
 import { DealsPage } from "~/pages/dashboard";
 import { requireUser } from "~/lib/auth";
-import { getConfigsByUser } from "../../../src/db/repository";
+import { getConfigsByUser } from "~/db/repository.server";
 import { HotUKDealsService } from "../../../src/db/service";
 
 export async function loader({ request }: Route.LoaderArgs) {

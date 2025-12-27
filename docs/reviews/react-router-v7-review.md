@@ -36,21 +36,16 @@ The application demonstrates **good foundational patterns** for React Router v7 
 
 ### Issues & Recommendations
 
-#### Issue 1: Inconsistent repository imports
+#### ~~Issue 1: Inconsistent repository imports~~ ✅ RESOLVED
 
-Some files import from `~/db/repository.server`:
-```typescript
-// app/routes/dashboard/channels/$id.tsx:18
-import { ... } from "~/db/repository.server";
-```
+All repository imports have been standardized to use the `~/db/repository.server` alias.
 
-Others use relative paths:
-```typescript
-// app/routes/dashboard/channels/index.tsx:12
-import { ... } from "../../../../src/db/repository";
-```
-
-**Recommendation:** Standardize all imports to use the `~/db/repository.server` alias.
+**Files updated:**
+- `app/routes/dashboard/deals.tsx`
+- `app/routes/dashboard/index.tsx`
+- `app/routes/dashboard/channels/new.tsx`
+- `app/routes/dashboard/channels/$id.edit.tsx`
+- `app/routes/dashboard/channels/index.tsx`
 
 #### Issue 2: Direct `window.location.href` navigation
 
@@ -284,7 +279,7 @@ The following tests are failing due to UI changes:
 
 4. **Add missing page tests** - `ChannelDetailPage`, `DealsPage`, `AdminPage`
 5. **Add form component tests** - Test validation, submission, error states
-6. **Fix repository import inconsistencies** - Standardize to alias imports
+6. ~~**Fix repository import inconsistencies**~~ ✅ RESOLVED
 7. **Replace `window.location.href`** - Use React Router navigation
 
 ### Low Priority
