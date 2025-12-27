@@ -241,13 +241,13 @@ All page components now have test coverage:
 
 ### Current State
 
-**Test Files (14 total):**
-- 5 component tests
+**Test Files (16 total):**
+- 7 component tests ✅ (previously 5)
 - 8 page tests ✅ (previously 3)
 - 0 loader/action tests
 - 1 utility/helper test ✅ (auth helpers)
 
-**Test Results:** ✅ All 146 tests passing (previously 133)
+**Test Results:** ✅ All 184 tests passing (previously 146)
 
 ### Test Coverage Gaps
 
@@ -257,9 +257,9 @@ All page components now have test coverage:
 | **Actions** | 0% - No tests |
 | **Auth Helpers** | 100% ✅ - `getUser`, `requireUser`, `requireAnonymous`, `requireAdmin` tested |
 | **Repository Functions** | 0% - No tests |
-| **Presentational Components** | ~50% |
+| **Presentational Components** | ~70% |
 | **Page Components** | 100% ✅ (previously ~40%) |
-| **Form Components** | 0% - `ChannelForm`, `ConfigForm` untested |
+| **Form Components** | 100% ✅ - `ChannelForm`, `ConfigForm` tested |
 | **Modal Components** | 0% - Delete modals untested |
 
 ### ~~Failing Tests~~ ✅ RESOLVED
@@ -284,7 +284,7 @@ All test assertions have been updated to match the current UI implementation.
 ### Medium Priority
 
 4. ~~**Add missing page tests**~~ ✅ RESOLVED - All page components now have tests (`ChannelDetailPage`, `ChannelNewPage`, `ChannelEditPage`, `DealsPage`, `AdminPage`)
-5. **Add form component tests** - Test validation, submission, error states
+5. ~~**Add form component tests**~~ ✅ RESOLVED - Added tests for `ChannelForm` and `ConfigForm` components covering rendering, initial values, input interactions, labels, and validation setup
 6. ~~**Fix repository import inconsistencies**~~ ✅ RESOLVED
 7. ~~**Replace `window.location.href`**~~ ✅ RESOLVED - Now uses `useSearchParams()`
 
@@ -302,10 +302,10 @@ All test assertions have been updated to match the current UI implementation.
 | React Router v7 patterns | 9/10 | Good structure with error boundaries ✅ |
 | Presentational pattern | 9/10 | Well implemented |
 | Loader/Action testing | 1/10 | Critical gap |
-| Component testing | 7/10 | Page components fully covered ✅ |
+| Component testing | 8/10 | Page and form components fully covered ✅ |
 | Type safety | 8/10 | Good use of generated types |
 | Code organization | 9/10 | Clean separation |
-| **Overall** | **7/10** | Solid architecture, needs tests |
+| **Overall** | **7.5/10** | Solid architecture, needs loader/action tests |
 
 ---
 
@@ -320,6 +320,6 @@ The React Router v7 app has **excellent architectural foundations** with proper 
 However, the **remaining gaps are in test coverage**:
 - **No loader/action unit tests** - This is the most critical issue
 - ~~**No auth helper tests**~~ ✅ RESOLVED - Full coverage with 13 tests
-- ~~**Incomplete page/component tests**~~ ✅ RESOLVED - All page components now have tests (146 tests passing)
+- ~~**Incomplete page/component tests**~~ ✅ RESOLVED - All page and form components now have tests (184 tests passing)
 
-The codebase would benefit from prioritizing test coverage for the server-side logic (loaders, actions, auth helpers) before adding more features.
+The codebase would benefit from prioritizing test coverage for the server-side logic (loaders, actions) before adding more features.
