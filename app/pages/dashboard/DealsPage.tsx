@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Title, Text, Stack, Button, Group, Center, Switch, Badge } from "@mantine/core";
 import { DealCard, DealFilters, DealStats, FilterConfigPanel, type DealCardProps } from "~/components/deals";
 import { EmptyState } from "~/components/ui";
-import { applyFilter, type FilterConfig } from "~/lib/deal-filter";
+import { applyFilter } from "~/lib/deal-filter";
 
 export interface FilterConfigState {
   searchTerm: string;
@@ -52,11 +52,12 @@ export function DealsPage({
   // Apply live filtering when a filter config is provided
   const dealsWithLiveFilter = useMemo(() => {
     if (!filterConfig || !selectedSearchTerm) {
-      // No live filter - use stored filter status
+      // No live filter - use stored filter status and match details
       return deals.map((deal) => ({
         ...deal,
         liveFilterStatus: deal.filterStatus,
         liveFilterReason: deal.filterReason,
+        liveMatchDetails: deal.matchDetails, // Keep stored match details
       }));
     }
 
@@ -68,10 +69,11 @@ export function DealsPage({
           ...deal,
           liveFilterStatus: deal.filterStatus,
           liveFilterReason: deal.filterReason,
+          liveMatchDetails: deal.matchDetails, // Keep stored match details
         };
       }
 
-      // Apply live filter
+      // Apply live filter and compute real-time match details
       const result = applyFilter(
         { id: deal.id, title: deal.title, merchant: deal.merchant, searchTerm: deal.searchTerm },
         filterConfig
@@ -80,6 +82,7 @@ export function DealsPage({
         ...deal,
         liveFilterStatus: result.filterStatus,
         liveFilterReason: result.filterReason,
+        liveMatchDetails: JSON.stringify(result.matchDetails), // Serialize for DealCard
       };
     });
   }, [deals, filterConfig, selectedSearchTerm]);
@@ -167,6 +170,7 @@ export function DealsPage({
               {...deal}
               filterStatus={deal.liveFilterStatus}
               filterReason={deal.liveFilterReason}
+              matchDetails={deal.liveMatchDetails}
             />
           ))}
 

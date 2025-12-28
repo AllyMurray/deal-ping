@@ -96,4 +96,50 @@ describe('deal-filter', () => {
       expect(result.filterStatus).toBe('filtered_exclude');
     });
   });
+
+  describe('matchDetails computation', () => {
+    it('should include search term matches in match details', () => {
+      const result = applyFilter(baseDeal, baseConfig);
+      expect(result.matchDetails).toBeDefined();
+      expect(result.matchDetails.searchTermMatches).toContain('steam');
+      expect(result.matchDetails.searchTermMatches).toContain('deck');
+    });
+
+    it('should include matched segments with context', () => {
+      const result = applyFilter(baseDeal, baseConfig);
+      expect(result.matchDetails.matchedSegments.length).toBeGreaterThan(0);
+      expect(result.matchDetails.matchedSegments[0].position).toBe('title');
+      expect(result.matchDetails.matchedSegments[0].text).toContain('[');
+    });
+
+    it('should include include keyword matches when found', () => {
+      const config = { ...baseConfig, includeKeywords: ['512GB', 'OLED'] };
+      const result = applyFilter(baseDeal, config);
+      expect(result.matchDetails.includeKeywordMatches).toContain('512GB');
+      expect(result.matchDetails.includeKeywordMatches).toContain('OLED');
+    });
+
+    it('should not include missing keywords in includeKeywordMatches', () => {
+      const config = { ...baseConfig, includeKeywords: ['512GB', 'LCD'] };
+      const result = applyFilter(baseDeal, config);
+      // 512GB is found, LCD is missing
+      expect(result.matchDetails.includeKeywordMatches).toContain('512GB');
+      expect(result.matchDetails.includeKeywordMatches).not.toContain('LCD');
+      // Filter reason should mention the missing keyword
+      expect(result.filterReason).toContain('lcd');
+    });
+
+    it('should show excluded keywords found in status', () => {
+      const config = { ...baseConfig, excludeKeywords: ['OLED'] };
+      const result = applyFilter(baseDeal, config);
+      expect(result.matchDetails.excludeKeywordStatus).toContain('Contains excluded keywords');
+      expect(result.matchDetails.excludeKeywordStatus).toContain('OLED');
+    });
+
+    it('should show no match found for search term when filtered', () => {
+      const deal = { ...baseDeal, title: 'PlayStation 5 Console' };
+      const result = applyFilter(deal, baseConfig);
+      expect(result.matchDetails.filterStatus).toContain('No direct match found');
+    });
+  });
 });
