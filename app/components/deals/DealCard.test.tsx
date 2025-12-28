@@ -75,6 +75,45 @@ describe("DealCard", () => {
     });
   });
 
+  describe("filter status", () => {
+    it("does not show filter badge for passed deals", () => {
+      render(<DealCard {...defaultProps} filterStatus="passed" />);
+      expect(screen.queryByTestId("filter-status-badge")).not.toBeInTheDocument();
+    });
+
+    it("does not show filter badge when no filter status", () => {
+      render(<DealCard {...defaultProps} />);
+      expect(screen.queryByTestId("filter-status-badge")).not.toBeInTheDocument();
+    });
+
+    it("shows 'No Match' badge for filtered_no_match status", () => {
+      render(<DealCard {...defaultProps} filterStatus="filtered_no_match" />);
+      expect(screen.getByTestId("filter-status-badge")).toHaveTextContent("No Match");
+    });
+
+    it("shows 'Excluded' badge for filtered_exclude status", () => {
+      render(<DealCard {...defaultProps} filterStatus="filtered_exclude" />);
+      expect(screen.getByTestId("filter-status-badge")).toHaveTextContent("Excluded");
+    });
+
+    it("shows 'Missing Keywords' badge for filtered_include status", () => {
+      render(<DealCard {...defaultProps} filterStatus="filtered_include" />);
+      expect(screen.getByTestId("filter-status-badge")).toHaveTextContent("Missing Keywords");
+    });
+
+    it("applies reduced opacity to filtered deals", () => {
+      render(<DealCard {...defaultProps} filterStatus="filtered_exclude" />);
+      const card = screen.getByTestId("deal-card-deal-123");
+      expect(card).toHaveStyle({ opacity: "0.6" });
+    });
+
+    it("does not apply reduced opacity to passed deals", () => {
+      render(<DealCard {...defaultProps} filterStatus="passed" />);
+      const card = screen.getByTestId("deal-card-deal-123");
+      expect(card).toHaveStyle({ opacity: "1" });
+    });
+  });
+
   describe("match details", () => {
     it("renders match details toggle button", () => {
       render(<DealCard {...defaultProps} />);

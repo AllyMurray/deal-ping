@@ -185,4 +185,124 @@ describe("DealsPage", () => {
       expect(screen.queryByTestId("empty-state")).not.toBeInTheDocument();
     });
   });
+
+  describe("filter visibility toggle", () => {
+    const dealsWithFiltered = [
+      {
+        id: "deal-1",
+        title: "PlayStation 5 Console",
+        link: "https://example.com/deal/1",
+        searchTerm: "PS5",
+        filterStatus: "passed" as const,
+      },
+      {
+        id: "deal-2",
+        title: "Random Product",
+        link: "https://example.com/deal/2",
+        searchTerm: "PS5",
+        filterStatus: "filtered_no_match" as const,
+      },
+      {
+        id: "deal-3",
+        title: "Refurbished Console",
+        link: "https://example.com/deal/3",
+        searchTerm: "PS5",
+        filterStatus: "filtered_exclude" as const,
+      },
+    ];
+
+    it("shows show filtered toggle when there are filtered deals", () => {
+      render(
+        <DealsPage
+          {...defaultProps}
+          deals={dealsWithFiltered}
+          onShowFilteredChange={vi.fn()}
+        />
+      );
+      expect(screen.getByTestId("show-filtered-toggle")).toBeInTheDocument();
+    });
+
+    it("does not show toggle when no filtered deals", () => {
+      const allPassed = dealsWithFiltered.map(d => ({ ...d, filterStatus: "passed" as const }));
+      render(
+        <DealsPage
+          {...defaultProps}
+          deals={allPassed}
+          onShowFilteredChange={vi.fn()}
+        />
+      );
+      expect(screen.queryByTestId("show-filtered-toggle")).not.toBeInTheDocument();
+    });
+
+    it("shows filtered count badge", () => {
+      render(
+        <DealsPage
+          {...defaultProps}
+          deals={dealsWithFiltered}
+          onShowFilteredChange={vi.fn()}
+        />
+      );
+      expect(screen.getByText("2 filtered")).toBeInTheDocument();
+    });
+
+    it("hides filtered deals by default", () => {
+      render(
+        <DealsPage
+          {...defaultProps}
+          deals={dealsWithFiltered}
+          showFiltered={false}
+          onShowFilteredChange={vi.fn()}
+        />
+      );
+      // Should only show the passed deal
+      expect(screen.getByTestId("deal-card-deal-1")).toBeInTheDocument();
+      expect(screen.queryByTestId("deal-card-deal-2")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("deal-card-deal-3")).not.toBeInTheDocument();
+    });
+
+    it("shows filtered deals when toggle is on", () => {
+      render(
+        <DealsPage
+          {...defaultProps}
+          deals={dealsWithFiltered}
+          showFiltered={true}
+          onShowFilteredChange={vi.fn()}
+        />
+      );
+      // Should show all deals
+      expect(screen.getByTestId("deal-card-deal-1")).toBeInTheDocument();
+      expect(screen.getByTestId("deal-card-deal-2")).toBeInTheDocument();
+      expect(screen.getByTestId("deal-card-deal-3")).toBeInTheDocument();
+    });
+
+    it("calls onShowFilteredChange when toggle is clicked", async () => {
+      const user = userEvent.setup();
+      const onShowFilteredChange = vi.fn();
+      render(
+        <DealsPage
+          {...defaultProps}
+          deals={dealsWithFiltered}
+          showFiltered={false}
+          onShowFilteredChange={onShowFilteredChange}
+        />
+      );
+      await user.click(screen.getByTestId("show-filtered-toggle"));
+      expect(onShowFilteredChange).toHaveBeenCalledWith(true);
+    });
+
+    it("shows appropriate empty message when all deals filtered", () => {
+      const allFiltered = dealsWithFiltered.filter(d => d.filterStatus !== "passed");
+      render(
+        <DealsPage
+          {...defaultProps}
+          deals={allFiltered}
+          showFiltered={false}
+          onShowFilteredChange={vi.fn()}
+        />
+      );
+      expect(screen.getByTestId("empty-state-description")).toHaveTextContent(
+        "All deals were filtered out"
+      );
+    });
+  });
 });
