@@ -40,14 +40,14 @@ describe("DashboardHomePage", () => {
       );
     });
 
-    it("does not show active badge when all configs enabled", () => {
+    it("shows 'all active' badge when all configs enabled", () => {
       render(
         <DashboardHomePage
           stats={{ ...defaultStats, enabledConfigCount: 10 }}
         />
       );
-      expect(screen.getByTestId("stat-search-terms")).not.toHaveTextContent(
-        "active"
+      expect(screen.getByTestId("stat-search-terms")).toHaveTextContent(
+        "all active"
       );
     });
   });

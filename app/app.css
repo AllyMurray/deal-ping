@@ -291,6 +291,25 @@ body {
   color: var(--text-muted);
 }
 
+/* Clickable stat cards */
+.stat-card-clickable {
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card-clickable:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 144, 37, 0.4);
+}
+
+[data-mantine-color-scheme="dark"] .stat-card-clickable:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), var(--glow-flame);
+}
+
+[data-mantine-color-scheme="light"] .stat-card-clickable:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+}
+
 /* ============================================================================
    Navigation Enhancements
    ============================================================================ */
