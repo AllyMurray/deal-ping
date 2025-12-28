@@ -16,21 +16,16 @@ const mockConfigs = [
     enabled: true,
     includeKeywords: ["console"],
     excludeKeywords: ["broken"],
+    caseSensitive: false,
   },
   {
     searchTerm: "Xbox",
     enabled: false,
     includeKeywords: [],
     excludeKeywords: ["refurbished"],
+    caseSensitive: false,
   },
 ];
-
-const mockFilterConfig = {
-  searchTerm: "PS5",
-  includeKeywords: ["console"],
-  excludeKeywords: ["broken"],
-  caseSensitive: false,
-};
 
 const defaultProps = {
   channel: mockChannel,
@@ -41,8 +36,6 @@ const defaultProps = {
   onToggleConfig: vi.fn(),
   onTestNotification: vi.fn(),
   isTestingNotification: false,
-  filterConfig: mockFilterConfig,
-  onFilterConfigChange: vi.fn(),
 };
 
 describe("ChannelDetailPage", () => {
@@ -169,8 +162,8 @@ describe("ChannelDetailPage", () => {
       expect(screen.getByTestId("deals-list")).toBeInTheDocument();
     });
 
-    it("shows passed and filtered counts", () => {
-      // Deal titles need to match the filterConfig which has searchTerm: "PS5", includeKeywords: ["console"], excludeKeywords: ["broken"]
+    it("shows included and excluded counts", () => {
+      // Deal titles are filtered based on the config for their searchTerm
       const mockDeals = [
         {
           id: "deal-1",
@@ -188,12 +181,12 @@ describe("ChannelDetailPage", () => {
         },
       ];
       render(<ChannelDetailPage {...defaultProps} deals={mockDeals} />);
-      expect(screen.getByText("1 passing")).toBeInTheDocument();
-      expect(screen.getByText("1 filtered")).toBeInTheDocument();
+      expect(screen.getByText("1 included")).toBeInTheDocument();
+      expect(screen.getByText("1 excluded")).toBeInTheDocument();
     });
 
-    it("shows filtered toggle when there are filtered deals", () => {
-      // Deal will be filtered by the live filter because it contains "broken" (excluded keyword)
+    it("shows excluded toggle when there are excluded deals", () => {
+      // Deal will be filtered by the config because it contains "broken" (excluded keyword)
       const mockDeals = [
         {
           id: "deal-1",
@@ -207,10 +200,10 @@ describe("ChannelDetailPage", () => {
         <ChannelDetailPage
           {...defaultProps}
           deals={mockDeals}
-          onShowFilteredChange={vi.fn()}
+          onShowExcludedChange={vi.fn()}
         />
       );
-      expect(screen.getByTestId("show-filtered-toggle")).toBeInTheDocument();
+      expect(screen.getByTestId("show-excluded-toggle")).toBeInTheDocument();
     });
   });
 });

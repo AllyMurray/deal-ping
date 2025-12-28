@@ -109,6 +109,7 @@ describe("Channel Detail Route", () => {
           enabled: true,
           includeKeywords: ["pro", "max"],
           excludeKeywords: ["case"],
+          caseSensitive: false,
         },
       ]);
       expect(result.deals).toEqual([]);
