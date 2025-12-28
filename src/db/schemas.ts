@@ -56,6 +56,14 @@ export const SearchTermConfigSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
+// Deal filter status enum
+export const DealFilterStatusSchema = z.enum([
+  'passed',
+  'filtered_no_match',
+  'filtered_exclude',
+  'filtered_include',
+]);
+
 // Deal schema
 export const DealSchema = z.object({
   dealId: z.string(),
@@ -65,6 +73,9 @@ export const DealSchema = z.object({
   price: z.string().optional(),
   merchant: z.string().optional(),
   matchDetails: z.string().optional(), // Serialized JSON of MatchDetails
+  filterStatus: DealFilterStatusSchema.default('passed'),
+  filterReason: z.string().optional(), // Human-readable reason for filtering
+  notified: z.boolean().default(false), // Whether a notification was sent
   timestamp: z.number().optional(),
   createdAt: z.string().optional(),
   ttl: z.number().optional(),
@@ -86,6 +97,7 @@ export type MatchDetails = z.infer<typeof MatchDetailsSchema>;
 export type MatchFilterConfig = z.infer<typeof MatchFilterConfigSchema>;
 export type Channel = z.infer<typeof ChannelSchema>;
 export type SearchTermConfig = z.infer<typeof SearchTermConfigSchema>;
+export type DealFilterStatus = z.infer<typeof DealFilterStatusSchema>;
 export type Deal = z.infer<typeof DealSchema>;
 export type AllowedUser = z.infer<typeof AllowedUserSchema>;
 

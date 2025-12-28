@@ -8,6 +8,7 @@ import {
   IconChevronDown,
   IconChevronUp,
   IconSearch,
+  IconFilter,
 } from "@tabler/icons-react";
 import {
   deserializeMatchDetails,
@@ -15,6 +16,8 @@ import {
   formatMatchDetailsForUI,
   type MatchDetails,
 } from "~/lib/match-details";
+
+export type FilterStatus = 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include';
 
 export interface DealCardProps {
   id: string;
@@ -25,6 +28,42 @@ export interface DealCardProps {
   searchTerm: string;
   timestamp?: number;
   matchDetails?: string; // Serialized JSON
+  filterStatus?: FilterStatus;
+  filterReason?: string;
+}
+
+// Helper to get filter status display info
+function getFilterStatusInfo(filterStatus?: FilterStatus, filterReason?: string): {
+  label: string;
+  color: string;
+  description: string;
+} | null {
+  if (!filterStatus || filterStatus === 'passed') {
+    return null;
+  }
+
+  switch (filterStatus) {
+    case 'filtered_no_match':
+      return {
+        label: 'No Match',
+        color: 'gray',
+        description: filterReason || 'Search term not found in deal',
+      };
+    case 'filtered_exclude':
+      return {
+        label: 'Excluded',
+        color: 'red',
+        description: filterReason || 'Contains excluded keyword',
+      };
+    case 'filtered_include':
+      return {
+        label: 'Missing Keywords',
+        color: 'orange',
+        description: filterReason || 'Required keywords not found',
+      };
+    default:
+      return null;
+  }
 }
 
 export function DealCard({
@@ -36,6 +75,8 @@ export function DealCard({
   searchTerm,
   timestamp,
   matchDetails: matchDetailsSerialized,
+  filterStatus,
+  filterReason,
 }: DealCardProps) {
   const [showMatchDetails, setShowMatchDetails] = useState(false);
 
@@ -60,8 +101,19 @@ export function DealCard({
     return formatMatchDetailsForUI(computed);
   }, [matchDetailsSerialized, title, merchant, searchTerm]);
 
+  // Get filter status display info
+  const filterInfo = getFilterStatusInfo(filterStatus, filterReason);
+  const isFiltered = filterStatus && filterStatus !== 'passed';
+
   return (
-    <Box className="deal-card" data-testid={`deal-card-${id}`}>
+    <Box
+      className="deal-card"
+      data-testid={`deal-card-${id}`}
+      style={{
+        opacity: isFiltered ? 0.6 : 1,
+        position: 'relative',
+      }}
+    >
       {/* Header with Title and Price */}
       <Group justify="space-between" align="flex-start" gap="md" mb="sm">
         <Anchor
@@ -113,6 +165,19 @@ export function DealCard({
             }}
           >
             {merchant}
+          </Badge>
+        )}
+
+        {filterInfo && (
+          <Badge
+            variant="filled"
+            size="sm"
+            color={filterInfo.color}
+            leftSection={<IconFilter size={12} stroke={1.5} />}
+            data-testid="filter-status-badge"
+            title={filterInfo.description}
+          >
+            {filterInfo.label}
           </Badge>
         )}
       </Group>

@@ -21,6 +21,8 @@ import {
 
 const logger = new Logger({ serviceName: 'HotUKDealsNotifier' });
 
+export type FilterStatus = 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include';
+
 interface DealWithSearchTerm {
   id: string;
   title: string;
@@ -38,10 +40,14 @@ interface DealWithSearchTerm {
   searchTerm: string;
   matchDetails?: MatchDetails;
   matchDetailsSerialized?: string;
+  filterStatus: FilterStatus;
+  filterReason?: string;
 }
 
-interface FilterResult {
+export interface FilterResult {
   passed: boolean;
+  filterStatus: FilterStatus;
+  filterReason?: string;
   matchDetails: MatchDetails;
 }
 
@@ -81,7 +87,8 @@ const getGroupedConfigs = async (): Promise<ChannelWithConfigs[]> => {
 };
 
 // Filter deals based on include/exclude keywords and compute match details
-const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult => {
+// Exported for testing
+export const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult => {
   const title = config.caseSensitive ? deal.title : deal.title.toLowerCase();
   const merchant = config.caseSensitive ? (deal.merchant || '') : (deal.merchant || '').toLowerCase();
 
@@ -106,13 +113,19 @@ const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult => {
   const hasSearchTermMatch = normalizedSearchTermWords.some((word) => searchText.includes(word));
 
   if (!hasSearchTermMatch) {
+    const filterReason = `No words from search term "${config.searchTerm}" found in deal`;
     logger.debug('Deal filtered out - no search term words found in deal', {
       dealTitle: deal.title,
       searchTerm: config.searchTerm,
       searchTermWords,
       matchDetails,
     });
-    return { passed: false, matchDetails };
+    return {
+      passed: false,
+      filterStatus: 'filtered_no_match',
+      filterReason,
+      matchDetails,
+    };
   }
 
   // Check exclude keywords
@@ -121,14 +134,21 @@ const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult => {
       ? config.excludeKeywords
       : config.excludeKeywords.map((keyword) => keyword.toLowerCase());
 
-    if (excludeWords.some((keyword) => searchText.includes(keyword))) {
+    const matchedExclude = excludeWords.find((keyword) => searchText.includes(keyword));
+    if (matchedExclude) {
+      const filterReason = `Excluded keyword "${matchedExclude}" found in deal`;
       logger.debug('Deal filtered out by exclude keywords', {
         dealTitle: deal.title,
         excludeKeywords: config.excludeKeywords,
         searchTerm: config.searchTerm,
         matchDetails,
       });
-      return { passed: false, matchDetails };
+      return {
+        passed: false,
+        filterStatus: 'filtered_exclude',
+        filterReason,
+        matchDetails,
+      };
     }
   }
 
@@ -138,18 +158,26 @@ const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult => {
       ? config.includeKeywords
       : config.includeKeywords.map((keyword) => keyword.toLowerCase());
 
-    if (!includeWords.every((keyword) => searchText.includes(keyword))) {
+    const missingKeywords = includeWords.filter((keyword) => !searchText.includes(keyword));
+    if (missingKeywords.length > 0) {
+      const filterReason = `Required keyword(s) not found: ${missingKeywords.join(', ')}`;
       logger.debug('Deal filtered out by include keywords', {
         dealTitle: deal.title,
         includeKeywords: config.includeKeywords,
+        missingKeywords,
         searchTerm: config.searchTerm,
         matchDetails,
       });
-      return { passed: false, matchDetails };
+      return {
+        passed: false,
+        filterStatus: 'filtered_include',
+        filterReason,
+        matchDetails,
+      };
     }
   }
 
-  return { passed: true, matchDetails };
+  return { passed: true, filterStatus: 'passed', matchDetails };
 };
 
 // Helper function to process multiple search terms for a channel
@@ -194,7 +222,7 @@ const processChannelFeeds = async (channelWithConfigs: ChannelWithConfigs): Prom
 
     const existsMap = new Map(existenceChecks.map((check) => [check.dealId, check.exists]));
 
-    // Process deals that don't exist
+    // Process deals that don't exist - store all deals (passed and filtered)
     const allNewDeals: DealWithSearchTerm[] = [];
 
     for (const { deal, searchConfig } of allDealsWithConfig) {
@@ -207,35 +235,43 @@ const processChannelFeeds = async (channelWithConfigs: ChannelWithConfigs): Prom
 
       // Apply filtering logic and get match details
       const filterResult = filterDeal(deal, searchConfig);
-      if (!filterResult.passed) {
+
+      if (filterResult.passed) {
+        logger.info('New deal found (passed filters)', {
+          title: deal.title,
+          link: deal.link,
+          price: deal.price,
+          merchant: deal.merchant,
+          searchTerm: searchConfig.searchTerm,
+          matchDetails: filterResult.matchDetails,
+        });
+      } else {
         logger.debug('Deal filtered out', {
           dealId,
           title: deal.title,
           searchTerm: searchConfig.searchTerm,
+          filterStatus: filterResult.filterStatus,
+          filterReason: filterResult.filterReason,
           matchDetails: filterResult.matchDetails,
         });
-        continue;
       }
 
-      logger.info('New deal found', {
-        title: deal.title,
-        link: deal.link,
-        price: deal.price,
-        merchant: deal.merchant,
-        searchTerm: searchConfig.searchTerm,
-        matchDetails: filterResult.matchDetails,
-      });
-
+      // Store all deals regardless of filter status
       allNewDeals.push({
         ...deal,
         searchTerm: searchConfig.searchTerm,
         matchDetails: filterResult.matchDetails,
         matchDetailsSerialized: serializeMatchDetails(filterResult.matchDetails),
+        filterStatus: filterResult.filterStatus,
+        filterReason: filterResult.filterReason,
       });
     }
 
-    // Batch create all new deals
+    // Batch create all new deals (passed and filtered)
     if (allNewDeals.length > 0) {
+      // Separate passed deals for notification
+      const passedDeals = allNewDeals.filter((d) => d.filterStatus === 'passed');
+
       await Promise.all(
         allNewDeals.map((deal) =>
           createDeal({
@@ -246,11 +282,24 @@ const processChannelFeeds = async (channelWithConfigs: ChannelWithConfigs): Prom
             price: deal.price,
             merchant: deal.merchant,
             matchDetails: deal.matchDetailsSerialized,
+            filterStatus: deal.filterStatus,
+            filterReason: deal.filterReason,
+            notified: deal.filterStatus === 'passed',
           })
         )
       );
 
-      await sendCombinedDiscordMessage(channel.webhookUrl, allNewDeals);
+      // Only send Discord notifications for passed deals
+      if (passedDeals.length > 0) {
+        await sendCombinedDiscordMessage(channel.webhookUrl, passedDeals);
+      }
+
+      logger.info('Processed deals for channel', {
+        channelName: channel.name,
+        totalNewDeals: allNewDeals.length,
+        passedDeals: passedDeals.length,
+        filteredDeals: allNewDeals.length - passedDeals.length,
+      });
     } else {
       logger.info('No new deals found for channel', {
         channelName: channel.name,
