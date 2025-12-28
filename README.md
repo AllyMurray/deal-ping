@@ -7,6 +7,7 @@ A Discord bot that monitors HotUKDeals and sends deal notifications to Discord c
 - 🔍 **Multiple Search Terms**: Monitor multiple keywords per Discord channel
 - 📢 **Discord Notifications**: Send real-time deal notifications to Discord channels
 - 🎯 **Smart Filtering**: Include/exclude deals based on keywords to avoid unwanted results
+- 🌙 **Quiet Hours**: Pause notifications during specified hours, deals are queued and sent when quiet hours end
 - 💰 **Deal Information**: Extract prices, merchant details, and direct links
 - 🔧 **Channel Management**: Organize webhooks with friendly names
 - 📊 **Grouped Messages**: Combine multiple search results into organized Discord messages
@@ -185,6 +186,10 @@ export const Channel = z.object({
   userId: z.string(),
   name: z.string(),            // Friendly name (e.g., "Gaming Deals")
   webhookUrl: z.string(),      // Discord webhook URL
+  quietHoursEnabled: z.boolean().default(false),
+  quietHoursStart: z.string().optional(),    // HH:mm format (e.g., "22:00")
+  quietHoursEnd: z.string().optional(),      // HH:mm format (e.g., "08:00")
+  quietHoursTimezone: z.string().default('Europe/London'), // IANA timezone
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
