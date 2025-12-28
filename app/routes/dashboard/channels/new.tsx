@@ -11,9 +11,21 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const name = formData.get("name") as string;
   const webhookUrl = formData.get("webhookUrl") as string;
+  const quietHoursEnabled = formData.get("quietHoursEnabled") === "on";
+  const quietHoursStart = formData.get("quietHoursStart") as string;
+  const quietHoursEnd = formData.get("quietHoursEnd") as string;
+  const quietHoursTimezone = formData.get("quietHoursTimezone") as string;
 
   try {
-    const channel = await createChannel({ userId: user.id, name, webhookUrl });
+    const channel = await createChannel({
+      userId: user.id,
+      name,
+      webhookUrl,
+      quietHoursEnabled,
+      quietHoursStart: quietHoursEnabled ? quietHoursStart : undefined,
+      quietHoursEnd: quietHoursEnabled ? quietHoursEnd : undefined,
+      quietHoursTimezone: quietHoursEnabled ? quietHoursTimezone : undefined,
+    });
     return redirect(`/dashboard/channels/${channel.channelId}`);
   } catch {
     return { error: "Failed to create channel. Please try again." };

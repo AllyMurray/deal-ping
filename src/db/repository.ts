@@ -1,5 +1,5 @@
 import { HotUKDealsService } from './service';
-import type { Channel, SearchTermConfig, Deal, AllowedUser } from './schemas';
+import type { Channel, SearchTermConfig, Deal, AllowedUser, QueuedDeal } from './schemas';
 import {
   parseChannel,
   parseChannels,
@@ -9,6 +9,8 @@ import {
   parseDeals,
   parseAllowedUser,
   parseAllowedUsers,
+  parseQueuedDeal,
+  parseQueuedDeals,
 } from './schemas';
 
 // ============================================================================
@@ -18,9 +20,25 @@ import {
 // Channel params
 export type GetChannelsByUserParams = { userId: string };
 export type GetChannelParams = { id: string };
-export type UpdateChannelParams = { id: string; name?: string; webhookUrl?: string };
+export type UpdateChannelParams = {
+  id: string;
+  name?: string;
+  webhookUrl?: string;
+  quietHoursEnabled?: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  quietHoursTimezone?: string;
+};
 export type DeleteChannelParams = { id: string };
-export type CreateChannelParams = { userId: string; name: string; webhookUrl: string };
+export type CreateChannelParams = {
+  userId: string;
+  name: string;
+  webhookUrl: string;
+  quietHoursEnabled?: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  quietHoursTimezone?: string;
+};
 
 // Config params
 export type GetConfigsByUserParams = { userId: string };
@@ -67,6 +85,21 @@ export type AddAllowedUserParams = {
 };
 export type RemoveAllowedUserParams = { discordId: string };
 
+// QueuedDeal params
+export type CreateQueuedDealParams = {
+  channelId: string;
+  dealId: string;
+  searchTerm: string;
+  title: string;
+  link: string;
+  price?: string;
+  merchant?: string;
+  matchDetails?: string;
+};
+export type GetQueuedDealsParams = { channelId: string };
+export type DeleteQueuedDealParams = { queuedDealId: string };
+export type DeleteQueuedDealsForChannelParams = { channelId: string };
+
 // ============================================================================
 // Channel Repository
 // ============================================================================
@@ -105,9 +138,25 @@ export async function getChannel({ id }: GetChannelParams): Promise<Channel | nu
 /**
  * Create a new channel
  */
-export async function createChannel({ userId, name, webhookUrl }: CreateChannelParams): Promise<Channel> {
+export async function createChannel({
+  userId,
+  name,
+  webhookUrl,
+  quietHoursEnabled,
+  quietHoursStart,
+  quietHoursEnd,
+  quietHoursTimezone,
+}: CreateChannelParams): Promise<Channel> {
   const result = await HotUKDealsService.entities.channel
-    .put({ userId, name, webhookUrl })
+    .put({
+      userId,
+      name,
+      webhookUrl,
+      quietHoursEnabled: quietHoursEnabled ?? false,
+      quietHoursStart,
+      quietHoursEnd,
+      quietHoursTimezone: quietHoursTimezone ?? 'Europe/London',
+    })
     .go();
   return parseChannel(result.data);
 }
@@ -115,10 +164,29 @@ export async function createChannel({ userId, name, webhookUrl }: CreateChannelP
 /**
  * Update a channel
  */
-export async function updateChannel({ id, name, webhookUrl }: UpdateChannelParams): Promise<Channel> {
-  const updates: { name?: string; webhookUrl?: string } = {};
+export async function updateChannel({
+  id,
+  name,
+  webhookUrl,
+  quietHoursEnabled,
+  quietHoursStart,
+  quietHoursEnd,
+  quietHoursTimezone,
+}: UpdateChannelParams): Promise<Channel> {
+  const updates: {
+    name?: string;
+    webhookUrl?: string;
+    quietHoursEnabled?: boolean;
+    quietHoursStart?: string;
+    quietHoursEnd?: string;
+    quietHoursTimezone?: string;
+  } = {};
   if (name !== undefined) updates.name = name;
   if (webhookUrl !== undefined) updates.webhookUrl = webhookUrl;
+  if (quietHoursEnabled !== undefined) updates.quietHoursEnabled = quietHoursEnabled;
+  if (quietHoursStart !== undefined) updates.quietHoursStart = quietHoursStart;
+  if (quietHoursEnd !== undefined) updates.quietHoursEnd = quietHoursEnd;
+  if (quietHoursTimezone !== undefined) updates.quietHoursTimezone = quietHoursTimezone;
 
   const result = await HotUKDealsService.entities.channel
     .patch({ channelId: id })
@@ -497,4 +565,99 @@ export async function seedAdminUser({ discordId }: { discordId: string }): Promi
     addedBy: 'system',
     isAdmin: true,
   });
+}
+
+// ============================================================================
+// QueuedDeal Repository
+// ============================================================================
+
+/**
+ * Create a queued deal (for quiet hours)
+ */
+export async function createQueuedDeal(deal: CreateQueuedDealParams): Promise<QueuedDeal> {
+  const result = await HotUKDealsService.entities.queuedDeal
+    .put({
+      channelId: deal.channelId,
+      dealId: deal.dealId,
+      searchTerm: deal.searchTerm,
+      title: deal.title,
+      link: deal.link,
+      price: deal.price,
+      merchant: deal.merchant,
+      matchDetails: deal.matchDetails,
+    })
+    .go();
+  return parseQueuedDeal(result.data);
+}
+
+/**
+ * Get all queued deals for a channel
+ */
+export async function getQueuedDealsForChannel({ channelId }: GetQueuedDealsParams): Promise<QueuedDeal[]> {
+  const result = await HotUKDealsService.entities.queuedDeal.query
+    .byChannel({ channelId })
+    .go({ order: 'asc' }); // Oldest first
+  return parseQueuedDeals(result.data);
+}
+
+/**
+ * Get all queued deals (for batch processing when quiet hours end)
+ */
+export async function getAllQueuedDeals(): Promise<QueuedDeal[]> {
+  const result = await HotUKDealsService.entities.queuedDeal.query
+    .allQueued({})
+    .go();
+  return parseQueuedDeals(result.data);
+}
+
+/**
+ * Delete a queued deal by ID
+ */
+export async function deleteQueuedDeal({ queuedDealId }: DeleteQueuedDealParams): Promise<void> {
+  await HotUKDealsService.entities.queuedDeal
+    .delete({ queuedDealId })
+    .go();
+}
+
+/**
+ * Delete all queued deals for a channel (after sending them)
+ */
+export async function deleteQueuedDealsForChannel({ channelId }: DeleteQueuedDealsForChannelParams): Promise<void> {
+  const deals = await getQueuedDealsForChannel({ channelId });
+  await Promise.all(
+    deals.map((deal) =>
+      HotUKDealsService.entities.queuedDeal
+        .delete({ queuedDealId: deal.queuedDealId })
+        .go()
+    )
+  );
+}
+
+/**
+ * Get queued deals grouped by channel
+ */
+export interface ChannelWithQueuedDeals {
+  channelId: string;
+  deals: QueuedDeal[];
+}
+
+export async function getQueuedDealsGroupedByChannel(): Promise<ChannelWithQueuedDeals[]> {
+  const allDeals = await getAllQueuedDeals();
+
+  // Group by channelId
+  const grouped = allDeals.reduce(
+    (acc, deal) => {
+      if (!acc[deal.channelId]) {
+        acc[deal.channelId] = [];
+      }
+      acc[deal.channelId].push(deal);
+      return acc;
+    },
+    {} as Record<string, QueuedDeal[]>
+  );
+
+  return Object.entries(grouped).map(([channelId, deals]) => ({
+    channelId,
+    deals,
+  }));
 }

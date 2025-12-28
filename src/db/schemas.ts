@@ -45,6 +45,10 @@ export const Channel = z.object({
   userId: z.string(),
   name: z.string(),
   webhookUrl: z.string(),
+  quietHoursEnabled: z.boolean().default(false),
+  quietHoursStart: z.string().optional(), // HH:mm format (e.g., "22:00")
+  quietHoursEnd: z.string().optional(), // HH:mm format (e.g., "08:00")
+  quietHoursTimezone: z.string().default('Europe/London'), // IANA timezone
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -107,6 +111,24 @@ export const AllowedUser = z.object({
 
 export type AllowedUser = z.infer<typeof AllowedUser>;
 
+// QueuedDeal - deals waiting to be sent after quiet hours
+export const QueuedDeal = z.object({
+  queuedDealId: z.string(),
+  channelId: z.string(),
+  dealId: z.string(),
+  searchTerm: z.string(),
+  title: z.string(),
+  link: z.string(),
+  price: z.string().optional(),
+  merchant: z.string().optional(),
+  matchDetails: z.string().optional(),
+  queuedAt: z.number().optional(),
+  createdAt: z.string().optional(),
+  ttl: z.number().optional(),
+});
+
+export type QueuedDeal = z.infer<typeof QueuedDeal>;
+
 // Parse functions with defaults applied
 export function parseChannel(data: unknown): Channel {
   return Channel.parse(data);
@@ -124,6 +146,10 @@ export function parseAllowedUser(data: unknown): AllowedUser {
   return AllowedUser.parse(data);
 }
 
+export function parseQueuedDeal(data: unknown): QueuedDeal {
+  return QueuedDeal.parse(data);
+}
+
 // Safe parse functions for arrays
 export function parseChannels(data: unknown[]): Channel[] {
   return data.map((item) => Channel.parse(item));
@@ -139,4 +165,8 @@ export function parseDeals(data: unknown[]): Deal[] {
 
 export function parseAllowedUsers(data: unknown[]): AllowedUser[] {
   return data.map((item) => AllowedUser.parse(item));
+}
+
+export function parseQueuedDeals(data: unknown[]): QueuedDeal[] {
+  return data.map((item) => QueuedDeal.parse(item));
 }

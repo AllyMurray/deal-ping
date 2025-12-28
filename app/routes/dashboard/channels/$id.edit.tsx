@@ -19,6 +19,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       id: channel.channelId,
       name: channel.name,
       webhookUrl: channel.webhookUrl,
+      quietHoursEnabled: channel.quietHoursEnabled ?? false,
+      quietHoursStart: channel.quietHoursStart ?? "22:00",
+      quietHoursEnd: channel.quietHoursEnd ?? "08:00",
+      quietHoursTimezone: channel.quietHoursTimezone ?? "Europe/London",
     },
   };
 }
@@ -28,6 +32,10 @@ export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
   const name = formData.get("name") as string;
   const webhookUrl = formData.get("webhookUrl") as string;
+  const quietHoursEnabled = formData.get("quietHoursEnabled") === "on";
+  const quietHoursStart = formData.get("quietHoursStart") as string;
+  const quietHoursEnd = formData.get("quietHoursEnd") as string;
+  const quietHoursTimezone = formData.get("quietHoursTimezone") as string;
 
   // Verify ownership before updating
   const channel = await getChannel({ id: params.id! });
@@ -40,6 +48,10 @@ export async function action({ request, params }: Route.ActionArgs) {
       id: params.id!,
       name,
       webhookUrl,
+      quietHoursEnabled,
+      quietHoursStart: quietHoursEnabled ? quietHoursStart : undefined,
+      quietHoursEnd: quietHoursEnabled ? quietHoursEnd : undefined,
+      quietHoursTimezone: quietHoursEnabled ? quietHoursTimezone : undefined,
     });
     return redirect(`/dashboard/channels/${params.id}`);
   } catch {

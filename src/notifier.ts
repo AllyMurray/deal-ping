@@ -8,9 +8,14 @@ import {
   getEnabledConfigsGroupedByChannel,
   dealExists,
   createDeal,
+  createQueuedDeal,
+  getQueuedDealsForChannel,
+  deleteQueuedDealsForChannel,
+  getAllChannels,
   ChannelWithConfigs,
   SearchTermConfig,
 } from './db';
+import type { Channel, QueuedDeal } from './db/schemas';
 import { DiscordEmbed, DiscordWebhookPayload } from './discord-types';
 import {
   computeMatchDetails,
@@ -18,6 +23,7 @@ import {
   serializeMatchDetails,
   MatchDetails,
 } from './match-details';
+import { isWithinQuietHours, didQuietHoursJustEnd } from './quiet-hours';
 
 const logger = new Logger({ serviceName: 'HotUKDealsNotifier' });
 
@@ -289,9 +295,37 @@ const processChannelFeeds = async (channelWithConfigs: ChannelWithConfigs): Prom
         )
       );
 
-      // Only send Discord notifications for passed deals
+      // Handle passed deals - either send or queue based on quiet hours
       if (passedDeals.length > 0) {
-        await sendCombinedDiscordMessage(channel.webhookUrl, passedDeals);
+        const inQuietHours = isWithinQuietHours(channel);
+
+        if (inQuietHours) {
+          // Queue deals for later
+          logger.info('Channel is in quiet hours, queuing deals', {
+            channelName: channel.name,
+            dealCount: passedDeals.length,
+            quietHoursStart: channel.quietHoursStart,
+            quietHoursEnd: channel.quietHoursEnd,
+          });
+
+          await Promise.all(
+            passedDeals.map((deal) =>
+              createQueuedDeal({
+                channelId: channel.channelId,
+                dealId: deal.id,
+                searchTerm: deal.searchTerm,
+                title: deal.title,
+                link: deal.link,
+                price: deal.price,
+                merchant: deal.merchant,
+                matchDetails: deal.matchDetailsSerialized,
+              })
+            )
+          );
+        } else {
+          // Send notifications immediately
+          await sendCombinedDiscordMessage(channel.webhookUrl, passedDeals);
+        }
       }
 
       logger.info('Processed deals for channel', {
@@ -299,6 +333,7 @@ const processChannelFeeds = async (channelWithConfigs: ChannelWithConfigs): Prom
         totalNewDeals: allNewDeals.length,
         passedDeals: passedDeals.length,
         filteredDeals: allNewDeals.length - passedDeals.length,
+        quietHoursActive: isWithinQuietHours(channel),
       });
     } else {
       logger.info('No new deals found for channel', {
@@ -525,8 +560,78 @@ const sendCombinedDiscordMessage = async (
   }
 };
 
+// Convert queued deals to DealWithSearchTerm format for sending
+const queuedDealsToDealWithSearchTerm = (deals: QueuedDeal[]): DealWithSearchTerm[] => {
+  return deals.map((deal) => ({
+    id: deal.dealId,
+    title: deal.title,
+    link: deal.link,
+    price: deal.price,
+    merchant: deal.merchant,
+    searchTerm: deal.searchTerm,
+    matchDetailsSerialized: deal.matchDetails,
+    filterStatus: 'passed' as FilterStatus,
+  }));
+};
+
+// Process queued deals for channels where quiet hours just ended
+const processQueuedDeals = async (): Promise<void> => {
+  // Get all channels to check for quiet hours ending
+  const channels = await getAllChannels();
+
+  for (const channel of channels) {
+    // Skip channels without quiet hours or where quiet hours haven't just ended
+    if (!didQuietHoursJustEnd(channel)) {
+      continue;
+    }
+
+    // Get queued deals for this channel
+    const queuedDeals = await getQueuedDealsForChannel({ channelId: channel.channelId });
+
+    if (queuedDeals.length === 0) {
+      logger.debug('No queued deals to send for channel', {
+        channelName: channel.name,
+        channelId: channel.channelId,
+      });
+      continue;
+    }
+
+    logger.info('Quiet hours ended, sending queued deals', {
+      channelName: channel.name,
+      channelId: channel.channelId,
+      dealCount: queuedDeals.length,
+      quietHoursEnd: channel.quietHoursEnd,
+    });
+
+    try {
+      // Convert to DealWithSearchTerm format
+      const dealsToSend = queuedDealsToDealWithSearchTerm(queuedDeals);
+
+      // Send the queued deals
+      await sendCombinedDiscordMessage(channel.webhookUrl, dealsToSend);
+
+      // Delete the queued deals after successful send
+      await deleteQueuedDealsForChannel({ channelId: channel.channelId });
+
+      logger.info('Successfully sent queued deals after quiet hours', {
+        channelName: channel.name,
+        dealCount: queuedDeals.length,
+      });
+    } catch (error) {
+      logger.error('Error sending queued deals', {
+        error,
+        channelName: channel.name,
+        channelId: channel.channelId,
+      });
+    }
+  }
+};
+
 // Base Lambda handler
 const baseHandler: Handler = async () => {
+  // First, check if any channels have quiet hours that just ended and send queued deals
+  await processQueuedDeals();
+
   // Get all search term configurations grouped by channel
   const groupedConfigs = await getGroupedConfigs();
 

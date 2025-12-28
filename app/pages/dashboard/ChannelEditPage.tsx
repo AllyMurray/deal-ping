@@ -8,6 +8,10 @@ export interface ChannelEditPageProps {
     id: string;
     name: string;
     webhookUrl: string;
+    quietHoursEnabled?: boolean;
+    quietHoursStart?: string;
+    quietHoursEnd?: string;
+    quietHoursTimezone?: string;
   };
   onCancel: () => void;
 }
@@ -37,6 +41,10 @@ export function ChannelEditPage({
           initialValues={{
             name: channel.name,
             webhookUrl: channel.webhookUrl,
+            quietHoursEnabled: channel.quietHoursEnabled ?? false,
+            quietHoursStart: channel.quietHoursStart ?? "22:00",
+            quietHoursEnd: channel.quietHoursEnd ?? "08:00",
+            quietHoursTimezone: channel.quietHoursTimezone ?? "Europe/London",
           }}
           onCancel={onCancel}
           submitLabel="Save Changes"
