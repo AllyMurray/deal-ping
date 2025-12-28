@@ -7,6 +7,7 @@ import {
   Box,
   Badge,
   Button,
+  Tooltip,
 } from "@mantine/core";
 import {
   IconWebhook,
@@ -14,6 +15,7 @@ import {
   IconHistory,
   IconPlus,
   IconArrowRight,
+  IconClock,
 } from "@tabler/icons-react";
 import { Link } from "react-router";
 
@@ -35,12 +37,14 @@ interface StatCardProps {
   accentColor?: string;
   delay?: number;
   testId?: string;
+  href?: string;
+  tooltip?: string;
 }
 
-function StatCard({ icon, value, label, suffix, accentColor, delay = 0, testId }: StatCardProps) {
-  return (
+function StatCard({ icon, value, label, suffix, accentColor, delay = 0, testId, href, tooltip }: StatCardProps) {
+  const cardContent = (
     <Box
-      className="stat-card card-glass"
+      className={`stat-card card-glass ${href ? "stat-card-clickable" : ""}`}
       p="xl"
       data-testid={testId}
       style={{
@@ -71,7 +75,11 @@ function StatCard({ icon, value, label, suffix, accentColor, delay = 0, testId }
             </Text>
             {suffix}
           </Group>
-          <Text className="stat-label">{label}</Text>
+          <Tooltip label={tooltip} disabled={!tooltip} position="bottom" withArrow>
+            <Text className="stat-label" style={{ cursor: tooltip ? "help" : undefined }}>
+              {label}
+            </Text>
+          </Tooltip>
         </Stack>
 
         <Box
@@ -91,6 +99,20 @@ function StatCard({ icon, value, label, suffix, accentColor, delay = 0, testId }
       </Group>
     </Box>
   );
+
+  if (href) {
+    return (
+      <Box
+        component={Link}
+        to={href}
+        style={{ textDecoration: "none", color: "inherit" }}
+      >
+        {cardContent}
+      </Box>
+    );
+  }
+
+  return cardContent;
 }
 
 export function DashboardHomePage({ stats }: DashboardHomePageProps) {
@@ -118,6 +140,8 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
           icon={<IconWebhook size={24} stroke={1.5} />}
           value={stats.channelCount}
           label="Discord Channels"
+          tooltip="Discord webhooks configured to receive deal notifications"
+          href="/dashboard/channels"
           delay={0.1}
           testId="stat-channels"
         />
@@ -126,10 +150,18 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
           icon={<IconSearch size={24} stroke={1.5} />}
           value={stats.configCount}
           label="Search Terms"
+          tooltip="Keywords being monitored for deals across all channels"
+          href="/dashboard/channels"
           suffix={
-            disabledCount > 0 ? (
-              <Badge size="sm" variant="light" color="yellow">
-                {stats.enabledConfigCount} active
+            stats.configCount > 0 ? (
+              <Badge
+                size="sm"
+                variant="light"
+                color={disabledCount > 0 ? "yellow" : "green"}
+              >
+                {disabledCount > 0
+                  ? `${stats.enabledConfigCount} active`
+                  : "all active"}
               </Badge>
             ) : null
           }
@@ -138,57 +170,61 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
         />
 
         <StatCard
-          icon={<IconHistory size={24} stroke={1.5} />}
-          value="--"
+          icon={<IconClock size={24} stroke={1.5} />}
+          value="Soon"
           label="Deals Today"
+          tooltip="Deal tracking statistics coming in a future update"
+          href="/dashboard/deals"
           delay={0.2}
           testId="stat-deals-today"
         />
       </SimpleGrid>
 
-      {/* Quick Actions */}
-      <Box
-        style={{
-          animation: "fadeInUp 0.5s ease-out 0.25s forwards",
-          opacity: 0,
-        }}
-      >
-        <Text size="sm" fw={600} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: "0.06em" }}>
-          Quick Actions
-        </Text>
+      {/* Quick Actions - only show when user has channels */}
+      {stats.channelCount > 0 && (
+        <Box
+          style={{
+            animation: "fadeInUp 0.5s ease-out 0.25s forwards",
+            opacity: 0,
+          }}
+        >
+          <Text size="sm" fw={600} c="dimmed" tt="uppercase" mb="md" style={{ letterSpacing: "0.06em" }}>
+            Quick Actions
+          </Text>
 
-        <Group gap="md">
-          <Button
-            component={Link}
-            to="/dashboard/channels/new"
-            variant="light"
-            leftSection={<IconPlus size={18} />}
-            radius="md"
-          >
-            Add Channel
-          </Button>
+          <Group gap="md">
+            <Button
+              component={Link}
+              to="/dashboard/channels/new"
+              variant="light"
+              leftSection={<IconPlus size={18} />}
+              radius="md"
+            >
+              Add Channel
+            </Button>
 
-          <Button
-            component={Link}
-            to="/dashboard/channels"
-            variant="subtle"
-            rightSection={<IconArrowRight size={16} />}
-            radius="md"
-          >
-            View All Channels
-          </Button>
+            <Button
+              component={Link}
+              to="/dashboard/channels"
+              variant="subtle"
+              rightSection={<IconArrowRight size={16} />}
+              radius="md"
+            >
+              View All Channels
+            </Button>
 
-          <Button
-            component={Link}
-            to="/dashboard/deals"
-            variant="subtle"
-            rightSection={<IconArrowRight size={16} />}
-            radius="md"
-          >
-            View Deal History
-          </Button>
-        </Group>
-      </Box>
+            <Button
+              component={Link}
+              to="/dashboard/deals"
+              variant="subtle"
+              rightSection={<IconArrowRight size={16} />}
+              radius="md"
+            >
+              View Deal History
+            </Button>
+          </Group>
+        </Box>
+      )}
 
       {/* Getting Started Hint (show only if no channels) */}
       {stats.channelCount === 0 && (
