@@ -47,13 +47,13 @@ export function FilterConfigPanel({
             <IconFilter size={20} stroke={1.5} />
             <div>
               <Group gap="xs">
-                <Text fw={500}>Filter Preview</Text>
+                <Text fw={500}>Filter Settings</Text>
                 <Badge variant="light" size="sm">
                   {searchTerm}
                 </Badge>
               </Group>
               <Text size="xs" c="dimmed">
-                Configure filters to see which deals would match
+                Adjust filters to see results in real-time
               </Text>
             </div>
           </Group>

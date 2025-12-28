@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useFetcher } from "react-router";
 import type { Route } from "./+types/$id";
-import { ChannelDetailPage } from "~/pages/dashboard";
+import { ChannelDetailPage, type FilterConfigState } from "~/pages/dashboard";
 import {
   ConfigFormModal,
   DeleteConfigModal,
@@ -175,6 +175,29 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
 
   const [showFiltered, setShowFiltered] = useState(false);
 
+  // Initialize filter config from the first config or empty defaults
+  const [filterConfig, setFilterConfig] = useState<FilterConfigState>(() => {
+    const firstConfig = loaderData.configs[0];
+    return firstConfig
+      ? {
+          searchTerm: firstConfig.searchTerm,
+          includeKeywords: firstConfig.includeKeywords,
+          excludeKeywords: firstConfig.excludeKeywords,
+          caseSensitive: false,
+        }
+      : {
+          searchTerm: "",
+          includeKeywords: [],
+          excludeKeywords: [],
+          caseSensitive: false,
+        };
+  });
+
+  // Handle filter config changes
+  const handleFilterConfigChange = useCallback((partial: Partial<FilterConfigState>) => {
+    setFilterConfig((prev) => ({ ...prev, ...partial }));
+  }, []);
+
   // Track which operation is in progress using fetcher.formData
   const pendingIntent = fetcher.formData?.get("intent");
   const isSubmitting = fetcher.state !== "idle" && pendingIntent === "upsertConfig";
@@ -299,6 +322,8 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
         isTestingNotification={isTesting}
         showFiltered={showFiltered}
         onShowFilteredChange={setShowFiltered}
+        filterConfig={filterConfig}
+        onFilterConfigChange={handleFilterConfigChange}
       />
 
       <ConfigFormModal

@@ -8,10 +8,10 @@ export { ChannelNewPage } from "./ChannelNewPage";
 export type { ChannelNewPageProps } from "./ChannelNewPage";
 
 export { ChannelDetailPage } from "./ChannelDetailPage";
-export type { ChannelDetailPageProps } from "./ChannelDetailPage";
+export type { ChannelDetailPageProps, FilterConfigState } from "./ChannelDetailPage";
 
 export { ChannelEditPage } from "./ChannelEditPage";
 export type { ChannelEditPageProps } from "./ChannelEditPage";
 
 export { DealsPage } from "./DealsPage";
-export type { DealsPageProps, FilterConfigState } from "./DealsPage";
+export type { DealsPageProps } from "./DealsPage";

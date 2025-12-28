@@ -25,6 +25,13 @@ const mockConfigs = [
   },
 ];
 
+const mockFilterConfig = {
+  searchTerm: "PS5",
+  includeKeywords: ["console"],
+  excludeKeywords: ["broken"],
+  caseSensitive: false,
+};
+
 const defaultProps = {
   channel: mockChannel,
   configs: mockConfigs,
@@ -34,6 +41,8 @@ const defaultProps = {
   onToggleConfig: vi.fn(),
   onTestNotification: vi.fn(),
   isTestingNotification: false,
+  filterConfig: mockFilterConfig,
+  onFilterConfigChange: vi.fn(),
 };
 
 describe("ChannelDetailPage", () => {
@@ -146,10 +155,11 @@ describe("ChannelDetailPage", () => {
     });
 
     it("shows deals list when deals exist", () => {
+      // Deal title contains "PS5" and "console" (include keyword), so it passes the live filter
       const mockDeals = [
         {
           id: "deal-1",
-          title: "Test Deal",
+          title: "PS5 Console Bundle",
           link: "https://example.com",
           searchTerm: "PS5",
           filterStatus: "passed" as const,
@@ -160,32 +170,34 @@ describe("ChannelDetailPage", () => {
     });
 
     it("shows passed and filtered counts", () => {
+      // Deal titles need to match the filterConfig which has searchTerm: "PS5", includeKeywords: ["console"], excludeKeywords: ["broken"]
       const mockDeals = [
         {
           id: "deal-1",
-          title: "Passed Deal",
+          title: "PS5 Console Bundle", // Contains "PS5" and "console" (include keyword), passes
           link: "https://example.com",
           searchTerm: "PS5",
           filterStatus: "passed" as const,
         },
         {
           id: "deal-2",
-          title: "Filtered Deal",
+          title: "Broken PS5 Controller", // Contains "PS5" but also "broken" (excluded keyword), filtered
           link: "https://example.com",
           searchTerm: "PS5",
           filterStatus: "filtered_exclude" as const,
         },
       ];
       render(<ChannelDetailPage {...defaultProps} deals={mockDeals} />);
-      expect(screen.getByText("1 passed")).toBeInTheDocument();
+      expect(screen.getByText("1 passing")).toBeInTheDocument();
       expect(screen.getByText("1 filtered")).toBeInTheDocument();
     });
 
     it("shows filtered toggle when there are filtered deals", () => {
+      // Deal will be filtered by the live filter because it contains "broken" (excluded keyword)
       const mockDeals = [
         {
           id: "deal-1",
-          title: "Filtered Deal",
+          title: "Broken PS5 Controller",
           link: "https://example.com",
           searchTerm: "PS5",
           filterStatus: "filtered_exclude" as const,
