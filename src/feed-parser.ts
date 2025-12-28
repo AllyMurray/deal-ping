@@ -86,10 +86,10 @@ export async function fetchDeals(searchTerm: string): Promise<Deal[]> {
         if (thread) {
           // Price information
           if (thread.price) {
-            price = `£${thread.price}`;
+            price = `£${parseFloat(thread.price).toFixed(2)}`;
           }
           if (thread.nextBestPrice && thread.nextBestPrice > 0) {
-            originalPrice = `£${thread.nextBestPrice}`;
+            originalPrice = `£${parseFloat(thread.nextBestPrice).toFixed(2)}`;
           }
           
           // Merchant information
