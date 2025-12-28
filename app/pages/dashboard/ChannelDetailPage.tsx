@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Title,
   Text,
@@ -14,12 +15,16 @@ import {
   IconPlus,
   IconEdit,
   IconBell,
-  IconHistory,
+  IconFilter,
 } from "@tabler/icons-react";
 import { Link } from "react-router";
 import { ConfigCard, type ConfigCardProps } from "~/components/configs";
-import { DealCard, type DealCardProps } from "~/components/deals";
+import { DealCard, FilterConfigPanel, type DealCardProps } from "~/components/deals";
 import { EmptyState } from "~/components/ui";
+import { applyFilter, type FilterConfig } from "~/lib/deal-filter";
+
+// Re-export FilterConfig as FilterConfigState for backwards compatibility
+export type FilterConfigState = FilterConfig;
 
 export interface ChannelDetailPageProps {
   channel: {
@@ -37,6 +42,9 @@ export interface ChannelDetailPageProps {
   isTestingNotification?: boolean;
   showFiltered?: boolean;
   onShowFilteredChange?: (value: boolean) => void;
+  // Filter preview
+  filterConfig: FilterConfigState;
+  onFilterConfigChange: (config: Partial<FilterConfigState>) => void;
 }
 
 export function ChannelDetailPage({
@@ -51,22 +59,40 @@ export function ChannelDetailPage({
   isTestingNotification,
   showFiltered = false,
   onShowFilteredChange,
+  filterConfig,
+  onFilterConfigChange,
 }: ChannelDetailPageProps) {
   const maskedWebhook = channel.webhookUrl.replace(
     /discord\.com\/api\/webhooks\/\d+\/[^/]+/,
     "discord.com/api/webhooks/****/****"
   );
 
-  // Count filtered deals
-  const filteredCount = deals.filter(
-    (d) => d.filterStatus && d.filterStatus !== 'passed'
+  // Apply live filtering based on current filter config
+  const dealsWithLiveFilter = useMemo(() => {
+    return deals.map((deal) => {
+      const result = applyFilter(
+        { id: deal.id, title: deal.title, merchant: deal.merchant, searchTerm: deal.searchTerm },
+        filterConfig
+      );
+      return {
+        ...deal,
+        liveFilterStatus: result.filterStatus,
+        liveFilterReason: result.filterReason,
+        liveMatchDetails: JSON.stringify(result.matchDetails),
+      };
+    });
+  }, [deals, filterConfig]);
+
+  // Count filtered deals based on live filter status
+  const filteredCount = dealsWithLiveFilter.filter(
+    (d) => d.liveFilterStatus && d.liveFilterStatus !== 'passed'
   ).length;
-  const passedCount = deals.length - filteredCount;
+  const passedCount = dealsWithLiveFilter.length - filteredCount;
 
   // Filter displayed deals based on toggle
   const displayedDeals = showFiltered
-    ? deals
-    : deals.filter((d) => !d.filterStatus || d.filterStatus === 'passed');
+    ? dealsWithLiveFilter
+    : dealsWithLiveFilter.filter((d) => !d.liveFilterStatus || d.liveFilterStatus === 'passed');
 
   return (
     <Stack gap="lg" data-testid="channel-detail-page">
@@ -146,18 +172,12 @@ export function ChannelDetailPage({
         )}
       </Paper>
 
-      {/* Recent Deals Section */}
+      {/* Filter Preview Section */}
       <Paper withBorder p="lg">
         <Group justify="space-between" mb="md">
           <Group gap="sm">
-            <IconHistory size={20} />
-            <Title order={4}>Recent Deals</Title>
-            <Badge variant="light">{passedCount} passed</Badge>
-            {filteredCount > 0 && (
-              <Badge variant="light" color="gray">
-                {filteredCount} filtered
-              </Badge>
-            )}
+            <IconFilter size={20} />
+            <Title order={4}>Filter Results</Title>
           </Group>
           {onShowFilteredChange && filteredCount > 0 && (
             <Switch
@@ -169,6 +189,19 @@ export function ChannelDetailPage({
           )}
         </Group>
 
+        {/* Filter Configuration Panel */}
+        <FilterConfigPanel
+          searchTerm={filterConfig.searchTerm}
+          includeKeywords={filterConfig.includeKeywords}
+          excludeKeywords={filterConfig.excludeKeywords}
+          caseSensitive={filterConfig.caseSensitive}
+          onIncludeKeywordsChange={(keywords) => onFilterConfigChange({ includeKeywords: keywords })}
+          onExcludeKeywordsChange={(keywords) => onFilterConfigChange({ excludeKeywords: keywords })}
+          onCaseSensitiveChange={(value) => onFilterConfigChange({ caseSensitive: value })}
+          passedCount={passedCount}
+          filteredCount={filteredCount}
+        />
+
         {deals.length === 0 ? (
           <EmptyState
             title="No deals yet"
@@ -177,12 +210,18 @@ export function ChannelDetailPage({
         ) : displayedDeals.length === 0 ? (
           <EmptyState
             title="All deals filtered"
-            description="All deals were filtered out by your keywords. Toggle 'Show filtered' to see them."
+            description="All deals were filtered out by your current filter settings. Toggle 'Show filtered' to see them."
           />
         ) : (
-          <Stack gap="sm" data-testid="deals-list">
+          <Stack gap="sm" data-testid="deals-list" mt="md">
             {displayedDeals.map((deal) => (
-              <DealCard key={deal.id} {...deal} />
+              <DealCard
+                key={deal.id}
+                {...deal}
+                filterStatus={deal.liveFilterStatus}
+                filterReason={deal.liveFilterReason}
+                matchDetails={deal.liveMatchDetails}
+              />
             ))}
           </Stack>
         )}

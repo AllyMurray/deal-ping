@@ -35,11 +35,10 @@ export function DealsPage({
   showFiltered = false,
   onShowFilteredChange,
 }: DealsPageProps) {
-  // Count filtered deals
+  // Count filtered deals using stored filter status
   const filteredCount = deals.filter(
     (d) => d.filterStatus && d.filterStatus !== 'passed'
   ).length;
-  const passedCount = deals.length - filteredCount;
 
   // Filter displayed deals based on toggle
   const displayedDeals = showFiltered

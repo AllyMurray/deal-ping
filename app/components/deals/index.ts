@@ -6,3 +6,6 @@ export type { DealFiltersProps } from "./DealFilters";
 
 export { DealStats } from "./DealStats";
 export type { DealStatsProps } from "./DealStats";
+
+export { FilterConfigPanel } from "./FilterConfigPanel";
+export type { FilterConfigPanelProps } from "./FilterConfigPanel";
