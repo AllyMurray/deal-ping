@@ -12,6 +12,12 @@ import {
   SearchTermConfig,
 } from './db';
 import { DiscordEmbed, DiscordWebhookPayload } from './discord-types';
+import {
+  computeMatchDetails,
+  formatMatchSummary,
+  serializeMatchDetails,
+  MatchDetails,
+} from './match-details';
 
 const logger = new Logger({ serviceName: 'HotUKDealsNotifier' });
 
@@ -30,6 +36,13 @@ interface DealWithSearchTerm {
   savings?: string;
   savingsPercentage?: number;
   searchTerm: string;
+  matchDetails?: MatchDetails;
+  matchDetailsSerialized?: string;
+}
+
+interface FilterResult {
+  passed: boolean;
+  matchDetails: MatchDetails;
 }
 
 // Simple in-memory cache (optional optimization)
@@ -67,13 +80,21 @@ const getGroupedConfigs = async (): Promise<ChannelWithConfigs[]> => {
   }
 };
 
-// Filter deals based on include/exclude keywords
-const filterDeal = (deal: Deal, config: SearchTermConfig): boolean => {
+// Filter deals based on include/exclude keywords and compute match details
+const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult => {
   const title = config.caseSensitive ? deal.title : deal.title.toLowerCase();
   const merchant = config.caseSensitive ? (deal.merchant || '') : (deal.merchant || '').toLowerCase();
 
   // Combine title and merchant for filtering
   const searchText = `${title} ${merchant}`.trim();
+
+  // Compute match details regardless of filter outcome
+  const matchDetails = computeMatchDetails(deal.title, deal.merchant, {
+    searchTerm: config.searchTerm,
+    includeKeywords: config.includeKeywords,
+    excludeKeywords: config.excludeKeywords,
+    caseSensitive: config.caseSensitive,
+  });
 
   // Check exclude keywords
   if (config.excludeKeywords && config.excludeKeywords.length > 0) {
@@ -86,8 +107,9 @@ const filterDeal = (deal: Deal, config: SearchTermConfig): boolean => {
         dealTitle: deal.title,
         excludeKeywords: config.excludeKeywords,
         searchTerm: config.searchTerm,
+        matchDetails,
       });
-      return false;
+      return { passed: false, matchDetails };
     }
   }
 
@@ -102,12 +124,13 @@ const filterDeal = (deal: Deal, config: SearchTermConfig): boolean => {
         dealTitle: deal.title,
         includeKeywords: config.includeKeywords,
         searchTerm: config.searchTerm,
+        matchDetails,
       });
-      return false;
+      return { passed: false, matchDetails };
     }
   }
 
-  return true;
+  return { passed: true, matchDetails };
 };
 
 // Helper function to process multiple search terms for a channel
@@ -163,12 +186,14 @@ const processChannelFeeds = async (channelWithConfigs: ChannelWithConfigs): Prom
         continue;
       }
 
-      // Apply filtering logic
-      if (!filterDeal(deal, searchConfig)) {
+      // Apply filtering logic and get match details
+      const filterResult = filterDeal(deal, searchConfig);
+      if (!filterResult.passed) {
         logger.debug('Deal filtered out', {
           dealId,
           title: deal.title,
           searchTerm: searchConfig.searchTerm,
+          matchDetails: filterResult.matchDetails,
         });
         continue;
       }
@@ -179,11 +204,14 @@ const processChannelFeeds = async (channelWithConfigs: ChannelWithConfigs): Prom
         price: deal.price,
         merchant: deal.merchant,
         searchTerm: searchConfig.searchTerm,
+        matchDetails: filterResult.matchDetails,
       });
 
       allNewDeals.push({
         ...deal,
         searchTerm: searchConfig.searchTerm,
+        matchDetails: filterResult.matchDetails,
+        matchDetailsSerialized: serializeMatchDetails(filterResult.matchDetails),
       });
     }
 
@@ -198,6 +226,7 @@ const processChannelFeeds = async (channelWithConfigs: ChannelWithConfigs): Prom
             link: deal.link,
             price: deal.price,
             merchant: deal.merchant,
+            matchDetails: deal.matchDetailsSerialized,
           })
         )
       );
@@ -281,6 +310,16 @@ const createDealEmbed = (deal: DealWithSearchTerm): DiscordEmbed => {
       name: 'Merchant',
       value: merchantText,
       inline: true,
+    });
+  }
+
+  // Add match details if available
+  if (deal.matchDetails) {
+    const matchSummary = formatMatchSummary(deal.matchDetails);
+    fields.push({
+      name: 'Why Matched',
+      value: `🔍 ${matchSummary}`,
+      inline: false,
     });
   }
 

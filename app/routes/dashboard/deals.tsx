@@ -70,6 +70,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       merchant: d.merchant,
       searchTerm: d.searchTerm,
       timestamp: d.timestamp,
+      matchDetails: d.matchDetails,
     })),
     stats: {
       totalDeals: result.data.length,

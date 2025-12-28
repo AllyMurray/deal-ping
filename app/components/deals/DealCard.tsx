@@ -1,10 +1,20 @@
-import { Group, Text, Badge, Anchor, Stack, Box } from "@mantine/core";
+import { useState, useMemo } from "react";
+import { Group, Text, Badge, Anchor, Box, Collapse, UnstyledButton } from "@mantine/core";
 import {
   IconExternalLink,
   IconClock,
   IconTag,
   IconBuildingStore,
+  IconChevronDown,
+  IconChevronUp,
+  IconSearch,
 } from "@tabler/icons-react";
+import {
+  deserializeMatchDetails,
+  computeMatchDetailsForDisplay,
+  formatMatchDetailsForUI,
+  type MatchDetails,
+} from "~/lib/match-details";
 
 export interface DealCardProps {
   id: string;
@@ -14,6 +24,7 @@ export interface DealCardProps {
   merchant?: string;
   searchTerm: string;
   timestamp?: number;
+  matchDetails?: string; // Serialized JSON
 }
 
 export function DealCard({
@@ -24,7 +35,10 @@ export function DealCard({
   merchant,
   searchTerm,
   timestamp,
+  matchDetails: matchDetailsSerialized,
 }: DealCardProps) {
+  const [showMatchDetails, setShowMatchDetails] = useState(false);
+
   const formattedDate = timestamp
     ? new Date(timestamp).toLocaleDateString("en-GB", {
         day: "numeric",
@@ -33,6 +47,18 @@ export function DealCard({
         minute: "2-digit",
       })
     : null;
+
+  // Get or compute match details
+  const matchInfo = useMemo(() => {
+    // Try to deserialize stored match details
+    const stored = deserializeMatchDetails(matchDetailsSerialized);
+    if (stored) {
+      return formatMatchDetailsForUI(stored);
+    }
+    // Compute match details for old records
+    const computed = computeMatchDetailsForDisplay(title, merchant, searchTerm);
+    return formatMatchDetailsForUI(computed);
+  }, [matchDetailsSerialized, title, merchant, searchTerm]);
 
   return (
     <Box className="deal-card" data-testid={`deal-card-${id}`}>
@@ -90,6 +116,68 @@ export function DealCard({
           </Badge>
         )}
       </Group>
+
+      {/* Match Details Toggle */}
+      <UnstyledButton
+        onClick={() => setShowMatchDetails(!showMatchDetails)}
+        style={{ width: "100%" }}
+        data-testid="match-details-toggle"
+      >
+        <Group gap={6} mb={showMatchDetails ? "xs" : 0}>
+          <IconSearch size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />
+          <Text size="xs" c="dimmed">
+            Why did this match?
+          </Text>
+          {showMatchDetails ? (
+            <IconChevronUp size={14} style={{ color: "var(--text-muted)" }} />
+          ) : (
+            <IconChevronDown size={14} style={{ color: "var(--text-muted)" }} />
+          )}
+        </Group>
+      </UnstyledButton>
+
+      {/* Match Details Content */}
+      <Collapse in={showMatchDetails}>
+        <Box
+          style={{
+            backgroundColor: "var(--card-bg)",
+            border: "1px solid var(--card-border)",
+            borderRadius: "var(--mantine-radius-sm)",
+            padding: "var(--mantine-spacing-sm)",
+            marginBottom: "var(--mantine-spacing-sm)",
+          }}
+          data-testid="match-details-content"
+        >
+          {/* Summary */}
+          <Text size="sm" fw={500} mb="xs">
+            {matchInfo.summary}
+          </Text>
+
+          {/* Matched Segments */}
+          {matchInfo.segments.length > 0 && (
+            <Box mb="xs">
+              <Text size="xs" c="dimmed" mb={4}>
+                Matched text:
+              </Text>
+              {matchInfo.segments.map((segment, index) => (
+                <Text
+                  key={index}
+                  size="xs"
+                  style={{ fontFamily: "monospace" }}
+                  c="dimmed"
+                >
+                  {segment.text} <Text span size="xs" c="dimmed">({segment.location})</Text>
+                </Text>
+              ))}
+            </Box>
+          )}
+
+          {/* Filter Info */}
+          <Text size="xs" c="dimmed">
+            {matchInfo.filterInfo}
+          </Text>
+        </Box>
+      </Collapse>
 
       {/* Timestamp */}
       {formattedDate && (

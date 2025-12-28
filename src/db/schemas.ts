@@ -31,6 +31,7 @@ export const DealSchema = z.object({
   link: z.string(),
   price: z.string().optional(),
   merchant: z.string().optional(),
+  matchDetails: z.string().optional(), // Serialized JSON of MatchDetails
   timestamp: z.number().optional(),
   createdAt: z.string().optional(),
   ttl: z.number().optional(),

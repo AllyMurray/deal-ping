@@ -38,6 +38,9 @@ export const DealEntity = new Entity({
     merchant: {
       type: 'string',
     },
+    matchDetails: {
+      type: 'string', // Serialized JSON of MatchDetails
+    },
     timestamp: {
       type: 'number',
       default: () => Date.now(),

@@ -48,6 +48,7 @@ export type CreateDealParams = {
   link: string;
   price?: string;
   merchant?: string;
+  matchDetails?: string; // Serialized JSON of MatchDetails
 };
 
 // AllowedUser params
@@ -315,6 +316,7 @@ export async function createDeal(deal: CreateDealParams): Promise<Deal> {
       link: deal.link,
       price: deal.price,
       merchant: deal.merchant,
+      matchDetails: deal.matchDetails,
       timestamp: Date.now(),
     })
     .go();
