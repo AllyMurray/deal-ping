@@ -96,6 +96,25 @@ const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult => {
     caseSensitive: config.caseSensitive,
   });
 
+  // Check that at least one search term word appears in the deal
+  // This filters out HotUKDeals' fuzzy matches that don't actually contain any search words
+  const searchTermWords = config.searchTerm.split(/\s+/).filter((w) => w.length > 0);
+  const normalizedSearchTermWords = config.caseSensitive
+    ? searchTermWords
+    : searchTermWords.map((w) => w.toLowerCase());
+
+  const hasSearchTermMatch = normalizedSearchTermWords.some((word) => searchText.includes(word));
+
+  if (!hasSearchTermMatch) {
+    logger.debug('Deal filtered out - no search term words found in deal', {
+      dealTitle: deal.title,
+      searchTerm: config.searchTerm,
+      searchTermWords,
+      matchDetails,
+    });
+    return { passed: false, matchDetails };
+  }
+
   // Check exclude keywords
   if (config.excludeKeywords && config.excludeKeywords.length > 0) {
     const excludeWords = config.caseSensitive
