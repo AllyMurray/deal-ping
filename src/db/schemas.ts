@@ -1,5 +1,38 @@
 import { z } from 'zod';
 
+// ============================================================================
+// Match Details Schemas
+// ============================================================================
+
+// MatchSegment schema - represents a text segment containing a match
+export const MatchSegmentSchema = z.object({
+  text: z.string(), // The segment of text containing the match
+  matchedTerm: z.string(), // What term was matched
+  position: z.enum(['title', 'merchant']), // Where it was found
+});
+
+// MatchDetails schema - detailed match information for a deal
+export const MatchDetailsSchema = z.object({
+  searchText: z.string(), // Combined title + merchant that was searched
+  matchedSegments: z.array(MatchSegmentSchema), // Text snippets showing matches
+  searchTermMatches: z.array(z.string()), // Parts of search term found in deal
+  includeKeywordMatches: z.array(z.string()), // Which include keywords were found
+  excludeKeywordStatus: z.string(), // Status of exclude keyword check
+  filterStatus: z.string(), // Overall filter status explanation
+});
+
+// MatchFilterConfig schema - configuration for match filtering
+export const MatchFilterConfigSchema = z.object({
+  searchTerm: z.string(),
+  includeKeywords: z.array(z.string()).optional(),
+  excludeKeywords: z.array(z.string()).optional(),
+  caseSensitive: z.boolean().optional(),
+});
+
+// ============================================================================
+// Entity Schemas
+// ============================================================================
+
 // Channel schema
 export const ChannelSchema = z.object({
   channelId: z.string(),
@@ -48,6 +81,9 @@ export const AllowedUserSchema = z.object({
 });
 
 // Inferred types from schemas
+export type MatchSegment = z.infer<typeof MatchSegmentSchema>;
+export type MatchDetails = z.infer<typeof MatchDetailsSchema>;
+export type MatchFilterConfig = z.infer<typeof MatchFilterConfigSchema>;
 export type Channel = z.infer<typeof ChannelSchema>;
 export type SearchTermConfig = z.infer<typeof SearchTermConfigSchema>;
 export type Deal = z.infer<typeof DealSchema>;

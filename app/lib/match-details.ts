@@ -4,20 +4,9 @@
  * These functions help display and compute match information for deals.
  */
 
-export interface MatchSegment {
-  text: string; // The segment of text containing the match
-  matchedTerm: string; // What term was matched
-  position: 'title' | 'merchant'; // Where it was found
-}
+import type { MatchSegment, MatchDetails } from '../../src/db/schemas';
 
-export interface MatchDetails {
-  searchText: string; // Combined title + merchant that was searched
-  matchedSegments: MatchSegment[]; // Text snippets showing matches
-  searchTermMatches: string[]; // Parts of search term found in deal
-  includeKeywordMatches: string[]; // Which include keywords were found
-  excludeKeywordStatus: string; // Status of exclude keyword check
-  filterStatus: string; // Overall filter status explanation
-}
+export type { MatchSegment, MatchDetails };
 
 /**
  * Deserializes match details from storage

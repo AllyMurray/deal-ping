@@ -5,27 +5,9 @@
  * a search term configuration.
  */
 
-export interface MatchSegment {
-  text: string; // The segment of text containing the match
-  matchedTerm: string; // What term was matched
-  position: 'title' | 'merchant'; // Where it was found
-}
+import type { MatchSegment, MatchDetails, MatchFilterConfig } from './db/schemas';
 
-export interface MatchDetails {
-  searchText: string; // Combined title + merchant that was searched
-  matchedSegments: MatchSegment[]; // Text snippets showing matches
-  searchTermMatches: string[]; // Parts of search term found in deal
-  includeKeywordMatches: string[]; // Which include keywords were found
-  excludeKeywordStatus: string; // Status of exclude keyword check
-  filterStatus: string; // Overall filter status explanation
-}
-
-export interface MatchFilterConfig {
-  searchTerm: string;
-  includeKeywords?: string[];
-  excludeKeywords?: string[];
-  caseSensitive?: boolean;
-}
+export type { MatchSegment, MatchDetails, MatchFilterConfig };
 
 /**
  * Extracts a text segment around a matched term with context
