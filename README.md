@@ -180,7 +180,7 @@ Data is stored in DynamoDB using a single-table design with ElectroDB. Types are
 
 ### Channel
 ```typescript
-export const ChannelSchema = z.object({
+export const Channel = z.object({
   channelId: z.string(),
   userId: z.string(),
   name: z.string(),            // Friendly name (e.g., "Gaming Deals")
@@ -189,12 +189,12 @@ export const ChannelSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export type Channel = z.infer<typeof ChannelSchema>;
+export type Channel = z.infer<typeof Channel>;
 ```
 
 ### SearchTermConfig
 ```typescript
-export const SearchTermConfigSchema = z.object({
+export const SearchTermConfig = z.object({
   channelId: z.string(),
   userId: z.string(),
   searchTerm: z.string(),
@@ -206,19 +206,21 @@ export const SearchTermConfigSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export type SearchTermConfig = z.infer<typeof SearchTermConfigSchema>;
+export type SearchTermConfig = z.infer<typeof SearchTermConfig>;
 ```
 
 ### Deal
 ```typescript
-export const DealFilterStatusSchema = z.enum([
+export const DealFilterStatus = z.enum([
   'passed',            // Deal passed all filters, notification sent
   'filtered_no_match', // Search term not found in deal title
   'filtered_exclude',  // Contains an excluded keyword
   'filtered_include',  // Missing required include keywords
 ]);
 
-export const DealSchema = z.object({
+export type DealFilterStatus = z.infer<typeof DealFilterStatus>;
+
+export const Deal = z.object({
   dealId: z.string(),
   searchTerm: z.string(),
   title: z.string(),
@@ -226,7 +228,7 @@ export const DealSchema = z.object({
   price: z.string().optional(),
   merchant: z.string().optional(),
   matchDetails: z.string().optional(),  // Serialized JSON with match info
-  filterStatus: DealFilterStatusSchema.default('passed'),
+  filterStatus: DealFilterStatus.default('passed'),
   filterReason: z.string().optional(),  // Human-readable filter reason
   notified: z.boolean().default(false), // Whether notification was sent
   timestamp: z.number().optional(),
@@ -234,20 +236,20 @@ export const DealSchema = z.object({
   ttl: z.number().optional(),           // Auto-expires after 12 months
 });
 
-export type Deal = z.infer<typeof DealSchema>;
+export type Deal = z.infer<typeof Deal>;
 ```
 
 ### FilterConfig (Client-side)
 ```typescript
 // Used for live filter preview on channel detail page
-export const FilterConfigSchema = z.object({
+export const FilterConfig = z.object({
   searchTerm: z.string(),
   includeKeywords: z.array(z.string()),
   excludeKeywords: z.array(z.string()),
   caseSensitive: z.boolean(),
 });
 
-export type FilterConfig = z.infer<typeof FilterConfigSchema>;
+export type FilterConfig = z.infer<typeof FilterConfig>;
 ```
 
 ## Architecture
