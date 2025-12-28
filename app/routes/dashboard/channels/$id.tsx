@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useFetcher } from "react-router";
 import type { Route } from "./+types/$id";
-import { ChannelDetailPage, type FilterConfigState } from "~/pages/dashboard";
+import { ChannelDetailPage } from "~/pages/dashboard";
 import {
   ConfigFormModal,
   DeleteConfigModal,
@@ -51,6 +51,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       enabled: c.enabled,
       includeKeywords: c.includeKeywords || [],
       excludeKeywords: c.excludeKeywords || [],
+      caseSensitive: c.caseSensitive ?? false,
     })),
     deals: deals.map((d) => ({
       id: d.dealId,
@@ -173,30 +174,7 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
     searchTerm: string | null;
   }>({ open: false, searchTerm: null });
 
-  const [showFiltered, setShowFiltered] = useState(false);
-
-  // Initialize filter config from the first config or empty defaults
-  const [filterConfig, setFilterConfig] = useState<FilterConfigState>(() => {
-    const firstConfig = loaderData.configs[0];
-    return firstConfig
-      ? {
-          searchTerm: firstConfig.searchTerm,
-          includeKeywords: firstConfig.includeKeywords,
-          excludeKeywords: firstConfig.excludeKeywords,
-          caseSensitive: false,
-        }
-      : {
-          searchTerm: "",
-          includeKeywords: [],
-          excludeKeywords: [],
-          caseSensitive: false,
-        };
-  });
-
-  // Handle filter config changes
-  const handleFilterConfigChange = useCallback((partial: Partial<FilterConfigState>) => {
-    setFilterConfig((prev) => ({ ...prev, ...partial }));
-  }, []);
+  const [showExcluded, setShowExcluded] = useState(true);
 
   // Track which operation is in progress using fetcher.formData
   const pendingIntent = fetcher.formData?.get("intent");
@@ -320,10 +298,8 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
         onToggleConfig={handleToggleConfig}
         onTestNotification={handleTestNotification}
         isTestingNotification={isTesting}
-        showFiltered={showFiltered}
-        onShowFilteredChange={setShowFiltered}
-        filterConfig={filterConfig}
-        onFilterConfigChange={handleFilterConfigChange}
+        showExcluded={showExcluded}
+        onShowExcludedChange={setShowExcluded}
       />
 
       <ConfigFormModal
