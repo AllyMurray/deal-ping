@@ -25,6 +25,18 @@ vi.mock("~/db/repository.server", () => ({
   deleteConfig: vi.fn(),
 }));
 
+vi.mock("../../../../src/db/service", () => ({
+  HotUKDealsService: {
+    entities: {
+      deal: {
+        scan: {
+          go: vi.fn().mockResolvedValue({ data: [] }),
+        },
+      },
+    },
+  },
+}));
+
 // Import mocks for assertions
 import { requireUser } from "~/lib/auth";
 import {
@@ -99,6 +111,7 @@ describe("Channel Detail Route", () => {
           excludeKeywords: ["case"],
         },
       ]);
+      expect(result.deals).toEqual([]);
     });
 
     it("throws 404 when channel does not exist", async () => {

@@ -123,19 +123,82 @@ describe("ChannelDetailPage", () => {
   describe("empty state", () => {
     it("shows empty state when no configs", () => {
       render(<ChannelDetailPage {...defaultProps} configs={[]} />);
-      expect(screen.getByTestId("empty-state")).toBeInTheDocument();
+      expect(screen.getByText("No search terms")).toBeInTheDocument();
     });
 
-    it("shows appropriate empty state message", () => {
+    it("shows appropriate empty state message for configs", () => {
       render(<ChannelDetailPage {...defaultProps} configs={[]} />);
-      expect(screen.getByTestId("empty-state-title")).toHaveTextContent(
-        "No search terms"
-      );
+      expect(
+        screen.getByText("Add search terms to start receiving notifications for matching deals.")
+      ).toBeInTheDocument();
     });
 
-    it("does not show empty state when configs exist", () => {
+    it("shows configs list when configs exist", () => {
       render(<ChannelDetailPage {...defaultProps} />);
-      expect(screen.queryByTestId("empty-state")).not.toBeInTheDocument();
+      expect(screen.getByTestId("configs-list")).toBeInTheDocument();
+    });
+  });
+
+  describe("deals section", () => {
+    it("shows empty state when no deals", () => {
+      render(<ChannelDetailPage {...defaultProps} deals={[]} />);
+      expect(screen.getByText("No deals yet")).toBeInTheDocument();
+    });
+
+    it("shows deals list when deals exist", () => {
+      const mockDeals = [
+        {
+          id: "deal-1",
+          title: "Test Deal",
+          link: "https://example.com",
+          searchTerm: "PS5",
+          filterStatus: "passed" as const,
+        },
+      ];
+      render(<ChannelDetailPage {...defaultProps} deals={mockDeals} />);
+      expect(screen.getByTestId("deals-list")).toBeInTheDocument();
+    });
+
+    it("shows passed and filtered counts", () => {
+      const mockDeals = [
+        {
+          id: "deal-1",
+          title: "Passed Deal",
+          link: "https://example.com",
+          searchTerm: "PS5",
+          filterStatus: "passed" as const,
+        },
+        {
+          id: "deal-2",
+          title: "Filtered Deal",
+          link: "https://example.com",
+          searchTerm: "PS5",
+          filterStatus: "filtered_exclude" as const,
+        },
+      ];
+      render(<ChannelDetailPage {...defaultProps} deals={mockDeals} />);
+      expect(screen.getByText("1 passed")).toBeInTheDocument();
+      expect(screen.getByText("1 filtered")).toBeInTheDocument();
+    });
+
+    it("shows filtered toggle when there are filtered deals", () => {
+      const mockDeals = [
+        {
+          id: "deal-1",
+          title: "Filtered Deal",
+          link: "https://example.com",
+          searchTerm: "PS5",
+          filterStatus: "filtered_exclude" as const,
+        },
+      ];
+      render(
+        <ChannelDetailPage
+          {...defaultProps}
+          deals={mockDeals}
+          onShowFilteredChange={vi.fn()}
+        />
+      );
+      expect(screen.getByTestId("show-filtered-toggle")).toBeInTheDocument();
     });
   });
 });
