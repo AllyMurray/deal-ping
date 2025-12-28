@@ -6,6 +6,7 @@ import {
   parseSearchTermConfig,
   parseSearchTermConfigs,
   parseDeal,
+  parseDeals,
   parseAllowedUser,
   parseAllowedUsers,
 } from './schemas';
@@ -41,6 +42,7 @@ export type DeleteConfigsByChannelParams = { channelId: string };
 // Deal params
 export type DealExistsParams = { id: string };
 export type GetDealParams = { id: string };
+export type GetDealsBySearchTermParams = { searchTerm: string; limit?: number };
 export type CreateDealParams = {
   id: string;
   searchTerm: string;
@@ -48,6 +50,10 @@ export type CreateDealParams = {
   link: string;
   price?: string;
   merchant?: string;
+  matchDetails?: string; // Serialized JSON of MatchDetails
+  filterStatus: 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include';
+  filterReason?: string;
+  notified?: boolean;
 };
 
 // AllowedUser params
@@ -315,10 +321,27 @@ export async function createDeal(deal: CreateDealParams): Promise<Deal> {
       link: deal.link,
       price: deal.price,
       merchant: deal.merchant,
+      matchDetails: deal.matchDetails,
+      filterStatus: deal.filterStatus,
+      filterReason: deal.filterReason,
+      notified: deal.notified ?? false,
       timestamp: Date.now(),
     })
     .go();
   return parseDeal(result.data);
+}
+
+/**
+ * Get deals by search term (for displaying on channel page)
+ */
+export async function getDealsBySearchTerm({
+  searchTerm,
+  limit = 50,
+}: GetDealsBySearchTermParams): Promise<Deal[]> {
+  const result = await HotUKDealsService.entities.deal.query
+    .bySearchTerm({ searchTerm })
+    .go({ limit, order: 'desc' });
+  return parseDeals(result.data);
 }
 
 // ============================================================================

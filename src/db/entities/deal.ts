@@ -1,7 +1,11 @@
 import { Entity } from 'electrodb';
 
 /**
- * Deal entity tracks processed deals to prevent duplicate notifications.
+ * Deal entity tracks all deals returned by HotUKDeals searches.
+ *
+ * Stores both passed and filtered deals so users can see how their
+ * filters affect results. filterStatus indicates whether the deal
+ * passed filtering and was sent as a notification.
  *
  * TTL is set to 12 months - long enough to prevent duplicate notifications
  * (deals rarely stay in search results that long) while providing data hygiene.
@@ -38,6 +42,21 @@ export const DealEntity = new Entity({
     merchant: {
       type: 'string',
     },
+    matchDetails: {
+      type: 'string', // Serialized JSON of MatchDetails
+    },
+    filterStatus: {
+      type: ['passed', 'filtered_no_match', 'filtered_exclude', 'filtered_include'] as const,
+      required: true,
+      default: 'passed',
+    },
+    filterReason: {
+      type: 'string', // Human-readable reason for filtering
+    },
+    notified: {
+      type: 'boolean',
+      default: false, // Whether a notification was sent for this deal
+    },
     timestamp: {
       type: 'number',
       default: () => Date.now(),
@@ -65,6 +84,20 @@ export const DealEntity = new Entity({
         field: 'sk',
         composite: ['dealId'],
         template: 'DEAL#${dealId}',
+      },
+    },
+    // Query deals by search term (for channel page display)
+    bySearchTerm: {
+      index: 'gsi1',
+      pk: {
+        field: 'gsi1pk',
+        composite: ['searchTerm'],
+        template: 'DEALS#${searchTerm}',
+      },
+      sk: {
+        field: 'gsi1sk',
+        composite: ['timestamp'],
+        template: 'TS#${timestamp}',
       },
     },
   },

@@ -70,6 +70,9 @@ export async function loader({ request }: Route.LoaderArgs) {
       merchant: d.merchant,
       searchTerm: d.searchTerm,
       timestamp: d.timestamp,
+      matchDetails: d.matchDetails,
+      filterStatus: d.filterStatus,
+      filterReason: d.filterReason,
     })),
     stats: {
       totalDeals: result.data.length,
@@ -85,6 +88,7 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchTerm = searchParams.get("searchTerm");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showFiltered, setShowFiltered] = useState(false);
 
   // Filter deals client-side for search query
   const filteredDeals = loaderData.deals.filter((deal) => {
@@ -120,6 +124,8 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
         // Simple implementation - could be improved with cursor-based pagination
         console.log("Load more not yet implemented");
       }}
+      showFiltered={showFiltered}
+      onShowFilteredChange={setShowFiltered}
     />
   );
 }

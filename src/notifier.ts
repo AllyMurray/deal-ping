@@ -12,8 +12,16 @@ import {
   SearchTermConfig,
 } from './db';
 import { DiscordEmbed, DiscordWebhookPayload } from './discord-types';
+import {
+  computeMatchDetails,
+  formatMatchSummary,
+  serializeMatchDetails,
+  MatchDetails,
+} from './match-details';
 
 const logger = new Logger({ serviceName: 'HotUKDealsNotifier' });
+
+export type FilterStatus = 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include';
 
 interface DealWithSearchTerm {
   id: string;
@@ -30,6 +38,17 @@ interface DealWithSearchTerm {
   savings?: string;
   savingsPercentage?: number;
   searchTerm: string;
+  matchDetails?: MatchDetails;
+  matchDetailsSerialized?: string;
+  filterStatus: FilterStatus;
+  filterReason?: string;
+}
+
+export interface FilterResult {
+  passed: boolean;
+  filterStatus: FilterStatus;
+  filterReason?: string;
+  matchDetails: MatchDetails;
 }
 
 // Simple in-memory cache (optional optimization)
@@ -67,13 +86,47 @@ const getGroupedConfigs = async (): Promise<ChannelWithConfigs[]> => {
   }
 };
 
-// Filter deals based on include/exclude keywords
-const filterDeal = (deal: Deal, config: SearchTermConfig): boolean => {
+// Filter deals based on include/exclude keywords and compute match details
+// Exported for testing
+export const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult => {
   const title = config.caseSensitive ? deal.title : deal.title.toLowerCase();
   const merchant = config.caseSensitive ? (deal.merchant || '') : (deal.merchant || '').toLowerCase();
 
   // Combine title and merchant for filtering
   const searchText = `${title} ${merchant}`.trim();
+
+  // Compute match details regardless of filter outcome
+  const matchDetails = computeMatchDetails(deal.title, deal.merchant, {
+    searchTerm: config.searchTerm,
+    includeKeywords: config.includeKeywords,
+    excludeKeywords: config.excludeKeywords,
+    caseSensitive: config.caseSensitive,
+  });
+
+  // Check that at least one search term word appears in the deal
+  // This filters out HotUKDeals' fuzzy matches that don't actually contain any search words
+  const searchTermWords = config.searchTerm.split(/\s+/).filter((w) => w.length > 0);
+  const normalizedSearchTermWords = config.caseSensitive
+    ? searchTermWords
+    : searchTermWords.map((w) => w.toLowerCase());
+
+  const hasSearchTermMatch = normalizedSearchTermWords.some((word) => searchText.includes(word));
+
+  if (!hasSearchTermMatch) {
+    const filterReason = `No words from search term "${config.searchTerm}" found in deal`;
+    logger.debug('Deal filtered out - no search term words found in deal', {
+      dealTitle: deal.title,
+      searchTerm: config.searchTerm,
+      searchTermWords,
+      matchDetails,
+    });
+    return {
+      passed: false,
+      filterStatus: 'filtered_no_match',
+      filterReason,
+      matchDetails,
+    };
+  }
 
   // Check exclude keywords
   if (config.excludeKeywords && config.excludeKeywords.length > 0) {
@@ -81,13 +134,21 @@ const filterDeal = (deal: Deal, config: SearchTermConfig): boolean => {
       ? config.excludeKeywords
       : config.excludeKeywords.map((keyword) => keyword.toLowerCase());
 
-    if (excludeWords.some((keyword) => searchText.includes(keyword))) {
+    const matchedExclude = excludeWords.find((keyword) => searchText.includes(keyword));
+    if (matchedExclude) {
+      const filterReason = `Excluded keyword "${matchedExclude}" found in deal`;
       logger.debug('Deal filtered out by exclude keywords', {
         dealTitle: deal.title,
         excludeKeywords: config.excludeKeywords,
         searchTerm: config.searchTerm,
+        matchDetails,
       });
-      return false;
+      return {
+        passed: false,
+        filterStatus: 'filtered_exclude',
+        filterReason,
+        matchDetails,
+      };
     }
   }
 
@@ -97,17 +158,26 @@ const filterDeal = (deal: Deal, config: SearchTermConfig): boolean => {
       ? config.includeKeywords
       : config.includeKeywords.map((keyword) => keyword.toLowerCase());
 
-    if (!includeWords.every((keyword) => searchText.includes(keyword))) {
+    const missingKeywords = includeWords.filter((keyword) => !searchText.includes(keyword));
+    if (missingKeywords.length > 0) {
+      const filterReason = `Required keyword(s) not found: ${missingKeywords.join(', ')}`;
       logger.debug('Deal filtered out by include keywords', {
         dealTitle: deal.title,
         includeKeywords: config.includeKeywords,
+        missingKeywords,
         searchTerm: config.searchTerm,
+        matchDetails,
       });
-      return false;
+      return {
+        passed: false,
+        filterStatus: 'filtered_include',
+        filterReason,
+        matchDetails,
+      };
     }
   }
 
-  return true;
+  return { passed: true, filterStatus: 'passed', matchDetails };
 };
 
 // Helper function to process multiple search terms for a channel
@@ -152,7 +222,7 @@ const processChannelFeeds = async (channelWithConfigs: ChannelWithConfigs): Prom
 
     const existsMap = new Map(existenceChecks.map((check) => [check.dealId, check.exists]));
 
-    // Process deals that don't exist
+    // Process deals that don't exist - store all deals (passed and filtered)
     const allNewDeals: DealWithSearchTerm[] = [];
 
     for (const { deal, searchConfig } of allDealsWithConfig) {
@@ -163,32 +233,45 @@ const processChannelFeeds = async (channelWithConfigs: ChannelWithConfigs): Prom
         continue;
       }
 
-      // Apply filtering logic
-      if (!filterDeal(deal, searchConfig)) {
+      // Apply filtering logic and get match details
+      const filterResult = filterDeal(deal, searchConfig);
+
+      if (filterResult.passed) {
+        logger.info('New deal found (passed filters)', {
+          title: deal.title,
+          link: deal.link,
+          price: deal.price,
+          merchant: deal.merchant,
+          searchTerm: searchConfig.searchTerm,
+          matchDetails: filterResult.matchDetails,
+        });
+      } else {
         logger.debug('Deal filtered out', {
           dealId,
           title: deal.title,
           searchTerm: searchConfig.searchTerm,
+          filterStatus: filterResult.filterStatus,
+          filterReason: filterResult.filterReason,
+          matchDetails: filterResult.matchDetails,
         });
-        continue;
       }
 
-      logger.info('New deal found', {
-        title: deal.title,
-        link: deal.link,
-        price: deal.price,
-        merchant: deal.merchant,
-        searchTerm: searchConfig.searchTerm,
-      });
-
+      // Store all deals regardless of filter status
       allNewDeals.push({
         ...deal,
         searchTerm: searchConfig.searchTerm,
+        matchDetails: filterResult.matchDetails,
+        matchDetailsSerialized: serializeMatchDetails(filterResult.matchDetails),
+        filterStatus: filterResult.filterStatus,
+        filterReason: filterResult.filterReason,
       });
     }
 
-    // Batch create all new deals
+    // Batch create all new deals (passed and filtered)
     if (allNewDeals.length > 0) {
+      // Separate passed deals for notification
+      const passedDeals = allNewDeals.filter((d) => d.filterStatus === 'passed');
+
       await Promise.all(
         allNewDeals.map((deal) =>
           createDeal({
@@ -198,11 +281,25 @@ const processChannelFeeds = async (channelWithConfigs: ChannelWithConfigs): Prom
             link: deal.link,
             price: deal.price,
             merchant: deal.merchant,
+            matchDetails: deal.matchDetailsSerialized,
+            filterStatus: deal.filterStatus,
+            filterReason: deal.filterReason,
+            notified: deal.filterStatus === 'passed',
           })
         )
       );
 
-      await sendCombinedDiscordMessage(channel.webhookUrl, allNewDeals);
+      // Only send Discord notifications for passed deals
+      if (passedDeals.length > 0) {
+        await sendCombinedDiscordMessage(channel.webhookUrl, passedDeals);
+      }
+
+      logger.info('Processed deals for channel', {
+        channelName: channel.name,
+        totalNewDeals: allNewDeals.length,
+        passedDeals: passedDeals.length,
+        filteredDeals: allNewDeals.length - passedDeals.length,
+      });
     } else {
       logger.info('No new deals found for channel', {
         channelName: channel.name,
@@ -281,6 +378,16 @@ const createDealEmbed = (deal: DealWithSearchTerm): DiscordEmbed => {
       name: 'Merchant',
       value: merchantText,
       inline: true,
+    });
+  }
+
+  // Add match details if available
+  if (deal.matchDetails) {
+    const matchSummary = formatMatchSummary(deal.matchDetails);
+    fields.push({
+      name: 'Why Matched',
+      value: `🔍 ${matchSummary}`,
+      inline: false,
     });
   }
 
