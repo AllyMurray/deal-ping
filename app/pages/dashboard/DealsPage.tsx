@@ -1,6 +1,15 @@
+import { useMemo } from "react";
 import { Title, Text, Stack, Button, Group, Center, Switch, Badge } from "@mantine/core";
-import { DealCard, DealFilters, DealStats, type DealCardProps } from "~/components/deals";
+import { DealCard, DealFilters, DealStats, FilterConfigPanel, type DealCardProps } from "~/components/deals";
 import { EmptyState } from "~/components/ui";
+import { applyFilter, type FilterConfig } from "~/lib/deal-filter";
+
+export interface FilterConfigState {
+  searchTerm: string;
+  includeKeywords: string[];
+  excludeKeywords: string[];
+  caseSensitive: boolean;
+}
 
 export interface DealsPageProps {
   deals: DealCardProps[];
@@ -19,6 +28,9 @@ export interface DealsPageProps {
   isLoadingMore?: boolean;
   showFiltered?: boolean;
   onShowFilteredChange?: (value: boolean) => void;
+  // Live filter configuration
+  filterConfig?: FilterConfigState;
+  onFilterConfigChange?: (config: Partial<FilterConfigState>) => void;
 }
 
 export function DealsPage({
@@ -34,17 +46,54 @@ export function DealsPage({
   isLoadingMore,
   showFiltered = false,
   onShowFilteredChange,
+  filterConfig,
+  onFilterConfigChange,
 }: DealsPageProps) {
-  // Count filtered deals
-  const filteredCount = deals.filter(
-    (d) => d.filterStatus && d.filterStatus !== 'passed'
-  ).length;
-  const passedCount = deals.length - filteredCount;
+  // Apply live filtering when a filter config is provided
+  const dealsWithLiveFilter = useMemo(() => {
+    if (!filterConfig || !selectedSearchTerm) {
+      // No live filter - use stored filter status
+      return deals.map((deal) => ({
+        ...deal,
+        liveFilterStatus: deal.filterStatus,
+        liveFilterReason: deal.filterReason,
+      }));
+    }
 
-  // Filter displayed deals based on toggle
+    // Apply live filter to deals matching the selected search term
+    return deals.map((deal) => {
+      if (deal.searchTerm !== selectedSearchTerm) {
+        // For deals with different search terms, use stored status
+        return {
+          ...deal,
+          liveFilterStatus: deal.filterStatus,
+          liveFilterReason: deal.filterReason,
+        };
+      }
+
+      // Apply live filter
+      const result = applyFilter(
+        { id: deal.id, title: deal.title, merchant: deal.merchant, searchTerm: deal.searchTerm },
+        filterConfig
+      );
+      return {
+        ...deal,
+        liveFilterStatus: result.filterStatus,
+        liveFilterReason: result.filterReason,
+      };
+    });
+  }, [deals, filterConfig, selectedSearchTerm]);
+
+  // Count filtered deals based on live filter status
+  const filteredCount = dealsWithLiveFilter.filter(
+    (d) => d.liveFilterStatus && d.liveFilterStatus !== 'passed'
+  ).length;
+  const passedCount = dealsWithLiveFilter.length - filteredCount;
+
+  // Filter displayed deals based on toggle, using live filter status
   const displayedDeals = showFiltered
-    ? deals
-    : deals.filter((d) => !d.filterStatus || d.filterStatus === 'passed');
+    ? dealsWithLiveFilter
+    : dealsWithLiveFilter.filter((d) => !d.liveFilterStatus || d.liveFilterStatus === 'passed');
 
   return (
     <Stack gap="lg" data-testid="deals-page">
@@ -84,6 +133,21 @@ export function DealsPage({
         )}
       </Group>
 
+      {/* Filter Configuration Panel - shown when a search term is selected */}
+      {selectedSearchTerm && filterConfig && onFilterConfigChange && (
+        <FilterConfigPanel
+          searchTerm={selectedSearchTerm}
+          includeKeywords={filterConfig.includeKeywords}
+          excludeKeywords={filterConfig.excludeKeywords}
+          caseSensitive={filterConfig.caseSensitive}
+          onIncludeKeywordsChange={(keywords) => onFilterConfigChange({ includeKeywords: keywords })}
+          onExcludeKeywordsChange={(keywords) => onFilterConfigChange({ excludeKeywords: keywords })}
+          onCaseSensitiveChange={(value) => onFilterConfigChange({ caseSensitive: value })}
+          passedCount={passedCount}
+          filteredCount={filteredCount}
+        />
+      )}
+
       {displayedDeals.length === 0 ? (
         <EmptyState
           title="No deals found"
@@ -98,7 +162,12 @@ export function DealsPage({
       ) : (
         <Stack gap="md" data-testid="deals-list">
           {displayedDeals.map((deal) => (
-            <DealCard key={deal.id} {...deal} />
+            <DealCard
+              key={deal.id}
+              {...deal}
+              filterStatus={deal.liveFilterStatus}
+              filterReason={deal.liveFilterReason}
+            />
           ))}
 
           {hasMore && (

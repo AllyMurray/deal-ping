@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 import type { Route } from "./+types/deals";
-import { DealsPage } from "~/pages/dashboard";
+import { DealsPage, type FilterConfigState } from "~/pages/dashboard";
 import { RouteErrorBoundary } from "~/components/ui";
 import { requireUser } from "~/lib/auth";
 import { getConfigsByUser } from "~/db/repository.server";
@@ -61,6 +61,21 @@ export async function loader({ request }: Route.LoaderArgs) {
     (a, b) => b[1] - a[1]
   )[0]?.[0];
 
+  // Create a map of search term -> config for filter preview
+  const configsBySearchTerm: Record<string, {
+    includeKeywords: string[];
+    excludeKeywords: string[];
+    caseSensitive: boolean;
+  }> = {};
+
+  configs.forEach((c) => {
+    configsBySearchTerm[c.searchTerm] = {
+      includeKeywords: c.includeKeywords || [],
+      excludeKeywords: c.excludeKeywords || [],
+      caseSensitive: c.caseSensitive ?? false,
+    };
+  });
+
   return {
     deals: deals.map((d) => ({
       id: d.dealId,
@@ -81,6 +96,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     },
     searchTerms,
     hasMore,
+    configsBySearchTerm,
   };
 }
 
@@ -88,7 +104,44 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchTerm = searchParams.get("searchTerm");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showFiltered, setShowFiltered] = useState(false);
+  const [showFiltered, setShowFiltered] = useState(true); // Default to showing filtered deals
+
+  // Initialize filter config state from saved config
+  const savedConfig = searchTerm ? loaderData.configsBySearchTerm[searchTerm] : undefined;
+  const [filterConfigOverrides, setFilterConfigOverrides] = useState<Partial<FilterConfigState>>({});
+
+  // Merge saved config with local overrides
+  const filterConfig = useMemo((): FilterConfigState | undefined => {
+    if (!searchTerm) return undefined;
+
+    const saved = savedConfig || {
+      includeKeywords: [],
+      excludeKeywords: [],
+      caseSensitive: false,
+    };
+
+    return {
+      searchTerm,
+      includeKeywords: filterConfigOverrides.includeKeywords ?? saved.includeKeywords,
+      excludeKeywords: filterConfigOverrides.excludeKeywords ?? saved.excludeKeywords,
+      caseSensitive: filterConfigOverrides.caseSensitive ?? saved.caseSensitive,
+    };
+  }, [searchTerm, savedConfig, filterConfigOverrides]);
+
+  // Reset overrides when search term changes
+  const handleSearchTermChange = useCallback((value: string | null) => {
+    setFilterConfigOverrides({}); // Reset overrides
+    if (value) {
+      setSearchParams({ searchTerm: value });
+    } else {
+      setSearchParams({});
+    }
+  }, [setSearchParams]);
+
+  // Handle filter config changes
+  const handleFilterConfigChange = useCallback((changes: Partial<FilterConfigState>) => {
+    setFilterConfigOverrides((prev: Partial<FilterConfigState>) => ({ ...prev, ...changes }));
+  }, []);
 
   // Filter deals client-side for search query
   const filteredDeals = loaderData.deals.filter((deal) => {
@@ -101,14 +154,6 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
     }
     return true;
   });
-
-  const handleSearchTermChange = (value: string | null) => {
-    if (value) {
-      setSearchParams({ searchTerm: value });
-    } else {
-      setSearchParams({});
-    }
-  };
 
   return (
     <DealsPage
@@ -126,6 +171,8 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
       }}
       showFiltered={showFiltered}
       onShowFilteredChange={setShowFiltered}
+      filterConfig={filterConfig}
+      onFilterConfigChange={handleFilterConfigChange}
     />
   );
 }
