@@ -6,30 +6,46 @@
  * src/notifier.ts to allow live preview of filter settings.
  */
 
-import type { MatchSegment, MatchDetails } from '../../src/db/schemas';
+import { z } from 'zod';
+import {
+  type MatchSegment,
+  type MatchDetails,
+  type DealFilterStatus,
+  MatchDetailsSchema,
+} from '../../src/db/schemas';
 
-export type FilterStatus = 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include';
+// Re-export for convenience
+export type { DealFilterStatus as FilterStatus };
 
-export interface FilterConfig {
-  searchTerm: string;
-  includeKeywords: string[];
-  excludeKeywords: string[];
-  caseSensitive: boolean;
-}
+// FilterConfig schema for client-side filter settings
+export const FilterConfigSchema = z.object({
+  searchTerm: z.string(),
+  includeKeywords: z.array(z.string()),
+  excludeKeywords: z.array(z.string()),
+  caseSensitive: z.boolean(),
+});
 
-export interface FilterResult {
-  passed: boolean;
-  filterStatus: FilterStatus;
-  filterReason?: string;
-  matchDetails: MatchDetails;
-}
+export type FilterConfig = z.infer<typeof FilterConfigSchema>;
 
-export interface Deal {
-  id: string;
-  title: string;
-  merchant?: string;
-  searchTerm: string;
-}
+// FilterResult schema for filter evaluation results
+export const FilterResultSchema = z.object({
+  passed: z.boolean(),
+  filterStatus: z.enum(['passed', 'filtered_no_match', 'filtered_exclude', 'filtered_include']),
+  filterReason: z.string().optional(),
+  matchDetails: MatchDetailsSchema,
+});
+
+export type FilterResult = z.infer<typeof FilterResultSchema>;
+
+// Deal schema for filter input
+export const FilterDealSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  merchant: z.string().optional(),
+  searchTerm: z.string(),
+});
+
+export type Deal = z.infer<typeof FilterDealSchema>;
 
 /**
  * Extracts a text segment around a matched term with context

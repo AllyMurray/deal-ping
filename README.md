@@ -11,6 +11,7 @@ A Discord bot that monitors HotUKDeals and sends deal notifications to Discord c
 - 🔧 **Channel Management**: Organize webhooks with friendly names
 - 📊 **Grouped Messages**: Combine multiple search results into organized Discord messages
 - 🌐 **Web Dashboard**: Manage channels, view deal history, and see why deals were filtered
+- 🔬 **Live Filter Preview**: Test filter settings in real-time on the channel page before saving
 - 📈 **Filter Transparency**: All deals (passed and filtered) are stored with match details explaining why
 - ⚡ **AWS Lambda**: Serverless deployment with automatic scheduling
 
@@ -234,6 +235,19 @@ export const DealSchema = z.object({
 });
 
 export type Deal = z.infer<typeof DealSchema>;
+```
+
+### FilterConfig (Client-side)
+```typescript
+// Used for live filter preview on channel detail page
+export const FilterConfigSchema = z.object({
+  searchTerm: z.string(),
+  includeKeywords: z.array(z.string()),
+  excludeKeywords: z.array(z.string()),
+  caseSensitive: z.boolean(),
+});
+
+export type FilterConfig = z.infer<typeof FilterConfigSchema>;
 ```
 
 ## Architecture

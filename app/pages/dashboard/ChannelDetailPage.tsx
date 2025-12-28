@@ -21,14 +21,10 @@ import { Link } from "react-router";
 import { ConfigCard, type ConfigCardProps } from "~/components/configs";
 import { DealCard, FilterConfigPanel, type DealCardProps } from "~/components/deals";
 import { EmptyState } from "~/components/ui";
-import { applyFilter } from "~/lib/deal-filter";
+import { applyFilter, type FilterConfig } from "~/lib/deal-filter";
 
-export interface FilterConfigState {
-  searchTerm: string;
-  includeKeywords: string[];
-  excludeKeywords: string[];
-  caseSensitive: boolean;
-}
+// Re-export FilterConfig as FilterConfigState for backwards compatibility
+export type FilterConfigState = FilterConfig;
 
 export interface ChannelDetailPageProps {
   channel: {
