@@ -121,7 +121,7 @@ Loaders and actions contain critical business logic:
 | Route File | Has Loader | Has Action | Has Tests |
 |------------|------------|------------|-----------|
 | `dashboard/channels/$id.tsx` | Yes | Yes (4 intents) | No |
-| `dashboard/channels/index.tsx` | Yes | Yes (delete) | No |
+| `dashboard/channels/index.tsx` | Yes | Yes (delete) | Yes ✅ |
 | `dashboard/channels/new.tsx` | No | Yes | No |
 | `dashboard/channels/$id.edit.tsx` | Yes | Yes | No |
 | `dashboard/deals.tsx` | Yes | No | No |
@@ -241,20 +241,20 @@ All page components now have test coverage:
 
 ### Current State
 
-**Test Files (16 total):**
+**Test Files (17 total):**
 - 7 component tests ✅ (previously 5)
 - 8 page tests ✅ (previously 3)
-- 0 loader/action tests
+- 1 loader/action test ✅ (`dashboard/channels/index.tsx`)
 - 1 utility/helper test ✅ (auth helpers)
 
-**Test Results:** ✅ All 184 tests passing (previously 146)
+**Test Results:** ✅ All 193 tests passing (previously 184)
 
 ### Test Coverage Gaps
 
 | Category | Coverage |
 |----------|----------|
-| **Loaders** | 0% - No tests |
-| **Actions** | 0% - No tests |
+| **Loaders** | ~10% - 1 route tested (`dashboard/channels/index.tsx`) |
+| **Actions** | ~10% - 1 route tested (`dashboard/channels/index.tsx`) |
 | **Auth Helpers** | 100% ✅ - `getUser`, `requireUser`, `requireAnonymous`, `requireAdmin` tested |
 | **Repository Functions** | 0% - No tests |
 | **Presentational Components** | ~70% |
