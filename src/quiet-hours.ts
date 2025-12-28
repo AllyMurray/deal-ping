@@ -1,4 +1,4 @@
-import type { Channel } from './db/schemas';
+import type { AllowedUser } from './db/schemas';
 
 /**
  * Quiet hours utility functions.
@@ -8,7 +8,20 @@ import type { Channel } from './db/schemas';
  *
  * Time is stored in HH:mm format (24-hour) with a timezone.
  * Quiet hours can span midnight (e.g., 22:00 - 08:00).
+ *
+ * Quiet hours are now an account-level setting (stored on AllowedUser),
+ * not per-channel, for better UX.
  */
+
+/**
+ * Interface for entities with quiet hours settings
+ */
+export interface QuietHoursConfig {
+  quietHoursEnabled?: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  quietHoursTimezone?: string;
+}
 
 /**
  * Parse a time string (HH:mm) into minutes since midnight
@@ -38,23 +51,23 @@ export function getCurrentTimeInTimezone(timezone: string): number {
 }
 
 /**
- * Check if the current time is within quiet hours for a channel.
+ * Check if the current time is within quiet hours for a user.
  *
  * Handles cases where quiet hours span midnight (e.g., 22:00 - 08:00).
  *
- * @param channel - The channel with quiet hours settings
+ * @param config - An entity with quiet hours settings (AllowedUser)
  * @returns true if currently within quiet hours, false otherwise
  */
-export function isWithinQuietHours(channel: Channel): boolean {
+export function isWithinQuietHours(config: QuietHoursConfig): boolean {
   // If quiet hours not enabled or times not set, not in quiet hours
-  if (!channel.quietHoursEnabled || !channel.quietHoursStart || !channel.quietHoursEnd) {
+  if (!config.quietHoursEnabled || !config.quietHoursStart || !config.quietHoursEnd) {
     return false;
   }
 
-  const timezone = channel.quietHoursTimezone ?? 'Europe/London';
+  const timezone = config.quietHoursTimezone ?? 'UTC';
   const currentMinutes = getCurrentTimeInTimezone(timezone);
-  const startMinutes = parseTimeToMinutes(channel.quietHoursStart);
-  const endMinutes = parseTimeToMinutes(channel.quietHoursEnd);
+  const startMinutes = parseTimeToMinutes(config.quietHoursStart);
+  const endMinutes = parseTimeToMinutes(config.quietHoursEnd);
 
   // Check if quiet hours span midnight
   if (startMinutes > endMinutes) {
@@ -72,19 +85,19 @@ export function isWithinQuietHours(channel: Channel): boolean {
  * This is used to determine when to send queued deals.
  * We check if we're within the first few minutes after quiet hours ended.
  *
- * @param channel - The channel with quiet hours settings
+ * @param config - An entity with quiet hours settings (AllowedUser)
  * @param windowMinutes - How many minutes after quiet hours end to consider "just ended" (default: 2)
  * @returns true if quiet hours just ended, false otherwise
  */
-export function didQuietHoursJustEnd(channel: Channel, windowMinutes: number = 2): boolean {
+export function didQuietHoursJustEnd(config: QuietHoursConfig, windowMinutes: number = 2): boolean {
   // If quiet hours not enabled or times not set, didn't just end
-  if (!channel.quietHoursEnabled || !channel.quietHoursStart || !channel.quietHoursEnd) {
+  if (!config.quietHoursEnabled || !config.quietHoursStart || !config.quietHoursEnd) {
     return false;
   }
 
-  const timezone = channel.quietHoursTimezone ?? 'Europe/London';
+  const timezone = config.quietHoursTimezone ?? 'UTC';
   const currentMinutes = getCurrentTimeInTimezone(timezone);
-  const endMinutes = parseTimeToMinutes(channel.quietHoursEnd);
+  const endMinutes = parseTimeToMinutes(config.quietHoursEnd);
 
   // Check if we're within the window after quiet hours end
   // Account for midnight wrap-around
@@ -96,16 +109,16 @@ export function didQuietHoursJustEnd(channel: Channel, windowMinutes: number = 2
 /**
  * Get a human-readable description of quiet hours for display
  */
-export function formatQuietHours(channel: Channel): string | null {
-  if (!channel.quietHoursEnabled || !channel.quietHoursStart || !channel.quietHoursEnd) {
+export function formatQuietHours(config: QuietHoursConfig): string | null {
+  if (!config.quietHoursEnabled || !config.quietHoursStart || !config.quietHoursEnd) {
     return null;
   }
 
-  const timezone = channel.quietHoursTimezone ?? 'Europe/London';
+  const timezone = config.quietHoursTimezone ?? 'UTC';
   // Format timezone for display (e.g., "Europe/London" -> "London")
   const shortTimezone = timezone.split('/').pop() ?? timezone;
 
-  return `${channel.quietHoursStart} - ${channel.quietHoursEnd} (${shortTimezone})`;
+  return `${config.quietHoursStart} - ${config.quietHoursEnd} (${shortTimezone})`;
 }
 
 /**

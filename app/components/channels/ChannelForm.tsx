@@ -3,38 +3,13 @@ import {
   Button,
   Stack,
   Group,
-  Switch,
-  Select,
-  Paper,
-  Text,
-  Collapse,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { Form, useNavigation } from "react-router";
-import { IconMoon } from "@tabler/icons-react";
-
-const TIMEZONE_OPTIONS = [
-  { value: "Europe/London", label: "London (GMT/BST)" },
-  { value: "Europe/Paris", label: "Paris (CET/CEST)" },
-  { value: "Europe/Berlin", label: "Berlin (CET/CEST)" },
-  { value: "Europe/Amsterdam", label: "Amsterdam (CET/CEST)" },
-  { value: "Europe/Dublin", label: "Dublin (GMT/IST)" },
-  { value: "America/New_York", label: "New York (EST/EDT)" },
-  { value: "America/Los_Angeles", label: "Los Angeles (PST/PDT)" },
-  { value: "America/Chicago", label: "Chicago (CST/CDT)" },
-  { value: "Asia/Tokyo", label: "Tokyo (JST)" },
-  { value: "Asia/Singapore", label: "Singapore (SGT)" },
-  { value: "Australia/Sydney", label: "Sydney (AEST/AEDT)" },
-  { value: "UTC", label: "UTC" },
-];
 
 export interface ChannelFormValues {
   name: string;
   webhookUrl: string;
-  quietHoursEnabled: boolean;
-  quietHoursStart: string;
-  quietHoursEnd: string;
-  quietHoursTimezone: string;
 }
 
 export interface ChannelFormProps {
@@ -55,10 +30,6 @@ export function ChannelForm({
     initialValues: {
       name: "",
       webhookUrl: "",
-      quietHoursEnabled: false,
-      quietHoursStart: "22:00",
-      quietHoursEnd: "08:00",
-      quietHoursTimezone: "Europe/London",
       ...initialValues,
     },
     validate: {
@@ -68,22 +39,6 @@ export function ChannelForm({
         if (!value.trim()) return "Webhook URL is required";
         if (!value.includes("discord.com/api/webhooks/")) {
           return "Must be a valid Discord webhook URL";
-        }
-        return null;
-      },
-      quietHoursStart: (value, values) => {
-        if (!values.quietHoursEnabled) return null;
-        if (!value) return "Start time is required";
-        if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(value)) {
-          return "Use HH:mm format (e.g., 22:00)";
-        }
-        return null;
-      },
-      quietHoursEnd: (value, values) => {
-        if (!values.quietHoursEnabled) return null;
-        if (!value) return "End time is required";
-        if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(value)) {
-          return "Use HH:mm format (e.g., 08:00)";
         }
         return null;
       },
@@ -118,65 +73,6 @@ export function ChannelForm({
           data-testid="webhook-url-input"
           {...form.getInputProps("webhookUrl")}
         />
-
-        {/* Quiet Hours Section */}
-        <Paper withBorder p="md" radius="md">
-          <Group justify="space-between" mb={form.values.quietHoursEnabled ? "md" : 0}>
-            <Group gap="sm">
-              <IconMoon size={20} style={{ color: "var(--mantine-color-dimmed)" }} />
-              <div>
-                <Text size="sm" fw={500}>
-                  Quiet Hours
-                </Text>
-                <Text size="xs" c="dimmed">
-                  Pause notifications during specific hours
-                </Text>
-              </div>
-            </Group>
-            <Switch
-              name="quietHoursEnabled"
-              checked={form.values.quietHoursEnabled}
-              onChange={(e) =>
-                form.setFieldValue("quietHoursEnabled", e.currentTarget.checked)
-              }
-              data-testid="quiet-hours-toggle"
-            />
-          </Group>
-
-          <Collapse in={form.values.quietHoursEnabled}>
-            <Stack gap="sm">
-              <Text size="xs" c="dimmed">
-                Deals found during quiet hours will be queued and sent when
-                quiet hours end.
-              </Text>
-              <Group grow>
-                <TextInput
-                  name="quietHoursStart"
-                  label="Start Time"
-                  placeholder="22:00"
-                  description="24-hour format"
-                  data-testid="quiet-hours-start-input"
-                  {...form.getInputProps("quietHoursStart")}
-                />
-                <TextInput
-                  name="quietHoursEnd"
-                  label="End Time"
-                  placeholder="08:00"
-                  description="24-hour format"
-                  data-testid="quiet-hours-end-input"
-                  {...form.getInputProps("quietHoursEnd")}
-                />
-              </Group>
-              <Select
-                name="quietHoursTimezone"
-                label="Timezone"
-                data={TIMEZONE_OPTIONS}
-                data-testid="quiet-hours-timezone-select"
-                {...form.getInputProps("quietHoursTimezone")}
-              />
-            </Stack>
-          </Collapse>
-        </Paper>
 
         <Group justify="flex-end" mt="md">
           <Button

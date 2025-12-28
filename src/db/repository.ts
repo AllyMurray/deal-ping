@@ -24,20 +24,12 @@ export type UpdateChannelParams = {
   id: string;
   name?: string;
   webhookUrl?: string;
-  quietHoursEnabled?: boolean;
-  quietHoursStart?: string;
-  quietHoursEnd?: string;
-  quietHoursTimezone?: string;
 };
 export type DeleteChannelParams = { id: string };
 export type CreateChannelParams = {
   userId: string;
   name: string;
   webhookUrl: string;
-  quietHoursEnabled?: boolean;
-  quietHoursStart?: string;
-  quietHoursEnd?: string;
-  quietHoursTimezone?: string;
 };
 
 // Config params
@@ -84,6 +76,13 @@ export type AddAllowedUserParams = {
   isAdmin?: boolean;
 };
 export type RemoveAllowedUserParams = { discordId: string };
+export type UpdateUserSettingsParams = {
+  discordId: string;
+  quietHoursEnabled?: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  quietHoursTimezone?: string;
+};
 
 // QueuedDeal params
 export type CreateQueuedDealParams = {
@@ -142,20 +141,12 @@ export async function createChannel({
   userId,
   name,
   webhookUrl,
-  quietHoursEnabled,
-  quietHoursStart,
-  quietHoursEnd,
-  quietHoursTimezone,
 }: CreateChannelParams): Promise<Channel> {
   const result = await HotUKDealsService.entities.channel
     .put({
       userId,
       name,
       webhookUrl,
-      quietHoursEnabled: quietHoursEnabled ?? false,
-      quietHoursStart,
-      quietHoursEnd,
-      quietHoursTimezone: quietHoursTimezone ?? 'Europe/London',
     })
     .go();
   return parseChannel(result.data);
@@ -168,25 +159,13 @@ export async function updateChannel({
   id,
   name,
   webhookUrl,
-  quietHoursEnabled,
-  quietHoursStart,
-  quietHoursEnd,
-  quietHoursTimezone,
 }: UpdateChannelParams): Promise<Channel> {
   const updates: {
     name?: string;
     webhookUrl?: string;
-    quietHoursEnabled?: boolean;
-    quietHoursStart?: string;
-    quietHoursEnd?: string;
-    quietHoursTimezone?: string;
   } = {};
   if (name !== undefined) updates.name = name;
   if (webhookUrl !== undefined) updates.webhookUrl = webhookUrl;
-  if (quietHoursEnabled !== undefined) updates.quietHoursEnabled = quietHoursEnabled;
-  if (quietHoursStart !== undefined) updates.quietHoursStart = quietHoursStart;
-  if (quietHoursEnd !== undefined) updates.quietHoursEnd = quietHoursEnd;
-  if (quietHoursTimezone !== undefined) updates.quietHoursTimezone = quietHoursTimezone;
 
   const result = await HotUKDealsService.entities.channel
     .patch({ channelId: id })
@@ -537,6 +516,39 @@ export async function updateAllowedUserProfile({ discordId, username, avatar }: 
     .patch({ discordId })
     .set({ username, avatar })
     .go();
+}
+
+/**
+ * Update a user's quiet hours settings
+ */
+export async function updateUserSettings({
+  discordId,
+  quietHoursEnabled,
+  quietHoursStart,
+  quietHoursEnd,
+  quietHoursTimezone,
+}: UpdateUserSettingsParams): Promise<AllowedUser> {
+  const updates: {
+    quietHoursEnabled?: boolean;
+    quietHoursStart?: string;
+    quietHoursEnd?: string;
+    quietHoursTimezone?: string;
+  } = {};
+  if (quietHoursEnabled !== undefined) updates.quietHoursEnabled = quietHoursEnabled;
+  if (quietHoursStart !== undefined) updates.quietHoursStart = quietHoursStart;
+  if (quietHoursEnd !== undefined) updates.quietHoursEnd = quietHoursEnd;
+  if (quietHoursTimezone !== undefined) updates.quietHoursTimezone = quietHoursTimezone;
+
+  await HotUKDealsService.entities.allowedUser
+    .patch({ discordId })
+    .set(updates)
+    .go();
+
+  const updated = await getAllowedUser({ discordId });
+  if (!updated) {
+    throw new Error('Failed to update user settings');
+  }
+  return updated;
 }
 
 /**

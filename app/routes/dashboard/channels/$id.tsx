@@ -45,10 +45,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       id: channel.channelId,
       name: channel.name,
       webhookUrl: channel.webhookUrl,
-      quietHoursEnabled: channel.quietHoursEnabled ?? false,
-      quietHoursStart: channel.quietHoursStart,
-      quietHoursEnd: channel.quietHoursEnd,
-      quietHoursTimezone: channel.quietHoursTimezone,
     },
     configs: configs.map((c) => ({
       searchTerm: c.searchTerm,

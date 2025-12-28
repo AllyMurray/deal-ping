@@ -26,20 +26,6 @@ export const ChannelEntity = new Entity({
       type: 'string',
       required: true,
     },
-    quietHoursEnabled: {
-      type: 'boolean',
-      default: false,
-    },
-    quietHoursStart: {
-      type: 'string', // HH:mm format (e.g., "22:00")
-    },
-    quietHoursEnd: {
-      type: 'string', // HH:mm format (e.g., "08:00")
-    },
-    quietHoursTimezone: {
-      type: 'string', // IANA timezone (e.g., "Europe/London")
-      default: 'Europe/London',
-    },
     createdAt: {
       type: 'string',
       default: () => new Date().toISOString(),

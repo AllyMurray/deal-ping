@@ -144,17 +144,18 @@ Track which notifications were actually sent.
 ## Completed Features
 
 ### Quiet Hours (Implemented)
-Pause notifications during specified hours. Deals are queued and sent when quiet hours end.
+Account-level setting to pause notifications during specified hours. Deals are queued and sent when quiet hours end.
 
 **Configuration:**
-- Enable/disable per channel
+- Enable/disable in Settings page (applies to all channels)
 - Set start and end time (24-hour format)
-- Select timezone
+- Select timezone (auto-detects from browser on first setup)
 
 **Behavior:**
-- Deals found during quiet hours are stored in queue
+- Deals found during quiet hours are stored in DynamoDB queue
 - When quiet hours end, all queued deals are sent as a batch
 - 24-hour TTL on queued deals for automatic cleanup
+- Single setting applies to all channels (better UX than per-channel)
 
 ## Implementation Priority
 

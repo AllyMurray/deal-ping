@@ -16,7 +16,6 @@ import {
   IconEdit,
   IconBell,
   IconFilter,
-  IconMoon,
 } from "@tabler/icons-react";
 import { Link } from "react-router";
 import { ConfigCard, type ConfigCardProps } from "~/components/configs";
@@ -29,10 +28,6 @@ export interface ChannelDetailPageProps {
     id: string;
     name: string;
     webhookUrl: string;
-    quietHoursEnabled?: boolean;
-    quietHoursStart?: string;
-    quietHoursEnd?: string;
-    quietHoursTimezone?: string;
   };
   configs: (ConfigCardProps & { caseSensitive?: boolean })[];
   deals?: DealCardProps[];
@@ -127,21 +122,9 @@ export function ChannelDetailPage({
 
       <Group justify="space-between" align="flex-start">
         <div>
-          <Group gap="sm" mb={4}>
-            <Title order={2} data-testid="channel-name">
-              {channel.name}
-            </Title>
-            {channel.quietHoursEnabled && (
-              <Badge
-                variant="light"
-                color="violet"
-                leftSection={<IconMoon size={12} />}
-                data-testid="quiet-hours-badge"
-              >
-                Quiet Hours: {channel.quietHoursStart} - {channel.quietHoursEnd}
-              </Badge>
-            )}
-          </Group>
+          <Title order={2} data-testid="channel-name" mb={4}>
+            {channel.name}
+          </Title>
           <Text c="dimmed" size="sm" data-testid="webhook-url">
             {maskedWebhook}
           </Text>

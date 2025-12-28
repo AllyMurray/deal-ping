@@ -45,10 +45,6 @@ export const Channel = z.object({
   userId: z.string(),
   name: z.string(),
   webhookUrl: z.string(),
-  quietHoursEnabled: z.boolean().default(false),
-  quietHoursStart: z.string().optional(), // HH:mm format (e.g., "22:00")
-  quietHoursEnd: z.string().optional(), // HH:mm format (e.g., "08:00")
-  quietHoursTimezone: z.string().default('Europe/London'), // IANA timezone
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -107,6 +103,11 @@ export const AllowedUser = z.object({
   isAdmin: z.boolean().default(false),
   addedBy: z.string(),
   addedAt: z.string().optional(),
+  // Quiet hours settings (account-level)
+  quietHoursEnabled: z.boolean().default(false),
+  quietHoursStart: z.string().optional(), // HH:mm format (e.g., "22:00")
+  quietHoursEnd: z.string().optional(), // HH:mm format (e.g., "08:00")
+  quietHoursTimezone: z.string().optional(), // IANA timezone
 });
 
 export type AllowedUser = z.infer<typeof AllowedUser>;

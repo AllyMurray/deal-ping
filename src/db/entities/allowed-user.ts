@@ -34,6 +34,20 @@ export const AllowedUserEntity = new Entity({
       default: () => new Date().toISOString(),
       readOnly: true,
     },
+    // Quiet hours settings (account-level)
+    quietHoursEnabled: {
+      type: 'boolean',
+      default: false,
+    },
+    quietHoursStart: {
+      type: 'string', // HH:mm format (e.g., "22:00")
+    },
+    quietHoursEnd: {
+      type: 'string', // HH:mm format (e.g., "08:00")
+    },
+    quietHoursTimezone: {
+      type: 'string', // IANA timezone (e.g., "Europe/London")
+    },
   },
   indexes: {
     // Primary access: Get user by Discord ID
