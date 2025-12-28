@@ -17,6 +17,7 @@ import {
   upsertConfig,
   deleteConfig,
 } from "~/db/repository.server";
+import { HotUKDealsService } from "../../../../src/db/service";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
@@ -27,6 +28,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 
   const configs = await getConfigsByChannel({ channelId: params.id! });
+  const searchTerms = configs.map((c) => c.searchTerm);
+
+  // Fetch deals for this channel's search terms
+  const result = await HotUKDealsService.entities.deal.scan.go({ limit: 500 });
+  let deals = result.data.filter((d) => searchTerms.includes(d.searchTerm));
+
+  // Sort by timestamp descending
+  deals.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+  // Limit to 100 deals
+  deals = deals.slice(0, 100);
 
   return {
     channel: {
@@ -39,6 +51,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       enabled: c.enabled,
       includeKeywords: c.includeKeywords || [],
       excludeKeywords: c.excludeKeywords || [],
+    })),
+    deals: deals.map((d) => ({
+      id: d.dealId,
+      title: d.title,
+      link: d.link,
+      price: d.price,
+      merchant: d.merchant,
+      searchTerm: d.searchTerm,
+      timestamp: d.timestamp,
+      matchDetails: d.matchDetails,
+      filterStatus: d.filterStatus,
+      filterReason: d.filterReason,
     })),
   };
 }
@@ -148,6 +172,8 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
     open: boolean;
     searchTerm: string | null;
   }>({ open: false, searchTerm: null });
+
+  const [showFiltered, setShowFiltered] = useState(false);
 
   // Track which operation is in progress using fetcher.formData
   const pendingIntent = fetcher.formData?.get("intent");
@@ -264,12 +290,15 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
       <ChannelDetailPage
         channel={loaderData.channel}
         configs={loaderData.configs}
+        deals={loaderData.deals}
         onAddConfig={handleAddConfig}
         onEditConfig={handleEditConfig}
         onDeleteConfig={handleDeleteConfig}
         onToggleConfig={handleToggleConfig}
         onTestNotification={handleTestNotification}
         isTestingNotification={isTesting}
+        showFiltered={showFiltered}
+        onShowFilteredChange={setShowFiltered}
       />
 
       <ConfigFormModal

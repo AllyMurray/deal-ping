@@ -10,6 +10,8 @@ A Discord bot that monitors HotUKDeals and sends deal notifications to Discord c
 - 💰 **Deal Information**: Extract prices, merchant details, and direct links
 - 🔧 **Channel Management**: Organize webhooks with friendly names
 - 📊 **Grouped Messages**: Combine multiple search results into organized Discord messages
+- 🌐 **Web Dashboard**: Manage channels, view deal history, and see why deals were filtered
+- 📈 **Filter Transparency**: All deals (passed and filtered) are stored with match details explaining why
 - ⚡ **AWS Lambda**: Serverless deployment with automatic scheduling
 
 ## Setup
@@ -173,45 +175,65 @@ pnpm run feed-parser phone
 
 ## Configuration Structure
 
-Data is stored in DynamoDB using a single-table design with ElectroDB:
+Data is stored in DynamoDB using a single-table design with ElectroDB. Types are inferred from Zod schemas:
 
 ### Channel
 ```typescript
-interface Channel {
-  channelId: string;       // Auto-generated UUID
-  name: string;            // Friendly name (e.g., "Gaming Deals")
-  webhookUrl: string;      // Discord webhook URL
-  createdAt?: string;
-  updatedAt?: string;
-}
+export const ChannelSchema = z.object({
+  channelId: z.string(),
+  userId: z.string(),
+  name: z.string(),            // Friendly name (e.g., "Gaming Deals")
+  webhookUrl: z.string(),      // Discord webhook URL
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export type Channel = z.infer<typeof ChannelSchema>;
 ```
 
 ### SearchTermConfig
 ```typescript
-interface SearchTermConfig {
-  channelId: string;         // References Channel
-  searchTerm: string;        // Search keyword
-  enabled: boolean;          // Enable/disable notifications
-  excludeKeywords: string[]; // Keywords to exclude from results
-  includeKeywords: string[]; // Keywords that must be present
-  caseSensitive: boolean;    // Case-sensitive filtering
-  createdAt?: string;
-  updatedAt?: string;
-}
+export const SearchTermConfigSchema = z.object({
+  channelId: z.string(),
+  userId: z.string(),
+  searchTerm: z.string(),
+  enabled: z.boolean().default(true),
+  excludeKeywords: z.array(z.string()).default([]),
+  includeKeywords: z.array(z.string()).default([]),
+  caseSensitive: z.boolean().default(false),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export type SearchTermConfig = z.infer<typeof SearchTermConfigSchema>;
 ```
 
 ### Deal
 ```typescript
-interface Deal {
-  dealId: string;          // Unique deal ID from HotUKDeals
-  searchTerm: string;      // Search term that found this deal
-  title: string;           // Deal title
-  link: string;            // Direct link to deal
-  price?: string;          // Deal price
-  merchant?: string;       // Merchant name
-  timestamp?: number;      // When the deal was processed
-  ttl?: number;            // Auto-expires after 12 months
-}
+export const DealFilterStatusSchema = z.enum([
+  'passed',            // Deal passed all filters, notification sent
+  'filtered_no_match', // Search term not found in deal title
+  'filtered_exclude',  // Contains an excluded keyword
+  'filtered_include',  // Missing required include keywords
+]);
+
+export const DealSchema = z.object({
+  dealId: z.string(),
+  searchTerm: z.string(),
+  title: z.string(),
+  link: z.string(),
+  price: z.string().optional(),
+  merchant: z.string().optional(),
+  matchDetails: z.string().optional(),  // Serialized JSON with match info
+  filterStatus: DealFilterStatusSchema.default('passed'),
+  filterReason: z.string().optional(),  // Human-readable filter reason
+  notified: z.boolean().default(false), // Whether notification was sent
+  timestamp: z.number().optional(),
+  createdAt: z.string().optional(),
+  ttl: z.number().optional(),           // Auto-expires after 12 months
+});
+
+export type Deal = z.infer<typeof DealSchema>;
 ```
 
 ## Architecture
@@ -220,6 +242,7 @@ interface Deal {
 - **DynamoDB**: Single-table design with ElectroDB for data access
 - **Discord Webhooks**: Sends notifications to Discord channels
 - **HotUKDeals Scraping**: Parses deal data from the website
+- **React Router**: Web dashboard with Discord OAuth authentication
 - **SST Framework**: Infrastructure as Code deployment
 
 ## Development
@@ -232,6 +255,8 @@ interface Deal {
 - Uses **Commander.js** for CLI interface
 - Uses **Chalk** for colored terminal output
 - Uses **Ora** for loading spinners
+- Uses **Mantine** for UI components
+- Uses **React Router v7** for web framework
 - Targets **AWS Lambda** deployment with **SST v3**
 
 ## License
