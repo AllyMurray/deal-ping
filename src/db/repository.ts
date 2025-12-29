@@ -55,7 +55,12 @@ export type DeleteConfigsByChannelParams = { channelId: string };
 // Deal params
 export type DealExistsParams = { id: string };
 export type GetDealParams = { id: string };
-export type GetDealsBySearchTermParams = { searchTerm: string; limit?: number };
+export type GetDealsBySearchTermParams = {
+  searchTerm: string;
+  limit?: number;
+  startTime?: number; // Filter deals from this timestamp (inclusive)
+  endTime?: number; // Filter deals until this timestamp (inclusive)
+};
 export type CreateDealParams = {
   id: string;
   searchTerm: string;
@@ -468,14 +473,37 @@ export async function createDeal(deal: CreateDealParams): Promise<Deal> {
 
 /**
  * Get deals by search term (for displaying on channel page)
+ *
+ * Uses the bySearchTerm GSI which has timestamp in the sort key,
+ * allowing efficient date range filtering without table scans.
  */
 export async function getDealsBySearchTerm({
   searchTerm,
   limit = 50,
+  startTime,
+  endTime,
 }: GetDealsBySearchTermParams): Promise<Deal[]> {
-  const result = await HotUKDealsService.entities.deal.query
-    .bySearchTerm({ searchTerm })
-    .go({ limit, order: 'desc' });
+  const query = HotUKDealsService.entities.deal.query.bySearchTerm({ searchTerm });
+
+  // Apply date range filter on sort key if provided
+  // ElectroDB translates these to DynamoDB KeyConditionExpression
+  let result;
+  if (startTime !== undefined && endTime !== undefined) {
+    result = await query
+      .between({ timestamp: startTime }, { timestamp: endTime })
+      .go({ limit, order: 'desc' });
+  } else if (startTime !== undefined) {
+    result = await query
+      .gte({ timestamp: startTime })
+      .go({ limit, order: 'desc' });
+  } else if (endTime !== undefined) {
+    result = await query
+      .lte({ timestamp: endTime })
+      .go({ limit, order: 'desc' });
+  } else {
+    result = await query.go({ limit, order: 'desc' });
+  }
+
   return parseDeals(result.data);
 }
 

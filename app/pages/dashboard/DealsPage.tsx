@@ -1,5 +1,5 @@
 import { Title, Text, Stack, Button, Group, Center, Switch, Badge } from "@mantine/core";
-import { DealCard, DealFilters, DealStats, type DealCardProps } from "~/components/deals";
+import { DealCard, DealFilters, DealStats, type DealCardProps, type DateRange } from "~/components/deals";
 import { EmptyState } from "~/components/ui";
 
 export interface DealsPageProps {
@@ -14,6 +14,8 @@ export interface DealsPageProps {
   onSearchTermChange: (value: string | null) => void;
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
+  dateRange: DateRange;
+  onDateRangeChange: (value: DateRange) => void;
   hasMore: boolean;
   onLoadMore: () => void;
   isLoadingMore?: boolean;
@@ -29,6 +31,8 @@ export function DealsPage({
   onSearchTermChange,
   searchQuery,
   onSearchQueryChange,
+  dateRange,
+  onDateRangeChange,
   hasMore,
   onLoadMore,
   isLoadingMore,
@@ -67,6 +71,8 @@ export function DealsPage({
           onSearchTermChange={onSearchTermChange}
           searchQuery={searchQuery}
           onSearchQueryChange={onSearchQueryChange}
+          dateRange={dateRange}
+          onDateRangeChange={onDateRangeChange}
         />
         {onShowFilteredChange && filteredCount > 0 && (
           <Group gap="xs">

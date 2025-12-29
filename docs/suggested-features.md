@@ -7,8 +7,8 @@ This document outlines potential features and UX improvements identified during 
 | Issue | Location | Impact | Priority |
 |-------|----------|--------|----------|
 | **"Deals Today" shows "Soon"** | Dashboard Home | Incomplete placeholder looks unfinished - should show actual data or be hidden | Medium |
-| **No sorting on Deals page** | DealsPage | Users can filter but can't sort by date, price, or search term | High |
-| **No date range filter** | DealFilters | Users can't filter deals by time period (today, this week, etc.) | High |
+| ~~**No sorting on Deals page**~~ | ~~DealsPage~~ | ~~Users can filter but can't sort by date, price, or search term~~ | ~~High~~ (Not implementing - see notes) |
+| ~~**No date range filter**~~ | ~~DealFilters~~ | ~~Users can't filter deals by time period (today, this week, etc.)~~ | ~~High~~ ✓ |
 | **Search terms link to channels** | DashboardHomePage | Both stat cards link to `/dashboard/channels` - not intuitive for search terms | Low |
 | **No webhook validation** | ChannelForm | No live check if webhook URL is valid before saving | Medium |
 | ~~**Channel has no activity indicator**~~ | ~~ChannelCard~~ | ~~No "last notification" timestamp to show if channel is active~~ | ~~Medium~~ ✓ |
@@ -17,7 +17,7 @@ This document outlines potential features and UX improvements identified during 
 
 ### High Value - Low Effort
 
-#### 1. Date Range Filter on Deals Page
+#### ~~1. Date Range Filter on Deals Page~~ (Implemented)
 Add a dropdown to filter deals by time period.
 
 **Options:**
@@ -30,17 +30,24 @@ Add a dropdown to filter deals by time period.
 - Add filter dropdown to `DealFilters` component
 - Filter deals by `timestamp` field in loader
 
-#### 2. Sorting Options on Deals Page
+#### 2. Sorting Options on Deals Page (Not Implementing)
 Allow sorting deals by different criteria.
 
 **Sort by:**
-- Date (newest/oldest)
+- Date (newest/oldest) - Already default
 - Price (low/high)
 - Search term (alphabetical)
 
-**Implementation:**
-- Add sort dropdown to `DealFilters` component
-- Sort in loader or client-side depending on data size
+**Why not implementing:**
+Sorting by price or search term would require either:
+1. **Full table scans** - The DynamoDB design partitions deals by search term with timestamp in the sort key. There's no GSI for price or cross-search-term sorting.
+2. **New GSIs** - Adding a price GSI is complex because prices are stored as strings ("£49.99", "Free", etc.) and would need normalization.
+3. **Client-side sorting** - With pagination, this would be misleading. Users would see "cheapest deals" but only from the current page, not globally.
+
+**Current behavior:**
+- Deals are always sorted by date (newest first) which is the most useful default
+- Users can filter by search term to focus on specific categories
+- The existing date-based sorting uses the efficient `bySearchTerm` GSI
 
 #### ~~3. Last Notification Timestamp on Channel Cards~~ (Implemented)
 Show when the last deal was sent for each channel.
@@ -228,11 +235,34 @@ Show when each channel last sent a notification, helping users see if their chan
   - Actual date (e.g., "15 Feb") for notifications more than a month old
   - Year included for notifications from previous years (e.g., "15 Jun 2023")
 
+### Date Range Filter (Implemented)
+Filter deal history by time period, with efficient database queries that avoid table scans.
+
+**Features:**
+- Dropdown filter with options: Today, Last 7 days, Last 30 days, All time
+- Default filter is "Last 7 days" for fast initial page load
+- Combines with existing search term filter
+
+**Location:**
+- Available in the Deal Filters bar on the Deals page
+
+**Behavior:**
+- Uses the existing `bySearchTerm` GSI with timestamp in the sort key for efficient queries
+- Each search term is queried in parallel with the date range filter applied at the database level
+- No table scans - queries only read matching data from the index
+- Results are merged and sorted by date (newest first)
+
+**Technical Details:**
+- The `getDealsBySearchTerm` repository function accepts `startTime` and `endTime` parameters
+- ElectroDB translates these to DynamoDB `KeyConditionExpression` using `between`, `gte`, or `lte` operators
+- Query is performed on the sort key (`TS#${timestamp}`) of the `bySearchTerm` GSI
+- Multiple search terms are queried in parallel using `Promise.all` for performance
+
 ## Implementation Priority
 
 ### Phase 1 (Quick Wins)
-1. Date range filter
-2. Sorting options
+1. ~~Date range filter~~ ✓
+2. ~~Sorting options~~ (Not implementing - see notes above)
 3. ~~Last notification timestamp~~ ✓
 
 ### Phase 2 (User Experience)
