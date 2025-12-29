@@ -66,7 +66,7 @@ Only notify when deal price is under a specified amount.
 - Add `maxPrice` and `minDiscount` fields to SearchTermConfig
 - Filter deals in notifier based on price parsing
 
-#### 5. Notification Preview
+#### ~~5. Notification Preview~~ (Implemented)
 Show what the Discord message will look like before saving.
 
 **Features:**
@@ -171,6 +171,25 @@ Account-level setting to pause notifications during specified hours. Deals are q
 - 24-hour TTL on queued deals for automatic cleanup
 - Single setting applies to all channels (better UX than per-channel)
 
+### Notification Preview (Implemented)
+Show what the Discord message will look like before saving, helping users understand how their notifications will appear.
+
+**Features:**
+- Live preview of Discord embed with sample deal data
+- Lock screen preview showing how notifications appear on mobile
+- Displays active price and discount filters
+- Collapsible section to keep the interface clean
+
+**Location:**
+- Available on the Channel Detail page (between Search Terms and Deals sections)
+- Click "Notification Preview" to expand/collapse the preview
+
+**Behavior:**
+- Shows a realistic Discord embed using the first search term's configuration
+- Displays sample deal title, price, merchant, and "Why Matched" information
+- When price thresholds are configured, shows which filters are active
+- Updates dynamically based on the channel's search term settings
+
 ## Implementation Priority
 
 ### Phase 1 (Quick Wins)
@@ -179,8 +198,8 @@ Account-level setting to pause notifications during specified hours. Deals are q
 3. Last notification timestamp
 
 ### Phase 2 (User Experience)
-4. Price threshold alerts
-5. Notification preview
+4. ~~Price threshold alerts~~ ✓
+5. ~~Notification preview~~ ✓
 6. Duplicate detection
 
 ### Phase 3 (Power Features)

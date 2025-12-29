@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Title,
   Text,
@@ -9,6 +9,8 @@ import {
   Badge,
   Anchor,
   Switch,
+  Collapse,
+  UnstyledButton,
 } from "@mantine/core";
 import {
   IconArrowLeft,
@@ -16,10 +18,14 @@ import {
   IconEdit,
   IconBell,
   IconFilter,
+  IconEye,
+  IconChevronDown,
+  IconChevronUp,
 } from "@tabler/icons-react";
 import { Link } from "react-router";
 import { ConfigCard, type ConfigCardProps } from "~/components/configs";
 import { DealCard, type DealCardProps } from "~/components/deals";
+import { DiscordPreview } from "~/components/notifications";
 import { EmptyState } from "~/components/ui";
 import { applyFilter } from "~/lib/deal-filter";
 
@@ -29,7 +35,7 @@ export interface ChannelDetailPageProps {
     name: string;
     webhookUrl: string;
   };
-  configs: (ConfigCardProps & { caseSensitive?: boolean })[];
+  configs: (ConfigCardProps & { caseSensitive?: boolean; maxPrice?: number | null; minDiscount?: number | null })[];
   deals?: DealCardProps[];
   onAddConfig: () => void;
   onEditConfig: (searchTerm: string) => void;
@@ -54,6 +60,8 @@ export function ChannelDetailPage({
   showExcluded = true,
   onShowExcludedChange,
 }: ChannelDetailPageProps) {
+  const [showPreview, setShowPreview] = useState(false);
+
   const maskedWebhook = channel.webhookUrl.replace(
     /discord\.com\/api\/webhooks\/\d+\/[^/]+/,
     "discord.com/api/webhooks/****/****"
@@ -188,6 +196,46 @@ export function ChannelDetailPage({
           </Stack>
         )}
       </Paper>
+
+      {/* Notification Preview Section */}
+      {configs.length > 0 && (
+        <Paper withBorder p="lg" data-testid="notification-preview-section">
+          <UnstyledButton
+            onClick={() => setShowPreview(!showPreview)}
+            style={{ width: "100%" }}
+            data-testid="preview-toggle"
+          >
+            <Group justify="space-between">
+              <Group gap="sm">
+                <IconEye size={20} />
+                <Title order={4}>Notification Preview</Title>
+                <Badge variant="light" size="sm">
+                  See how notifications look
+                </Badge>
+              </Group>
+              {showPreview ? (
+                <IconChevronUp size={20} style={{ color: "var(--mantine-color-dimmed)" }} />
+              ) : (
+                <IconChevronDown size={20} style={{ color: "var(--mantine-color-dimmed)" }} />
+              )}
+            </Group>
+          </UnstyledButton>
+
+          <Collapse in={showPreview}>
+            <Stack gap="md" mt="md">
+              <Text size="sm" c="dimmed">
+                This is a preview of how Discord notifications will appear for your first search term.
+                The actual notification will include real deal data when matches are found.
+              </Text>
+              <DiscordPreview
+                searchTerm={configs[0].searchTerm}
+                maxPrice={configs[0].maxPrice}
+                minDiscount={configs[0].minDiscount}
+              />
+            </Stack>
+          </Collapse>
+        </Paper>
+      )}
 
       {/* Deals Section */}
       <Paper withBorder p="lg">
