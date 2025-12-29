@@ -7,6 +7,7 @@ A Discord bot that monitors HotUKDeals and sends deal notifications to Discord c
 - 🔍 **Multiple Search Terms**: Monitor multiple keywords per Discord channel
 - 📢 **Discord Notifications**: Send real-time deal notifications to Discord channels
 - 🎯 **Smart Filtering**: Include/exclude deals based on keywords to avoid unwanted results
+- 💷 **Price Thresholds**: Only notify when deals are under a maximum price or meet a minimum discount percentage
 - 🌙 **Quiet Hours**: Account-level setting to pause notifications during specified hours (deals are queued and sent when quiet hours end)
 - 💰 **Deal Information**: Extract prices, merchant details, and direct links
 - 🔧 **Channel Management**: Organize webhooks with friendly names
@@ -222,6 +223,8 @@ export const SearchTermConfig = z.object({
   excludeKeywords: z.array(z.string()).default([]),
   includeKeywords: z.array(z.string()).default([]),
   caseSensitive: z.boolean().default(false),
+  maxPrice: z.number().optional(),     // Max price in pence (e.g., 5000 = £50.00)
+  minDiscount: z.number().optional(),  // Min discount percentage (e.g., 30 = 30% off)
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -232,10 +235,12 @@ export type SearchTermConfig = z.infer<typeof SearchTermConfig>;
 ### Deal
 ```typescript
 export const DealFilterStatus = z.enum([
-  'passed',            // Deal passed all filters, notification sent
-  'filtered_no_match', // Search term not found in deal title
-  'filtered_exclude',  // Contains an excluded keyword
-  'filtered_include',  // Missing required include keywords
+  'passed',                  // Deal passed all filters, notification sent
+  'filtered_no_match',       // Search term not found in deal title
+  'filtered_exclude',        // Contains an excluded keyword
+  'filtered_include',        // Missing required include keywords
+  'filtered_price_too_high', // Price exceeds maximum threshold
+  'filtered_discount_too_low', // Discount below minimum threshold
 ]);
 
 export type DealFilterStatus = z.infer<typeof DealFilterStatus>;
