@@ -7,6 +7,7 @@ const defaultStats = {
   channelCount: 3,
   configCount: 10,
   enabledConfigCount: 8,
+  dealsToday: 5,
 };
 
 describe("DashboardHomePage", () => {
@@ -49,6 +50,18 @@ describe("DashboardHomePage", () => {
       expect(screen.getByTestId("stat-search-terms")).toHaveTextContent(
         "all active"
       );
+    });
+
+    it("shows deals today count", () => {
+      render(<DashboardHomePage stats={defaultStats} />);
+      expect(screen.getByTestId("stat-deals-today")).toHaveTextContent("5");
+    });
+
+    it("shows zero when no deals today", () => {
+      render(
+        <DashboardHomePage stats={{ ...defaultStats, dealsToday: 0 }} />
+      );
+      expect(screen.getByTestId("stat-deals-today")).toHaveTextContent("0");
     });
   });
 });

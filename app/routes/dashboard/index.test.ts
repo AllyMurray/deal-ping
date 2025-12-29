@@ -20,15 +20,21 @@ vi.mock("~/lib/auth", () => ({
 vi.mock("~/db/repository.server", () => ({
   getChannelsByUser: vi.fn(),
   getConfigsByUser: vi.fn(),
+  getDealsBySearchTerm: vi.fn(),
 }));
 
 // Import mocks for assertions
 import { requireUser } from "~/lib/auth";
-import { getChannelsByUser, getConfigsByUser } from "~/db/repository.server";
+import {
+  getChannelsByUser,
+  getConfigsByUser,
+  getDealsBySearchTerm,
+} from "~/db/repository.server";
 
 const mockRequireUser = vi.mocked(requireUser);
 const mockGetChannelsByUser = vi.mocked(getChannelsByUser);
 const mockGetConfigsByUser = vi.mocked(getConfigsByUser);
+const mockGetDealsBySearchTerm = vi.mocked(getDealsBySearchTerm);
 
 describe("Dashboard Index Route", () => {
   beforeEach(() => {
@@ -49,9 +55,15 @@ describe("Dashboard Index Route", () => {
       ]);
 
       mockGetConfigsByUser.mockResolvedValue([
-        fromPartial({ configId: "cfg-1", enabled: true }),
-        fromPartial({ configId: "cfg-2", enabled: true }),
-        fromPartial({ configId: "cfg-3", enabled: false }),
+        fromPartial({ configId: "cfg-1", searchTerm: "laptops", enabled: true }),
+        fromPartial({ configId: "cfg-2", searchTerm: "phones", enabled: true }),
+        fromPartial({ configId: "cfg-3", searchTerm: "tablets", enabled: false }),
+      ]);
+
+      // Mock deals from today
+      mockGetDealsBySearchTerm.mockResolvedValue([
+        fromPartial({ dealId: "deal-1" }),
+        fromPartial({ dealId: "deal-2" }),
       ]);
 
       const request = new Request("http://localhost/dashboard");
@@ -61,6 +73,7 @@ describe("Dashboard Index Route", () => {
         channelCount: 2,
         configCount: 3,
         enabledConfigCount: 2,
+        dealsToday: 6, // 2 deals per search term * 3 search terms
       });
     });
 
@@ -73,6 +86,7 @@ describe("Dashboard Index Route", () => {
 
       mockGetChannelsByUser.mockResolvedValue([]);
       mockGetConfigsByUser.mockResolvedValue([]);
+      // No search terms, so getDealsBySearchTerm won't be called
 
       const request = new Request("http://localhost/dashboard");
       const result = await loader({ request, params: {}, context: {} });
@@ -81,6 +95,7 @@ describe("Dashboard Index Route", () => {
         channelCount: 0,
         configCount: 0,
         enabledConfigCount: 0,
+        dealsToday: 0,
       });
     });
 
@@ -112,6 +127,34 @@ describe("Dashboard Index Route", () => {
 
       expect(mockGetChannelsByUser).toHaveBeenCalledWith({ userId: "user-123" });
       expect(mockGetConfigsByUser).toHaveBeenCalledWith({ userId: "user-123" });
+    });
+
+    it("fetches deals for each unique search term", async () => {
+      mockRequireUser.mockResolvedValue(
+        fromPartial({
+          user: { id: "user-123", username: "testuser" },
+        })
+      );
+
+      mockGetChannelsByUser.mockResolvedValue([]);
+      mockGetConfigsByUser.mockResolvedValue([
+        fromPartial({ searchTerm: "laptops" }),
+        fromPartial({ searchTerm: "laptops" }), // duplicate
+        fromPartial({ searchTerm: "phones" }),
+      ]);
+      mockGetDealsBySearchTerm.mockResolvedValue([]);
+
+      const request = new Request("http://localhost/dashboard");
+      await loader({ request, params: {}, context: {} });
+
+      // Should only call once per unique search term
+      expect(mockGetDealsBySearchTerm).toHaveBeenCalledTimes(2);
+      expect(mockGetDealsBySearchTerm).toHaveBeenCalledWith(
+        expect.objectContaining({ searchTerm: "laptops" })
+      );
+      expect(mockGetDealsBySearchTerm).toHaveBeenCalledWith(
+        expect.objectContaining({ searchTerm: "phones" })
+      );
     });
   });
 });
