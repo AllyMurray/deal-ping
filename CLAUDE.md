@@ -106,7 +106,8 @@ describe("MyComponent", () => {
 
 ### Database Patterns
 
-- All entities defined in `src/db/schemas.ts` using Zod
+- All entity types are inferred from Zod schemas using `z.infer<typeof Schema>`
+- Schemas defined in `src/db/schemas.ts` - types should be imported from here, not manually defined
 - ElectroDB entities in `src/db/entities/`
 - Repository functions in `src/db/repository.ts` (Lambda) and `app/db/repository.server.ts` (web app)
 - Prices stored in pence (integer), converted to pounds for display
