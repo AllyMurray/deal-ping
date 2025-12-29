@@ -9,6 +9,8 @@ import {
   IconChevronUp,
   IconSearch,
   IconFilter,
+  IconBell,
+  IconBellOff,
 } from "@tabler/icons-react";
 import {
   deserializeMatchDetails,
@@ -17,7 +19,7 @@ import {
   type MatchDetails,
 } from "~/lib/match-details";
 
-export type FilterStatus = 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include';
+export type FilterStatus = 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include' | 'filtered_price_too_high' | 'filtered_discount_too_low';
 
 export interface DealCardProps {
   id: string;
@@ -30,6 +32,7 @@ export interface DealCardProps {
   matchDetails?: string; // Serialized JSON
   filterStatus?: FilterStatus;
   filterReason?: string;
+  notified?: boolean; // Whether a notification was sent
 }
 
 // Helper to get filter status display info
@@ -61,6 +64,18 @@ function getFilterStatusInfo(filterStatus?: FilterStatus, filterReason?: string)
         color: 'orange',
         description: filterReason || 'Required keywords not found',
       };
+    case 'filtered_price_too_high':
+      return {
+        label: 'Price Too High',
+        color: 'yellow',
+        description: filterReason || 'Price exceeds maximum threshold',
+      };
+    case 'filtered_discount_too_low':
+      return {
+        label: 'Low Discount',
+        color: 'yellow',
+        description: filterReason || 'Discount below minimum threshold',
+      };
     default:
       return null;
   }
@@ -77,6 +92,7 @@ export function DealCard({
   matchDetails: matchDetailsSerialized,
   filterStatus,
   filterReason,
+  notified,
 }: DealCardProps) {
   const [showMatchDetails, setShowMatchDetails] = useState(false);
 
@@ -178,6 +194,20 @@ export function DealCard({
             title={filterInfo.description}
           >
             {filterInfo.label}
+          </Badge>
+        )}
+
+        {/* Notification status badge */}
+        {notified !== undefined && (
+          <Badge
+            variant={notified ? "light" : "outline"}
+            size="sm"
+            color={notified ? "green" : "gray"}
+            leftSection={notified ? <IconBell size={12} stroke={1.5} /> : <IconBellOff size={12} stroke={1.5} />}
+            data-testid="notification-status-badge"
+            title={notified ? "Notification sent" : filterReason || "No notification sent"}
+          >
+            {notified ? "Notified" : "Not Notified"}
           </Badge>
         )}
       </Group>

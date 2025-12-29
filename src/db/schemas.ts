@@ -60,6 +60,8 @@ export const SearchTermConfig = z.object({
   excludeKeywords: z.array(z.string()).default([]),
   includeKeywords: z.array(z.string()).default([]),
   caseSensitive: z.boolean().default(false),
+  maxPrice: z.number().optional(), // Maximum price threshold in pence (e.g., 5000 = £50.00)
+  minDiscount: z.number().optional(), // Minimum discount percentage (e.g., 30 = 30% off)
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -72,6 +74,8 @@ export const DealFilterStatus = z.enum([
   'filtered_no_match',
   'filtered_exclude',
   'filtered_include',
+  'filtered_price_too_high',
+  'filtered_discount_too_low',
 ]);
 
 export type DealFilterStatus = z.infer<typeof DealFilterStatus>;

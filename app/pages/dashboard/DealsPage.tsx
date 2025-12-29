@@ -51,7 +51,7 @@ export function DealsPage({
         <Title order={2} data-testid="page-title">
           Deal History
         </Title>
-        <Text c="dimmed">View processed deals and notification history</Text>
+        <Text c="dimmed">View all processed deals with notification status and filter reasons</Text>
       </div>
 
       <DealStats
