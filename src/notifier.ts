@@ -15,7 +15,7 @@ import {
   getAllowedUsers,
   type ChannelWithConfigs,
 } from './db';
-import type { Channel, QueuedDeal, AllowedUser, SearchTermConfig } from './db/schemas';
+import type { Channel, QueuedDeal, AllowedUser, SearchTermConfig, DealFilterStatus } from './db/schemas';
 import type { DiscordEmbed, DiscordWebhookPayload } from './discord-types';
 import {
   computeMatchDetails,
@@ -27,7 +27,8 @@ import { isWithinQuietHours, didQuietHoursJustEnd } from './quiet-hours';
 
 const logger = new Logger({ serviceName: 'HotUKDealsNotifier' });
 
-export type FilterStatus = 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include' | 'filtered_price_too_high' | 'filtered_discount_too_low';
+// Re-export from schemas for backwards compatibility
+export type FilterStatus = DealFilterStatus;
 
 interface DealWithSearchTerm {
   id: string;
