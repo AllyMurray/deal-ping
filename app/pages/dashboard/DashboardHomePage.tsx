@@ -206,16 +206,6 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
 
             <Button
               component={Link}
-              to="/dashboard/channels"
-              variant="subtle"
-              rightSection={<IconArrowRight size={16} />}
-              radius="md"
-            >
-              View All Channels
-            </Button>
-
-            <Button
-              component={Link}
               to="/dashboard/deals"
               variant="subtle"
               rightSection={<IconArrowRight size={16} />}
