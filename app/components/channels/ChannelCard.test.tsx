@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { screen } from "@testing-library/react";
 import { render } from "~/test-utils";
 import { ChannelCard } from "./ChannelCard";
@@ -59,6 +59,48 @@ describe("ChannelCard", () => {
       render(<ChannelCard {...defaultProps} configCount={1} />);
       expect(screen.getByTestId("config-count")).toHaveTextContent(
         "1 search term"
+      );
+    });
+  });
+
+  describe("last notification", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2024-06-15T12:00:00.000Z"));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("shows 'No notifications yet' when lastNotificationAt is undefined", () => {
+      render(<ChannelCard {...defaultProps} />);
+      expect(screen.getByTestId("last-notification")).toHaveTextContent(
+        "No notifications yet"
+      );
+    });
+
+    it("shows relative time when lastNotificationAt is provided", () => {
+      render(
+        <ChannelCard
+          {...defaultProps}
+          lastNotificationAt="2024-06-15T10:00:00.000Z"
+        />
+      );
+      expect(screen.getByTestId("last-notification")).toHaveTextContent(
+        "Last notification: 2 hours ago"
+      );
+    });
+
+    it("shows 'just now' for very recent notifications", () => {
+      render(
+        <ChannelCard
+          {...defaultProps}
+          lastNotificationAt="2024-06-15T11:59:45.000Z"
+        />
+      );
+      expect(screen.getByTestId("last-notification")).toHaveTextContent(
+        "Last notification: just now"
       );
     });
   });

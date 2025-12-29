@@ -26,6 +26,10 @@ export const ChannelEntity = new Entity({
       type: 'string',
       required: true,
     },
+    lastNotificationAt: {
+      type: 'string',
+      required: false,
+    },
     createdAt: {
       type: 'string',
       default: () => new Date().toISOString(),

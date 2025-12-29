@@ -14,8 +14,10 @@ import {
   IconBrandDiscord,
   IconSearch,
   IconChevronRight,
+  IconBell,
 } from "@tabler/icons-react";
 import { Link } from "react-router";
+import { formatTimeAgo } from "~/lib/time-format";
 
 export interface ChannelCardProps {
   id: string;
@@ -23,6 +25,7 @@ export interface ChannelCardProps {
   webhookUrl: string;
   configCount: number;
   enabledConfigCount: number;
+  lastNotificationAt?: string;
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -33,6 +36,7 @@ export function ChannelCard({
   webhookUrl,
   configCount,
   enabledConfigCount,
+  lastNotificationAt,
   onEdit,
   onDelete,
 }: ChannelCardProps) {
@@ -132,28 +136,39 @@ export function ChannelCard({
       </Group>
 
       {/* Stats Row */}
-      <Group gap="md" mb="md">
-        <Group gap="xs">
-          <IconSearch size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />
-          <Text size="sm" c="dimmed" data-testid="config-count">
-            <Text component="span" fw={600} c="inherit">
-              {configCount}
-            </Text>{" "}
-            search term{configCount !== 1 ? "s" : ""}
-          </Text>
+      <Stack gap="xs" mb="md">
+        <Group gap="md">
+          <Group gap="xs">
+            <IconSearch size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />
+            <Text size="sm" c="dimmed" data-testid="config-count">
+              <Text component="span" fw={600} c="inherit">
+                {configCount}
+              </Text>{" "}
+              search term{configCount !== 1 ? "s" : ""}
+            </Text>
+          </Group>
+
+          {enabledConfigCount < configCount && (
+            <Badge
+              size="sm"
+              variant="light"
+              color="yellow"
+              data-testid="enabled-count"
+            >
+              {enabledConfigCount} active
+            </Badge>
+          )}
         </Group>
 
-        {enabledConfigCount < configCount && (
-          <Badge
-            size="sm"
-            variant="light"
-            color="yellow"
-            data-testid="enabled-count"
-          >
-            {enabledConfigCount} active
-          </Badge>
-        )}
-      </Group>
+        <Group gap="xs">
+          <IconBell size={14} stroke={1.5} style={{ color: "var(--text-muted)" }} />
+          <Text size="sm" c="dimmed" data-testid="last-notification">
+            {lastNotificationAt
+              ? `Last notification: ${formatTimeAgo(lastNotificationAt)}`
+              : "No notifications yet"}
+          </Text>
+        </Group>
+      </Stack>
 
       {/* View Details Link */}
       <Group justify="flex-end">

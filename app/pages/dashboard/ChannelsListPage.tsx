@@ -17,6 +17,7 @@ export interface ChannelWithStats {
   webhookUrl: string;
   configCount: number;
   enabledConfigCount: number;
+  lastNotificationAt?: string;
 }
 
 export interface ChannelsListPageProps {
@@ -66,6 +67,7 @@ export function ChannelsListPage({
               webhookUrl={channel.webhookUrl}
               configCount={channel.configCount}
               enabledConfigCount={channel.enabledConfigCount}
+              lastNotificationAt={channel.lastNotificationAt}
               onEdit={() => onEditChannel(channel.id)}
               onDelete={() => onDeleteChannel(channel.id)}
             />

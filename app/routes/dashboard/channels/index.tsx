@@ -26,6 +26,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         webhookUrl: channel.webhookUrl,
         configCount: configs.length,
         enabledConfigCount: configs.filter((c) => c.enabled).length,
+        lastNotificationAt: channel.lastNotificationAt,
       };
     })
   );
