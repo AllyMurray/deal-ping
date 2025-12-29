@@ -39,6 +39,8 @@ const defaultProps = {
   onSearchTermChange: vi.fn(),
   searchQuery: "",
   onSearchQueryChange: vi.fn(),
+  dateRange: "7days" as const,
+  onDateRangeChange: vi.fn(),
   hasMore: false,
   onLoadMore: vi.fn(),
   isLoadingMore: false,
@@ -90,6 +92,11 @@ describe("DealsPage", () => {
     it("renders deal filters component", () => {
       render(<DealsPage {...defaultProps} />);
       expect(screen.getByTestId("deal-filters")).toBeInTheDocument();
+    });
+
+    it("renders date range filter", () => {
+      render(<DealsPage {...defaultProps} />);
+      expect(screen.getByTestId("date-range-filter")).toBeInTheDocument();
     });
 
     it("renders search term filter", () => {

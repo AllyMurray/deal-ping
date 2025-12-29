@@ -23,6 +23,7 @@ export {
   dealExists,
   getDeal,
   createDeal,
+  getDealsBySearchTerm,
   // AllowedUser functions
   isUserAllowed,
   isUserAdmin,

@@ -4,50 +4,80 @@ import type { Route } from "./+types/deals";
 import { DealsPage } from "~/pages/dashboard";
 import { RouteErrorBoundary } from "~/components/ui";
 import { requireUser } from "~/lib/auth";
-import { getConfigsByUser } from "~/db/repository.server";
-import { HotUKDealsService } from "../../../src/db/service";
+import { getConfigsByUser, getDealsBySearchTerm } from "~/db/repository.server";
+import type { DateRange } from "~/components/deals";
+
+/**
+ * Converts a date range option to a timestamp for database queries.
+ * Returns the start timestamp for the selected range.
+ */
+function getDateRangeStartTime(dateRange: DateRange): number | undefined {
+  const now = Date.now();
+  const day = 24 * 60 * 60 * 1000;
+
+  switch (dateRange) {
+    case "today": {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      return startOfDay.getTime();
+    }
+    case "7days":
+      return now - 7 * day;
+    case "30days":
+      return now - 30 * day;
+    case "all":
+      return undefined; // No filter
+  }
+}
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
   const url = new URL(request.url);
   const searchTermFilter = url.searchParams.get("searchTerm");
+  const dateRangeParam = url.searchParams.get("dateRange") as DateRange | null;
+  const dateRange: DateRange = dateRangeParam || "7days";
   const limit = 50;
 
   // Get unique search terms for THIS user only
   const configs = await getConfigsByUser({ userId: user.id });
-  const searchTerms = [...new Set(configs.map((c) => c.searchTerm))];
+  const allSearchTerms = [...new Set(configs.map((c) => c.searchTerm))];
 
-  // Query deals - using ElectroDB scan for now (pagination would need GSI)
-  const query = HotUKDealsService.entities.deal.scan;
+  // Determine which search terms to query
+  const searchTermsToQuery = searchTermFilter
+    ? [searchTermFilter]
+    : allSearchTerms;
 
-  const result = await query.go({ limit: 500 }); // Get more to filter
+  // Calculate date range for efficient queries
+  const startTime = getDateRangeStartTime(dateRange);
 
-  // Filter deals to only those matching user's search terms
-  let deals = result.data.filter((d) => searchTerms.includes(d.searchTerm));
+  // Query deals using efficient GSI queries (no table scan!)
+  // Each search term query uses the bySearchTerm GSI with timestamp in sort key
+  const dealPromises = searchTermsToQuery.map((term) =>
+    getDealsBySearchTerm({
+      searchTerm: term,
+      startTime,
+      limit: 100, // Get more per term, we'll trim after merging
+    })
+  );
+  const dealResults = await Promise.all(dealPromises);
+  let deals = dealResults.flat();
 
-  // Further filter by specific search term if specified
-  if (searchTermFilter) {
-    deals = deals.filter((d) => d.searchTerm === searchTermFilter);
-  }
-
-  // Sort by timestamp descending
+  // Sort merged results by timestamp descending
   deals.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
+  const totalDealsInRange = deals.length;
   const hasMore = deals.length > limit;
   if (hasMore) {
     deals = deals.slice(0, limit);
   }
 
   // Calculate stats
-  const now = new Date();
-  const startOfDay = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  ).getTime();
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const startOfDayTime = startOfDay.getTime();
 
   const dealsToday = deals.filter(
-    (d) => d.timestamp && d.timestamp >= startOfDay
+    (d) => d.timestamp && d.timestamp >= startOfDayTime
   ).length;
 
   // Count deals by search term
@@ -76,11 +106,12 @@ export async function loader({ request }: Route.LoaderArgs) {
       notified: d.notified,
     })),
     stats: {
-      totalDeals: result.data.length,
+      totalDeals: totalDealsInRange,
       dealsToday,
       topSearchTerm,
     },
-    searchTerms,
+    searchTerms: allSearchTerms,
+    dateRange,
     hasMore,
   };
 }
@@ -104,11 +135,19 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
   });
 
   const handleSearchTermChange = (value: string | null) => {
+    const newParams = new URLSearchParams(searchParams);
     if (value) {
-      setSearchParams({ searchTerm: value });
+      newParams.set("searchTerm", value);
     } else {
-      setSearchParams({});
+      newParams.delete("searchTerm");
     }
+    setSearchParams(newParams);
+  };
+
+  const handleDateRangeChange = (value: DateRange) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("dateRange", value);
+    setSearchParams(newParams);
   };
 
   return (
@@ -120,6 +159,8 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
       onSearchTermChange={handleSearchTermChange}
       searchQuery={searchQuery}
       onSearchQueryChange={setSearchQuery}
+      dateRange={loaderData.dateRange}
+      onDateRangeChange={handleDateRangeChange}
       hasMore={loaderData.hasMore}
       onLoadMore={() => {
         // Simple implementation - could be improved with cursor-based pagination
