@@ -334,6 +334,7 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
         initialValues={configModal.config || undefined}
         isSubmitting={isSubmitting}
         isEditing={configModal.isEditing}
+        channelId={loaderData.channel.id}
       />
 
       {deleteModal.searchTerm && (

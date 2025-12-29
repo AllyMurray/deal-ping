@@ -15,6 +15,7 @@ export {
   getConfig,
   getConfigBySearchTerm,
   getAllConfigsForSearchTerm,
+  findDuplicateSearchTerms,
   upsertConfig,
   deleteConfig,
   deleteConfigsByChannel,
@@ -44,3 +45,5 @@ export type {
   Deal,
   AllowedUser,
 } from "../../src/db/schemas";
+
+export type { DuplicateSearchTermInfo } from "../../src/db/repository";

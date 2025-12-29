@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from "react";
 import {
   TextInput,
   Button,
@@ -7,8 +8,12 @@ import {
   TagsInput,
   NumberInput,
   Text,
+  Alert,
 } from "@mantine/core";
+import { IconAlertTriangle } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
+import { useDebouncedValue } from "@mantine/hooks";
+import type { DuplicateSearchTermInfo } from "~/db/repository.server";
 
 export interface ConfigFormValues {
   searchTerm: string;
@@ -27,6 +32,7 @@ export interface ConfigFormProps {
   isSubmitting?: boolean;
   submitLabel?: string;
   isEditing?: boolean;
+  channelId?: string;
 }
 
 export function ConfigForm({
@@ -36,7 +42,11 @@ export function ConfigForm({
   isSubmitting = false,
   submitLabel = "Save",
   isEditing = false,
+  channelId,
 }: ConfigFormProps) {
+  const [duplicates, setDuplicates] = useState<DuplicateSearchTermInfo[]>([]);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+
   const form = useForm<ConfigFormValues>({
     initialValues: {
       searchTerm: "",
@@ -62,6 +72,39 @@ export function ConfigForm({
     },
   });
 
+  const [debouncedSearchTerm] = useDebouncedValue(form.values.searchTerm, 300);
+
+  const checkDuplicates = useCallback(
+    async (searchTerm: string) => {
+      if (!searchTerm.trim() || isEditing) {
+        setDuplicates([]);
+        return;
+      }
+
+      setIsCheckingDuplicates(true);
+      try {
+        const params = new URLSearchParams({ searchTerm: searchTerm.trim() });
+        if (channelId) {
+          params.set("channelId", channelId);
+        }
+        const response = await fetch(`/api/configs/check-duplicates?${params}`);
+        if (response.ok) {
+          const data = await response.json();
+          setDuplicates(data.duplicates || []);
+        }
+      } catch {
+        // Silently fail - duplicate check is non-critical
+      } finally {
+        setIsCheckingDuplicates(false);
+      }
+    },
+    [channelId, isEditing]
+  );
+
+  useEffect(() => {
+    checkDuplicates(debouncedSearchTerm);
+  }, [debouncedSearchTerm, checkDuplicates]);
+
   return (
     <form onSubmit={form.onSubmit(onSubmit)} data-testid="config-form">
       <Stack gap="md">
@@ -73,6 +116,24 @@ export function ConfigForm({
           data-testid="search-term-input"
           {...form.getInputProps("searchTerm")}
         />
+
+        {duplicates.length > 0 && (
+          <Alert
+            icon={<IconAlertTriangle size={16} />}
+            color="yellow"
+            variant="light"
+            data-testid="duplicate-warning"
+          >
+            This search term is already used in:{" "}
+            {duplicates.map((d, i) => (
+              <span key={d.channelId}>
+                <strong>{d.channelName}</strong>
+                {i < duplicates.length - 1 ? ", " : ""}
+              </span>
+            ))}
+            . You can still add it, but you may receive duplicate notifications.
+          </Alert>
+        )}
 
         <Switch
           label="Enabled"
