@@ -9,7 +9,7 @@ This document outlines potential features and UX improvements identified during 
 | **"Deals Today" shows "Soon"** | Dashboard Home | Incomplete placeholder looks unfinished - should show actual data or be hidden | Medium |
 | ~~**No sorting on Deals page**~~ | ~~DealsPage~~ | ~~Users can filter but can't sort by date, price, or search term~~ | ~~High~~ (Not implementing - see notes) |
 | ~~**No date range filter**~~ | ~~DealFilters~~ | ~~Users can't filter deals by time period (today, this week, etc.)~~ | ~~High~~ ✓ |
-| **Search terms link to channels** | DashboardHomePage | Both stat cards link to `/dashboard/channels` - not intuitive for search terms | Low |
+| ~~**Search terms link to channels**~~ | ~~DashboardHomePage~~ | ~~Both stat cards link to `/dashboard/channels` - not intuitive for search terms~~ | ~~Low~~ ✓ |
 | ~~**No webhook validation**~~ | ~~ChannelForm~~ | ~~No live check if webhook URL is valid before saving~~ | ~~Medium~~ ✓ |
 | ~~**Channel has no activity indicator**~~ | ~~ChannelCard~~ | ~~No "last notification" timestamp to show if channel is active~~ | ~~Medium~~ ✓ |
 
@@ -283,6 +283,35 @@ Filter deal history by time period, with efficient database queries that avoid t
 - ElectroDB translates these to DynamoDB `KeyConditionExpression` using `between`, `gte`, or `lte` operators
 - Query is performed on the sort key (`TS#${timestamp}`) of the `bySearchTerm` GSI
 - Multiple search terms are queried in parallel using `Promise.all` for performance
+
+### Search Terms Page (Implemented)
+Dedicated page showing all search terms across all channels, fixing the UX issue where the Search Terms stat card linked to the Channels page.
+
+**Features:**
+- Consolidated view of all search terms across all channels
+- Shows search term name, parent channel, status (active/paused), and filters
+- Filter badges for include/exclude keywords, max price, and min discount
+- Click-through links to parent channel detail page
+- Navigation link in sidebar for easy access
+
+**Location:**
+- Available at `/dashboard/search-terms`
+- Accessible via Search Terms stat card on dashboard home
+- Added to sidebar navigation between Channels and Deal History
+
+**Behavior:**
+- Displays all search terms in a table format sorted alphabetically
+- Shows count of active terms and unique channels in subtitle
+- Each row links to the parent channel for easy navigation
+- Filter badges use tooltips to show full filter details
+- Empty state prompts users to view channels if no search terms exist
+
+**Technical Details:**
+- Route: `app/routes/dashboard/search-terms.tsx`
+- Page component: `app/pages/dashboard/SearchTermsPage.tsx`
+- Fetches all channels for the user, then all configs for each channel
+- Combines data into a flat list with channel names included
+- Uses existing repository functions (`getChannelsByUser`, `getConfigsByChannel`)
 
 ## Implementation Priority
 

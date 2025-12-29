@@ -14,6 +14,8 @@ export default [
     route("dashboard/channels/new", "routes/dashboard/channels/new.tsx"),
     route("dashboard/channels/:id", "routes/dashboard/channels/$id.tsx"),
     route("dashboard/channels/:id/edit", "routes/dashboard/channels/$id.edit.tsx"),
+    // Search terms
+    route("dashboard/search-terms", "routes/dashboard/search-terms.tsx"),
     // Deal history
     route("dashboard/deals", "routes/dashboard/deals.tsx"),
     // Admin (allowlist management)
