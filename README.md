@@ -14,6 +14,7 @@ A Discord bot that monitors HotUKDeals and sends deal notifications to Discord c
 - 📊 **Grouped Messages**: Combine multiple search results into organized Discord messages
 - 🌐 **Web Dashboard**: Manage channels, view deal history, and see why deals were filtered
 - 🔬 **Live Filter Preview**: See in real-time which deals would be included/excluded by your search term configs
+- 👁️ **Notification Preview**: Preview how your Discord notifications will look before deals arrive
 - 📈 **Filter Transparency**: All deals (passed and filtered) are stored with match details explaining why
 - ⚡ **AWS Lambda**: Serverless deployment with automatic scheduling
 

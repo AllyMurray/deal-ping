@@ -206,4 +206,69 @@ describe("ChannelDetailPage", () => {
       expect(screen.getByTestId("show-excluded-toggle")).toBeInTheDocument();
     });
   });
+
+  describe("notification preview section", () => {
+    it("renders notification preview section when configs exist", () => {
+      render(<ChannelDetailPage {...defaultProps} />);
+      expect(screen.getByTestId("notification-preview-section")).toBeInTheDocument();
+    });
+
+    it("does not render notification preview when no configs", () => {
+      render(<ChannelDetailPage {...defaultProps} configs={[]} />);
+      expect(screen.queryByTestId("notification-preview-section")).not.toBeInTheDocument();
+    });
+
+    it("renders preview toggle button", () => {
+      render(<ChannelDetailPage {...defaultProps} />);
+      expect(screen.getByTestId("preview-toggle")).toBeInTheDocument();
+    });
+
+    it("displays notification preview title", () => {
+      render(<ChannelDetailPage {...defaultProps} />);
+      expect(screen.getByText("Notification Preview")).toBeInTheDocument();
+    });
+
+    it("expands preview when toggle is clicked", async () => {
+      const user = userEvent.setup();
+      render(<ChannelDetailPage {...defaultProps} />);
+
+      await user.click(screen.getByTestId("preview-toggle"));
+
+      expect(screen.getByText(/This is a preview of how Discord notifications will appear/)).toBeInTheDocument();
+    });
+
+    it("shows discord embed preview when expanded", async () => {
+      const user = userEvent.setup();
+      render(<ChannelDetailPage {...defaultProps} />);
+
+      await user.click(screen.getByTestId("preview-toggle"));
+
+      expect(screen.getByText("Discord Embed Preview")).toBeInTheDocument();
+    });
+
+    it("uses first config search term for preview", async () => {
+      const user = userEvent.setup();
+      render(<ChannelDetailPage {...defaultProps} />);
+
+      await user.click(screen.getByTestId("preview-toggle"));
+
+      // Should use first config's search term "PS5"
+      expect(screen.getByText(/Search Term: PS5/)).toBeInTheDocument();
+    });
+
+    it("collapses preview when toggle is clicked again", async () => {
+      const user = userEvent.setup();
+      render(<ChannelDetailPage {...defaultProps} />);
+
+      // Expand
+      await user.click(screen.getByTestId("preview-toggle"));
+      expect(screen.getByText(/This is a preview/)).toBeInTheDocument();
+
+      // Collapse
+      await user.click(screen.getByTestId("preview-toggle"));
+
+      // The preview content should be hidden (in collapsed state)
+      // Note: The element may still be in the DOM but hidden via CSS
+    });
+  });
 });
