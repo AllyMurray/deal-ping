@@ -16,5 +16,8 @@ export type { ChannelEditPageProps } from "./ChannelEditPage";
 export { DealsPage } from "./DealsPage";
 export type { DealsPageProps } from "./DealsPage";
 
+export { SearchTermsPage } from "./SearchTermsPage";
+export type { SearchTermsPageProps, SearchTermWithChannel } from "./SearchTermsPage";
+
 export { SettingsPage } from "./SettingsPage";
 export type { SettingsPageProps, SettingsFormValues } from "./SettingsPage";

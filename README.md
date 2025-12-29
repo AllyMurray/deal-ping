@@ -12,6 +12,7 @@ A Discord bot that monitors HotUKDeals and sends deal notifications to Discord c
 - ⚠️ **Duplicate Detection**: Warns when adding search terms that already exist in other channels
 - 🕐 **Last Notification Timestamp**: See when each channel last sent a notification
 - 📅 **Date Range Filter**: Filter deal history by time period (Today, Last 7 days, Last 30 days, All time)
+- 📋 **Search Terms Overview**: Dedicated page showing all search terms across all channels with status and filters
 - 💰 **Deal Information**: Extract prices, merchant details, and direct links
 - 🔧 **Channel Management**: Organize webhooks with friendly names
 - 📊 **Grouped Messages**: Combine multiple search results into organized Discord messages

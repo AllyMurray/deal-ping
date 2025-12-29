@@ -151,7 +151,7 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
           value={stats.configCount}
           label="Search Terms"
           tooltip="Keywords being monitored for deals across all channels"
-          href="/dashboard/channels"
+          href="/dashboard/search-terms"
           suffix={
             stats.configCount > 0 ? (
               <Badge

@@ -18,6 +18,7 @@ import { useDisclosure } from "@mantine/hooks";
 import {
   IconHome,
   IconWebhook,
+  IconSearch,
   IconHistory,
   IconLogout,
   IconSun,
@@ -45,6 +46,7 @@ export function DashboardLayout({ user, children, isAdmin = false }: DashboardLa
   const navItems = [
     { href: "/dashboard", label: "Overview", icon: IconHome, exact: true },
     { href: "/dashboard/channels", label: "Channels", icon: IconWebhook },
+    { href: "/dashboard/search-terms", label: "Search Terms", icon: IconSearch },
     { href: "/dashboard/deals", label: "Deal History", icon: IconHistory },
     { href: "/dashboard/settings", label: "Settings", icon: IconSettings },
     ...(isAdmin
