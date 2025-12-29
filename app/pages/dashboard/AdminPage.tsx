@@ -12,13 +12,20 @@ import {
   Modal,
   Avatar,
 } from "@mantine/core";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useFetcher } from "react-router";
 import {
   IconPlus,
   IconTrash,
   IconShield,
-  IconUser,
 } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
+
+interface ActionResponse {
+  success: boolean;
+  error?: string;
+  intent?: string;
+}
 
 export interface AllowedUserDisplay {
   discordId: string;
@@ -35,51 +42,65 @@ export interface AdminPageProps {
 }
 
 export function AdminPage({ users, currentUserId }: AdminPageProps) {
+  const fetcher = useFetcher<ActionResponse>();
   const [newDiscordId, setNewDiscordId] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const adminCount = users.filter((u) => u.isAdmin).length;
   const isOnlyAdmin = adminCount === 1 && users.find((u) => u.discordId === currentUserId)?.isAdmin;
 
-  const handleAddUser = async (e: React.FormEvent) => {
+  // Track pending intent for loading states
+  const pendingIntent = fetcher.formData?.get("intent");
+  const isSubmitting = fetcher.state !== "idle" && pendingIntent === "addUser";
+  const isDeleting = fetcher.state !== "idle" && pendingIntent === "deleteUser";
+
+  // Handle fetcher completion
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) {
+      if (fetcher.data.success) {
+        if (fetcher.data.intent === "addUser") {
+          setNewDiscordId("");
+          notifications.show({
+            title: "Success",
+            message: "User added to allowlist",
+            color: "green",
+          });
+        }
+        if (fetcher.data.intent === "deleteUser") {
+          setDeleteUserId(null);
+          notifications.show({
+            title: "Success",
+            message: "User removed from allowlist",
+            color: "green",
+          });
+        }
+      } else if (fetcher.data.error) {
+        notifications.show({
+          title: "Error",
+          message: fetcher.data.error,
+          color: "red",
+        });
+      }
+    }
+  }, [fetcher.state, fetcher.data]);
+
+  const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDiscordId.trim()) return;
 
-    setIsSubmitting(true);
-    try {
-      const response = await fetch("/api/admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ discordId: newDiscordId.trim() }),
-      });
-
-      if (response.ok) {
-        setNewDiscordId("");
-        window.location.reload();
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    fetcher.submit(
+      { intent: "addUser", discordId: newDiscordId.trim() },
+      { method: "POST" }
+    );
   };
 
-  const handleDeleteUser = async () => {
+  const handleDeleteUser = () => {
     if (!deleteUserId) return;
 
-    setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/admin/users/${deleteUserId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setDeleteUserId(null);
-        window.location.reload();
-      }
-    } finally {
-      setIsDeleting(false);
-    }
+    fetcher.submit(
+      { intent: "deleteUser", discordId: deleteUserId },
+      { method: "POST" }
+    );
   };
 
   const formatDate = (dateString?: string) => {

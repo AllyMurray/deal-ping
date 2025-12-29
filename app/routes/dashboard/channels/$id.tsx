@@ -16,6 +16,7 @@ import {
   getConfig,
   upsertConfig,
   deleteConfig,
+  findDuplicateSearchTerms,
 } from "~/db/repository.server";
 import { HotUKDealsService } from "../../../../src/db/service";
 
@@ -166,6 +167,22 @@ export async function action({ request, params }: Route.ActionArgs) {
     } catch (error) {
       return { success: false, error: "Failed to send notification" };
     }
+  }
+
+  if (intent === "checkDuplicates") {
+    const searchTerm = formData.get("searchTerm") as string;
+
+    if (!searchTerm) {
+      return { intent: "checkDuplicates", duplicates: [] };
+    }
+
+    const duplicates = await findDuplicateSearchTerms({
+      searchTerm: searchTerm.trim(),
+      excludeChannelId: params.id,
+      userId: user.id,
+    });
+
+    return { intent: "checkDuplicates", duplicates };
   }
 
   return { success: false };
@@ -334,7 +351,6 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
         initialValues={configModal.config || undefined}
         isSubmitting={isSubmitting}
         isEditing={configModal.isEditing}
-        channelId={loaderData.channel.id}
       />
 
       {deleteModal.searchTerm && (

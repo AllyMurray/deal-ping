@@ -21,14 +21,4 @@ export default [
     // Settings
     route("dashboard/settings", "routes/dashboard/settings.tsx"),
   ]),
-  // API routes
-  route("api/channels", "routes/api/channels/index.ts"),
-  route("api/channels/:id", "routes/api/channels/$id.ts"),
-  route("api/channels/:id/test-notification", "routes/api/channels/test-notification.ts"),
-  route("api/configs", "routes/api/configs/index.ts"),
-  route("api/configs/check-duplicates", "routes/api/configs/check-duplicates.ts"),
-  route("api/configs/:channelId/:searchTerm", "routes/api/configs/$channelId.$searchTerm.ts"),
-  // Admin API routes
-  route("api/admin/users", "routes/api/admin/users.ts"),
-  route("api/admin/users/:discordId", "routes/api/admin/users.$discordId.ts"),
 ] satisfies RouteConfig;
