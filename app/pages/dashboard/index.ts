@@ -15,3 +15,6 @@ export type { ChannelEditPageProps } from "./ChannelEditPage";
 
 export { DealsPage } from "./DealsPage";
 export type { DealsPageProps } from "./DealsPage";
+
+export { SettingsPage } from "./SettingsPage";
+export type { SettingsPageProps, SettingsFormValues } from "./SettingsPage";

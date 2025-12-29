@@ -30,6 +30,7 @@ export {
   addAllowedUser,
   updateAllowedUserAdmin,
   updateAllowedUserProfile,
+  updateUserSettings,
   removeAllowedUser,
   seedAdminUser,
   // Grouped helpers

@@ -122,7 +122,7 @@ export function ChannelDetailPage({
 
       <Group justify="space-between" align="flex-start">
         <div>
-          <Title order={2} data-testid="channel-name">
+          <Title order={2} data-testid="channel-name" mb={4}>
             {channel.name}
           </Title>
           <Text c="dimmed" size="sm" data-testid="webhook-url">

@@ -25,6 +25,7 @@ import {
   IconRadar,
   IconChevronRight,
   IconShield,
+  IconSettings,
 } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router";
 import type { User } from "~/lib/auth";
@@ -45,6 +46,7 @@ export function DashboardLayout({ user, children, isAdmin = false }: DashboardLa
     { href: "/dashboard", label: "Overview", icon: IconHome, exact: true },
     { href: "/dashboard/channels", label: "Channels", icon: IconWebhook },
     { href: "/dashboard/deals", label: "Deal History", icon: IconHistory },
+    { href: "/dashboard/settings", label: "Settings", icon: IconSettings },
     ...(isAdmin
       ? [{ href: "/dashboard/admin", label: "Admin", icon: IconShield }]
       : []),

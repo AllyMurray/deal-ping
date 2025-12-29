@@ -13,7 +13,11 @@ export async function action({ request }: Route.ActionArgs) {
   const webhookUrl = formData.get("webhookUrl") as string;
 
   try {
-    const channel = await createChannel({ userId: user.id, name, webhookUrl });
+    const channel = await createChannel({
+      userId: user.id,
+      name,
+      webhookUrl,
+    });
     return redirect(`/dashboard/channels/${channel.channelId}`);
   } catch {
     return { error: "Failed to create channel. Please try again." };

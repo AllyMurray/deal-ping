@@ -13,8 +13,8 @@ import {
   type DealFilterStatus,
 } from '../../src/db/schemas';
 
-// Re-export for convenience
-export type { DealFilterStatus as FilterStatus };
+// Re-export for convenience and use within this file
+export type FilterStatus = DealFilterStatus;
 
 // FilterConfig for client-side filter settings
 export const FilterConfig = z.object({

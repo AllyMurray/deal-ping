@@ -1,4 +1,9 @@
-import { TextInput, Button, Stack, Group } from "@mantine/core";
+import {
+  TextInput,
+  Button,
+  Stack,
+  Group,
+} from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { Form, useNavigation } from "react-router";
 
@@ -8,7 +13,7 @@ export interface ChannelFormValues {
 }
 
 export interface ChannelFormProps {
-  initialValues?: ChannelFormValues;
+  initialValues?: Partial<ChannelFormValues>;
   onCancel: () => void;
   submitLabel?: string;
 }
@@ -22,9 +27,10 @@ export function ChannelForm({
   const isSubmitting = navigation.state === "submitting";
 
   const form = useForm<ChannelFormValues>({
-    initialValues: initialValues || {
+    initialValues: {
       name: "",
       webhookUrl: "",
+      ...initialValues,
     },
     validate: {
       name: (value) =>
@@ -40,12 +46,16 @@ export function ChannelForm({
   });
 
   return (
-    <Form method="post" onSubmit={(e) => {
-      const result = form.validate();
-      if (result.hasErrors) {
-        e.preventDefault();
-      }
-    }} data-testid="channel-form">
+    <Form
+      method="post"
+      onSubmit={(e) => {
+        const result = form.validate();
+        if (result.hasErrors) {
+          e.preventDefault();
+        }
+      }}
+      data-testid="channel-form"
+    >
       <Stack gap="md">
         <TextInput
           name="name"
@@ -63,6 +73,7 @@ export function ChannelForm({
           data-testid="webhook-url-input"
           {...form.getInputProps("webhookUrl")}
         />
+
         <Group justify="flex-end" mt="md">
           <Button
             variant="subtle"
