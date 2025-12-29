@@ -28,6 +28,8 @@ export default [
   route("api/configs", "routes/api/configs/index.ts"),
   route("api/configs/check-duplicates", "routes/api/configs/check-duplicates.ts"),
   route("api/configs/:channelId/:searchTerm", "routes/api/configs/$channelId.$searchTerm.ts"),
+  // Webhook API routes
+  route("api/webhooks/validate", "routes/api/webhooks/validate.ts"),
   // Admin API routes
   route("api/admin/users", "routes/api/admin/users.ts"),
   route("api/admin/users/:discordId", "routes/api/admin/users.$discordId.ts"),
