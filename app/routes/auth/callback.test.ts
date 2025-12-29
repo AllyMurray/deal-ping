@@ -74,14 +74,14 @@ describe("Auth Callback Route", () => {
         "http://localhost/auth/callback?error=access_denied&error_description=User+denied+access"
       );
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
       expect(mockRedirect).toHaveBeenCalledWith("/?error=auth_failed");
     });
 
     it("redirects to error page when no code is provided", async () => {
       const request = new Request("http://localhost/auth/callback");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
       expect(mockRedirect).toHaveBeenCalledWith("/?error=auth_failed");
     });
 
@@ -92,7 +92,7 @@ describe("Auth Callback Route", () => {
 
       const request = new Request("http://localhost/auth/callback?code=test-code");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
       expect(mockRedirect).toHaveBeenCalledWith("/?error=auth_failed");
     });
 
@@ -108,7 +108,7 @@ describe("Auth Callback Route", () => {
 
       const request = new Request("http://localhost/auth/callback?code=test-code");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
       expect(mockRedirect).toHaveBeenCalledWith("/?error=auth_failed");
     });
 
@@ -129,7 +129,7 @@ describe("Auth Callback Route", () => {
 
       const request = new Request("http://localhost/auth/callback?code=test-code");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
       expect(mockRedirect).toHaveBeenCalledWith("/?error=not_allowed");
     });
 
@@ -152,7 +152,7 @@ describe("Auth Callback Route", () => {
 
       const request = new Request("http://localhost/auth/callback?code=test-code");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
 
       expect(mockCreateAuthSession).toHaveBeenCalledWith("access-token", "refresh-token");
       expect(mockUpdateAllowedUserProfile).toHaveBeenCalledWith({
@@ -186,7 +186,7 @@ describe("Auth Callback Route", () => {
         "http://localhost/auth/callback?code=test-code&redirectTo=/dashboard/channels"
       );
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
 
       expect(mockRedirect).toHaveBeenCalledWith("/dashboard/channels", {
         headers: { "Set-Cookie": "session-cookie" },
@@ -207,14 +207,19 @@ describe("Auth Callback Route", () => {
       } as any);
 
       mockGetAllowedUser.mockResolvedValue(null);
-      mockAddAllowedUser.mockResolvedValue(undefined);
+      mockAddAllowedUser.mockResolvedValue({
+        discordId: "admin-discord-id",
+        isAdmin: true,
+        addedBy: "system",
+        quietHoursEnabled: false,
+      });
       mockIsUserAllowed.mockResolvedValue(true);
       mockCreateAuthSession.mockResolvedValue("session-cookie");
-      mockUpdateAllowedUserProfile.mockResolvedValue(undefined);
+      mockUpdateAllowedUserProfile.mockResolvedValue(undefined as any);
 
       const request = new Request("http://localhost/auth/callback?code=test-code");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
 
       expect(mockAddAllowedUser).toHaveBeenCalledWith({
         discordId: "admin-discord-id",
@@ -249,7 +254,7 @@ describe("Auth Callback Route", () => {
 
       const request = new Request("http://localhost/auth/callback?code=test-code");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
 
       expect(mockUpdateAllowedUserAdmin).toHaveBeenCalledWith({
         discordId: "admin-discord-id",

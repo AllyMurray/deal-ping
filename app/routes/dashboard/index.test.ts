@@ -55,9 +55,9 @@ describe("Dashboard Index Route", () => {
       ]);
 
       mockGetConfigsByUser.mockResolvedValue([
-        fromPartial({ configId: "cfg-1", searchTerm: "laptops", enabled: true }),
-        fromPartial({ configId: "cfg-2", searchTerm: "phones", enabled: true }),
-        fromPartial({ configId: "cfg-3", searchTerm: "tablets", enabled: false }),
+        fromPartial({ searchTerm: "laptops", enabled: true }),
+        fromPartial({ searchTerm: "phones", enabled: true }),
+        fromPartial({ searchTerm: "tablets", enabled: false }),
       ]);
 
       // Mock deals from today
@@ -67,7 +67,7 @@ describe("Dashboard Index Route", () => {
       ]);
 
       const request = new Request("http://localhost/dashboard");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.stats).toEqual({
         channelCount: 2,
@@ -89,7 +89,7 @@ describe("Dashboard Index Route", () => {
       // No search terms, so getDealsBySearchTerm won't be called
 
       const request = new Request("http://localhost/dashboard");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.stats).toEqual({
         channelCount: 0,
@@ -109,7 +109,7 @@ describe("Dashboard Index Route", () => {
 
       const request = new Request("http://localhost/dashboard");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
     });
 
     it("fetches channels and configs in parallel", async () => {
@@ -123,7 +123,7 @@ describe("Dashboard Index Route", () => {
       mockGetConfigsByUser.mockResolvedValue([]);
 
       const request = new Request("http://localhost/dashboard");
-      await loader({ request, params: {}, context: {} });
+      await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(mockGetChannelsByUser).toHaveBeenCalledWith({ userId: "user-123" });
       expect(mockGetConfigsByUser).toHaveBeenCalledWith({ userId: "user-123" });
@@ -145,7 +145,7 @@ describe("Dashboard Index Route", () => {
       mockGetDealsBySearchTerm.mockResolvedValue([]);
 
       const request = new Request("http://localhost/dashboard");
-      await loader({ request, params: {}, context: {} });
+      await loader(fromPartial({ request, params: {}, context: {} }));
 
       // Should only call once per unique search term
       expect(mockGetDealsBySearchTerm).toHaveBeenCalledTimes(2);

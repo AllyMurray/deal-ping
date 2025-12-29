@@ -75,7 +75,7 @@ describe("Deals Route", () => {
         ]);
 
       const request = new Request("http://localhost/dashboard/deals");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.deals).toHaveLength(2);
       expect(result.deals[0].title).toBe("iPhone 15 Pro");
@@ -118,7 +118,7 @@ describe("Deals Route", () => {
       ]);
 
       const request = new Request("http://localhost/dashboard/deals?searchTerm=iphone");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.deals).toHaveLength(1);
       expect(result.deals[0].searchTerm).toBe("iphone");
@@ -144,7 +144,7 @@ describe("Deals Route", () => {
       mockGetDealsBySearchTerm.mockResolvedValue([]);
 
       const request = new Request("http://localhost/dashboard/deals?dateRange=today");
-      await loader({ request, params: {}, context: {} });
+      await loader(fromPartial({ request, params: {}, context: {} }));
 
       // Verify startTime is passed for date filtering
       expect(mockGetDealsBySearchTerm).toHaveBeenCalledWith(
@@ -169,7 +169,7 @@ describe("Deals Route", () => {
       mockGetDealsBySearchTerm.mockResolvedValue([]);
 
       const request = new Request("http://localhost/dashboard/deals");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.dateRange).toBe("7days");
     });
@@ -184,7 +184,7 @@ describe("Deals Route", () => {
       mockGetConfigsByUser.mockResolvedValue([]);
 
       const request = new Request("http://localhost/dashboard/deals");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.deals).toHaveLength(0);
       expect(result.searchTerms).toEqual([]);
@@ -228,7 +228,7 @@ describe("Deals Route", () => {
       ]);
 
       const request = new Request("http://localhost/dashboard/deals");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.stats.dealsToday).toBe(1);
       expect(result.stats.topSearchTerm).toBe("iphone");
@@ -254,13 +254,14 @@ describe("Deals Route", () => {
           merchant: "Apple",
           searchTerm: "iphone",
           timestamp: Date.now() - i * 1000,
+          filterStatus: "passed" as const,
         })
       );
 
-      mockGetDealsBySearchTerm.mockResolvedValue(deals);
+      mockGetDealsBySearchTerm.mockResolvedValue(deals as any);
 
       const request = new Request("http://localhost/dashboard/deals");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.deals).toHaveLength(50);
       expect(result.hasMore).toBe(true);
@@ -276,7 +277,7 @@ describe("Deals Route", () => {
 
       const request = new Request("http://localhost/dashboard/deals");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
     });
   });
 });

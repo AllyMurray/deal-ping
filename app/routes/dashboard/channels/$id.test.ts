@@ -72,13 +72,12 @@ describe("Channel Detail Route", () => {
         userId: "user-123",
         name: "Test Channel",
         webhookUrl: "https://webhook.example.com",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       mockGetConfigsByChannel.mockResolvedValue([
         {
-          configId: "cfg-1",
           channelId: "ch-1",
           userId: "user-123",
           searchTerm: "iphone",
@@ -86,17 +85,17 @@ describe("Channel Detail Route", () => {
           includeKeywords: ["pro", "max"],
           excludeKeywords: ["case"],
           caseSensitive: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         },
       ]);
 
       const request = new Request("http://localhost/dashboard/channels/ch-1");
-      const result = await loader({
+      const result = await loader(fromPartial({
         request,
         params: { id: "ch-1" },
         context: {},
-      });
+      }));
 
       expect(result.channel).toEqual({
         id: "ch-1",
@@ -129,7 +128,7 @@ describe("Channel Detail Route", () => {
       const request = new Request("http://localhost/dashboard/channels/ch-1");
 
       await expect(
-        loader({ request, params: { id: "ch-1" }, context: {} })
+        loader(fromPartial({ request, params: { id: "ch-1" }, context: {} }))
       ).rejects.toThrow();
     });
 
@@ -145,14 +144,14 @@ describe("Channel Detail Route", () => {
         userId: "other-user",
         name: "Test Channel",
         webhookUrl: "https://webhook.example.com",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       const request = new Request("http://localhost/dashboard/channels/ch-1");
 
       await expect(
-        loader({ request, params: { id: "ch-1" }, context: {} })
+        loader(fromPartial({ request, params: { id: "ch-1" }, context: {} }))
       ).rejects.toThrow();
     });
   });
@@ -171,11 +170,19 @@ describe("Channel Detail Route", () => {
           userId: "user-123",
           name: "Test Channel",
           webhookUrl: "https://webhook.example.com",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
 
-        mockUpsertConfig.mockResolvedValue(undefined);
+        mockUpsertConfig.mockResolvedValue({
+          channelId: "ch-1",
+          userId: "user-123",
+          searchTerm: "iphone",
+          enabled: true,
+          excludeKeywords: ["case"],
+          includeKeywords: ["pro"],
+          caseSensitive: false,
+        });
 
         const formData = new FormData();
         formData.append("intent", "upsertConfig");
@@ -190,11 +197,11 @@ describe("Channel Detail Route", () => {
           body: formData,
         });
 
-        const result = await action({
-          request,
-          params: { id: "ch-1" },
-          context: {},
-        });
+        const result = await action(fromPartial({
+        request,
+        params: { id: "ch-1" },
+        context: {},
+      }));
 
         expect(mockUpsertConfig).toHaveBeenCalledWith({
           userId: "user-123",
@@ -224,8 +231,8 @@ describe("Channel Detail Route", () => {
           userId: "user-123",
           name: "Test Channel",
           webhookUrl: "https://webhook.example.com",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
 
         mockDeleteConfig.mockResolvedValue(undefined);
@@ -239,11 +246,11 @@ describe("Channel Detail Route", () => {
           body: formData,
         });
 
-        const result = await action({
-          request,
-          params: { id: "ch-1" },
-          context: {},
-        });
+        const result = await action(fromPartial({
+        request,
+        params: { id: "ch-1" },
+        context: {},
+      }));
 
         expect(mockDeleteConfig).toHaveBeenCalledWith({
           channelId: "ch-1",
@@ -266,20 +273,27 @@ describe("Channel Detail Route", () => {
           userId: "user-123",
           name: "Test Channel",
           webhookUrl: "https://webhook.example.com",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
 
         mockGetConfig.mockResolvedValue(
           fromPartial({
-            configId: "cfg-1",
             channelId: "ch-1",
             searchTerm: "iphone",
             enabled: true,
           })
         );
 
-        mockUpsertConfig.mockResolvedValue(undefined);
+        mockUpsertConfig.mockResolvedValue({
+          channelId: "ch-1",
+          userId: "user-123",
+          searchTerm: "iphone",
+          enabled: false,
+          excludeKeywords: [],
+          includeKeywords: [],
+          caseSensitive: false,
+        });
 
         const formData = new FormData();
         formData.append("intent", "toggleConfig");
@@ -291,11 +305,11 @@ describe("Channel Detail Route", () => {
           body: formData,
         });
 
-        const result = await action({
-          request,
-          params: { id: "ch-1" },
-          context: {},
-        });
+        const result = await action(fromPartial({
+        request,
+        params: { id: "ch-1" },
+        context: {},
+      }));
 
         expect(mockUpsertConfig).toHaveBeenCalledWith({
           userId: "user-123",
@@ -318,8 +332,8 @@ describe("Channel Detail Route", () => {
           userId: "user-123",
           name: "Test Channel",
           webhookUrl: "https://webhook.example.com",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
 
         mockGetConfig.mockResolvedValue(null);
@@ -334,11 +348,11 @@ describe("Channel Detail Route", () => {
           body: formData,
         });
 
-        const result = await action({
-          request,
-          params: { id: "ch-1" },
-          context: {},
-        });
+        const result = await action(fromPartial({
+        request,
+        params: { id: "ch-1" },
+        context: {},
+      }));
 
         expect(result).toEqual({ success: false, error: "Config not found" });
       });
@@ -357,8 +371,8 @@ describe("Channel Detail Route", () => {
           userId: "user-123",
           name: "Test Channel",
           webhookUrl: "https://webhook.example.com",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
 
         global.fetch = vi.fn().mockResolvedValue({
@@ -373,11 +387,11 @@ describe("Channel Detail Route", () => {
           body: formData,
         });
 
-        const result = await action({
-          request,
-          params: { id: "ch-1" },
-          context: {},
-        });
+        const result = await action(fromPartial({
+        request,
+        params: { id: "ch-1" },
+        context: {},
+      }));
 
         expect(global.fetch).toHaveBeenCalledWith(
           "https://webhook.example.com",
@@ -401,8 +415,8 @@ describe("Channel Detail Route", () => {
           userId: "user-123",
           name: "Test Channel",
           webhookUrl: "https://webhook.example.com",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
 
         global.fetch = vi.fn().mockResolvedValue({
@@ -417,11 +431,11 @@ describe("Channel Detail Route", () => {
           body: formData,
         });
 
-        const result = await action({
-          request,
-          params: { id: "ch-1" },
-          context: {},
-        });
+        const result = await action(fromPartial({
+        request,
+        params: { id: "ch-1" },
+        context: {},
+      }));
 
         expect(result).toEqual({ success: false, error: "Webhook returned error" });
       });
@@ -438,8 +452,8 @@ describe("Channel Detail Route", () => {
           userId: "user-123",
           name: "Test Channel",
           webhookUrl: "https://webhook.example.com",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
 
         global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
@@ -452,11 +466,11 @@ describe("Channel Detail Route", () => {
           body: formData,
         });
 
-        const result = await action({
-          request,
-          params: { id: "ch-1" },
-          context: {},
-        });
+        const result = await action(fromPartial({
+        request,
+        params: { id: "ch-1" },
+        context: {},
+      }));
 
         expect(result).toEqual({ success: false, error: "Failed to send notification" });
       });
@@ -480,11 +494,11 @@ describe("Channel Detail Route", () => {
         body: formData,
       });
 
-      const result = await action({
+      const result = await action(fromPartial({
         request,
         params: { id: "ch-1" },
         context: {},
-      });
+      }));
 
       expect(result).toEqual({
         success: false,
@@ -504,8 +518,8 @@ describe("Channel Detail Route", () => {
         userId: "user-123",
         name: "Test Channel",
         webhookUrl: "https://webhook.example.com",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       const formData = new FormData();
@@ -516,11 +530,11 @@ describe("Channel Detail Route", () => {
         body: formData,
       });
 
-      const result = await action({
+      const result = await action(fromPartial({
         request,
         params: { id: "ch-1" },
         context: {},
-      });
+      }));
 
       expect(result).toEqual({ success: false });
     });
