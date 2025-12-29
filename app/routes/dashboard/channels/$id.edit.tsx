@@ -5,6 +5,7 @@ import type { Route } from "./+types/$id.edit";
 import { ChannelEditPage } from "~/pages/dashboard";
 import { requireUser } from "~/lib/auth";
 import { getChannel, updateChannel } from "~/db/repository.server";
+import { validateDiscordWebhook } from "~/lib/webhook-validation.server";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
@@ -26,6 +27,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 export async function action({ request, params }: Route.ActionArgs) {
   const { user } = await requireUser(request);
   const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  // Handle webhook validation
+  if (intent === "validate") {
+    const webhookUrl = formData.get("webhookUrl") as string;
+    return validateDiscordWebhook(webhookUrl);
+  }
+
+  // Handle channel update
   const name = formData.get("name") as string;
   const webhookUrl = formData.get("webhookUrl") as string;
 

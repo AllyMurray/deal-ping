@@ -1,25 +1,24 @@
 import { render, type RenderOptions } from "@testing-library/react";
 import { MantineProvider } from "@mantine/core";
-import { MemoryRouter } from "react-router";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import { theme } from "./theme";
-
-interface WrapperProps {
-  children: React.ReactNode;
-}
-
-function AllProviders({ children }: WrapperProps) {
-  return (
-    <MemoryRouter>
-      <MantineProvider theme={theme}>{children}</MantineProvider>
-    </MemoryRouter>
-  );
-}
 
 export function renderWithProviders(
   ui: React.ReactElement,
   options?: Omit<RenderOptions, "wrapper">
 ) {
-  return render(ui, { wrapper: AllProviders, ...options });
+  // Create a data router that wraps the component
+  const router = createMemoryRouter(
+    [
+      {
+        path: "*",
+        element: <MantineProvider theme={theme}>{ui}</MantineProvider>,
+      },
+    ],
+    { initialEntries: ["/"] }
+  );
+
+  return render(<RouterProvider router={router} />, options);
 }
 
 export * from "@testing-library/react";

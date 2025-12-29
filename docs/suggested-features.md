@@ -10,7 +10,7 @@ This document outlines potential features and UX improvements identified during 
 | ~~**No sorting on Deals page**~~ | ~~DealsPage~~ | ~~Users can filter but can't sort by date, price, or search term~~ | ~~High~~ (Not implementing - see notes) |
 | ~~**No date range filter**~~ | ~~DealFilters~~ | ~~Users can't filter deals by time period (today, this week, etc.)~~ | ~~High~~ ✓ |
 | **Search terms link to channels** | DashboardHomePage | Both stat cards link to `/dashboard/channels` - not intuitive for search terms | Low |
-| **No webhook validation** | ChannelForm | No live check if webhook URL is valid before saving | Medium |
+| ~~**No webhook validation**~~ | ~~ChannelForm~~ | ~~No live check if webhook URL is valid before saving~~ | ~~Medium~~ ✓ |
 | ~~**Channel has no activity indicator**~~ | ~~ChannelCard~~ | ~~No "last notification" timestamp to show if channel is active~~ | ~~Medium~~ ✓ |
 
 ## Missing Features
@@ -234,6 +234,32 @@ Show when each channel last sent a notification, helping users see if their chan
   - "X minutes ago" / "X hours ago" / "X days ago" / "X weeks ago" for recent notifications
   - Actual date (e.g., "15 Feb") for notifications more than a month old
   - Year included for notifications from previous years (e.g., "15 Jun 2023")
+
+### Webhook Validation (Implemented)
+Live validation of Discord webhook URLs before saving, ensuring webhooks are valid and active.
+
+**Features:**
+- "Test" button next to webhook URL input
+- Validates webhook by calling the Discord API
+- Shows webhook name on success to confirm correct webhook
+- Shows specific error messages (not found, invalid, etc.)
+
+**Location:**
+- Available in the Channel Form (when creating or editing a channel)
+
+**Behavior:**
+- Click the "Test" button to validate the webhook URL
+- The button is disabled until a webhook URL is entered
+- On success: Shows green alert with "Webhook verified: [Webhook Name]"
+- On error: Shows red alert with specific error message
+- Validation is optional - users can still save without testing
+
+**Technical Details:**
+- Uses `useFetcher` hook to submit to the page's action with `intent: "validate"`
+- Validation logic in `app/lib/webhook-validation.server.ts` (shared by new/edit routes)
+- Makes a GET request to the Discord webhook URL from the server
+- Discord returns webhook info (name, channel_id, etc.) for valid webhooks
+- Returns appropriate error messages for 404 (deleted), 401 (invalid), and other errors
 
 ### Date Range Filter (Implemented)
 Filter deal history by time period, with efficient database queries that avoid table scans.

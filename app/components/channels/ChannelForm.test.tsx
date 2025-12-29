@@ -1,14 +1,26 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "~/test-utils";
 import { ChannelForm } from "./ChannelForm";
+
+// Create a mock submit function we can track
+const mockSubmit = vi.fn();
+
+// Create controllable fetcher state
+let mockFetcherState: "idle" | "submitting" | "loading" = "idle";
+let mockFetcherData: { intent: string; valid: boolean; webhookName?: string; error?: string } | undefined;
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router");
   return {
     ...actual,
     useNavigation: () => ({ state: "idle" }),
+    useFetcher: () => ({
+      state: mockFetcherState,
+      data: mockFetcherData,
+      submit: mockSubmit,
+    }),
     Form: ({
       children,
       ...props
@@ -23,6 +35,12 @@ const defaultProps = {
 };
 
 describe("ChannelForm", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFetcherState = "idle";
+    mockFetcherData = undefined;
+  });
+
   describe("rendering", () => {
     it("renders the form", () => {
       render(<ChannelForm {...defaultProps} />);
@@ -145,6 +163,86 @@ describe("ChannelForm", () => {
     it("has correct label for webhook URL input", () => {
       render(<ChannelForm {...defaultProps} />);
       expect(screen.getByLabelText(/discord webhook url/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("webhook validation", () => {
+    it("renders the validate webhook button", () => {
+      render(<ChannelForm {...defaultProps} />);
+      expect(screen.getByTestId("validate-webhook-button")).toBeInTheDocument();
+    });
+
+    it("disables validate button when webhook URL is empty", () => {
+      render(<ChannelForm {...defaultProps} />);
+      expect(screen.getByTestId("validate-webhook-button")).toBeDisabled();
+    });
+
+    it("enables validate button when webhook URL has value", async () => {
+      const user = userEvent.setup();
+      render(<ChannelForm {...defaultProps} />);
+
+      const webhookInput = screen.getByTestId("webhook-url-input");
+      await user.type(webhookInput, "https://discord.com/api/webhooks/123/abc");
+
+      expect(screen.getByTestId("validate-webhook-button")).toBeEnabled();
+    });
+
+    it("shows success message for valid webhook", () => {
+      mockFetcherData = { intent: "validate", valid: true, webhookName: "Test Webhook" };
+
+      render(
+        <ChannelForm
+          {...defaultProps}
+          initialValues={{
+            webhookUrl: "https://discord.com/api/webhooks/123/abc",
+          }}
+        />
+      );
+
+      expect(
+        screen.getByTestId("webhook-validation-success")
+      ).toBeInTheDocument();
+      expect(screen.getByText("Webhook verified: Test Webhook")).toBeInTheDocument();
+    });
+
+    it("shows error message for invalid webhook", () => {
+      mockFetcherData = {
+        intent: "validate",
+        valid: false,
+        error: "Webhook not found. It may have been deleted.",
+      };
+
+      render(
+        <ChannelForm
+          {...defaultProps}
+          initialValues={{
+            webhookUrl: "https://discord.com/api/webhooks/123/abc",
+          }}
+        />
+      );
+
+      expect(
+        screen.getByTestId("webhook-validation-error")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Webhook not found. It may have been deleted.")
+      ).toBeInTheDocument();
+    });
+
+    it("calls fetcher.submit with intent and webhookUrl", async () => {
+      const user = userEvent.setup();
+      render(<ChannelForm {...defaultProps} />);
+
+      const webhookInput = screen.getByTestId("webhook-url-input");
+      await user.type(webhookInput, "https://discord.com/api/webhooks/123/abc");
+
+      const validateButton = screen.getByTestId("validate-webhook-button");
+      await user.click(validateButton);
+
+      expect(mockSubmit).toHaveBeenCalledWith(
+        { intent: "validate", webhookUrl: "https://discord.com/api/webhooks/123/abc" },
+        { method: "POST" }
+      );
     });
   });
 });

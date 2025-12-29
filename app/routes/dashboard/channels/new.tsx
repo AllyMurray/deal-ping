@@ -5,10 +5,20 @@ import type { Route } from "./+types/new";
 import { ChannelNewPage } from "~/pages/dashboard";
 import { requireUser } from "~/lib/auth";
 import { createChannel } from "~/db/repository.server";
+import { validateDiscordWebhook } from "~/lib/webhook-validation.server";
 
 export async function action({ request }: Route.ActionArgs) {
   const { user } = await requireUser(request);
   const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  // Handle webhook validation
+  if (intent === "validate") {
+    const webhookUrl = formData.get("webhookUrl") as string;
+    return validateDiscordWebhook(webhookUrl);
+  }
+
+  // Handle channel creation
   const name = formData.get("name") as string;
   const webhookUrl = formData.get("webhookUrl") as string;
 

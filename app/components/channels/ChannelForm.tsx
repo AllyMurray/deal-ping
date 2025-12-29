@@ -3,9 +3,17 @@ import {
   Button,
   Stack,
   Group,
+  Alert,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { Form, useNavigation } from "react-router";
+import { Form, useNavigation, useFetcher } from "react-router";
+
+export interface WebhookValidationResult {
+  intent: "validate";
+  valid: boolean;
+  webhookName?: string;
+  error?: string;
+}
 
 export interface ChannelFormValues {
   name: string;
@@ -25,6 +33,14 @@ export function ChannelForm({
 }: ChannelFormProps) {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
+
+  const fetcher = useFetcher<WebhookValidationResult>();
+
+  // Derive validation state from fetcher
+  const isValidating = fetcher.state === "submitting" || fetcher.state === "loading";
+  const validationResult = fetcher.data?.intent === "validate" ? fetcher.data : undefined;
+  const showSuccess = !isValidating && validationResult?.valid === true;
+  const showError = !isValidating && validationResult?.valid === false;
 
   const form = useForm<ChannelFormValues>({
     initialValues: {
@@ -72,7 +88,45 @@ export function ChannelForm({
           required
           data-testid="webhook-url-input"
           {...form.getInputProps("webhookUrl")}
+          rightSection={
+            <Button
+              size="compact-xs"
+              variant="light"
+              onClick={() => {
+                fetcher.submit(
+                  { intent: "validate", webhookUrl: form.values.webhookUrl },
+                  { method: "POST" }
+                );
+              }}
+              loading={isValidating}
+              disabled={!form.values.webhookUrl.trim()}
+              data-testid="validate-webhook-button"
+            >
+              Test
+            </Button>
+          }
+          rightSectionWidth={60}
         />
+
+        {showSuccess && (
+          <Alert
+            color="green"
+            variant="light"
+            data-testid="webhook-validation-success"
+          >
+            Webhook verified: {validationResult?.webhookName}
+          </Alert>
+        )}
+
+        {showError && (
+          <Alert
+            color="red"
+            variant="light"
+            data-testid="webhook-validation-error"
+          >
+            {validationResult?.error ?? "Invalid webhook"}
+          </Alert>
+        )}
 
         <Group justify="flex-end" mt="md">
           <Button
