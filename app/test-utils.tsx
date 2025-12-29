@@ -8,11 +8,16 @@ export function renderWithProviders(
   options?: Omit<RenderOptions, "wrapper">
 ) {
   // Create a data router that wraps the component
+  // Include a no-op action to handle useFetcher submissions in tests
   const router = createMemoryRouter(
     [
       {
         path: "*",
         element: <MantineProvider theme={theme}>{ui}</MantineProvider>,
+        action: async () => {
+          // No-op action for test environment - handles useFetcher submissions
+          return null;
+        },
       },
     ],
     { initialEntries: ["/"] }
