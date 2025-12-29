@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterDeal, FilterResult, FilterStatus } from './notifier';
+import { filterDeal, FilterResult, FilterStatus, parsePriceToPence } from './notifier';
 import type { Deal } from './feed-parser';
 import type { SearchTermConfig } from './db';
 
@@ -21,6 +21,52 @@ const createConfig = (overrides: Partial<SearchTermConfig> = {}): SearchTermConf
   includeKeywords: [],
   caseSensitive: false,
   ...overrides,
+});
+
+describe('parsePriceToPence', () => {
+  it('parses price with pound symbol', () => {
+    expect(parsePriceToPence('£50.00')).toBe(5000);
+  });
+
+  it('parses price without decimal', () => {
+    expect(parsePriceToPence('£50')).toBe(5000);
+  });
+
+  it('parses price without currency symbol', () => {
+    expect(parsePriceToPence('50.00')).toBe(5000);
+  });
+
+  it('parses price with comma separator', () => {
+    expect(parsePriceToPence('£1,234.56')).toBe(123456);
+  });
+
+  it('parses price with dollar symbol', () => {
+    expect(parsePriceToPence('$99.99')).toBe(9999);
+  });
+
+  it('parses price with euro symbol', () => {
+    expect(parsePriceToPence('€25.50')).toBe(2550);
+  });
+
+  it('handles whitespace', () => {
+    expect(parsePriceToPence(' £ 50.00 ')).toBe(5000);
+  });
+
+  it('returns null for undefined', () => {
+    expect(parsePriceToPence(undefined)).toBe(null);
+  });
+
+  it('returns null for empty string', () => {
+    expect(parsePriceToPence('')).toBe(null);
+  });
+
+  it('returns null for non-numeric string', () => {
+    expect(parsePriceToPence('free')).toBe(null);
+  });
+
+  it('rounds to nearest pence', () => {
+    expect(parsePriceToPence('£10.999')).toBe(1100);
+  });
 });
 
 describe('filterDeal', () => {
@@ -264,6 +310,218 @@ describe('filterDeal', () => {
       const result = filterDeal(deal, config);
 
       expect(result.matchDetails.matchedSegments.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('price threshold (maxPrice)', () => {
+    it('passes when price is under maxPrice threshold', () => {
+      const deal = createDeal({ title: 'Test Product', price: '£45.00' });
+      const config = createConfig({
+        searchTerm: 'Test',
+        maxPrice: 5000, // £50.00 in pence
+      });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(true);
+      expect(result.filterStatus).toBe('passed');
+    });
+
+    it('passes when price equals maxPrice threshold', () => {
+      const deal = createDeal({ title: 'Test Product', price: '£50.00' });
+      const config = createConfig({
+        searchTerm: 'Test',
+        maxPrice: 5000, // £50.00 in pence
+      });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(true);
+      expect(result.filterStatus).toBe('passed');
+    });
+
+    it('filters out when price exceeds maxPrice threshold', () => {
+      const deal = createDeal({ title: 'Test Product', price: '£75.00' });
+      const config = createConfig({
+        searchTerm: 'Test',
+        maxPrice: 5000, // £50.00 in pence
+      });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(false);
+      expect(result.filterStatus).toBe('filtered_price_too_high');
+      expect(result.filterReason).toContain('£75.00');
+      expect(result.filterReason).toContain('£50.00');
+    });
+
+    it('passes when deal has no price and maxPrice is set', () => {
+      const deal = createDeal({ title: 'Test Product', price: undefined });
+      const config = createConfig({
+        searchTerm: 'Test',
+        maxPrice: 5000,
+      });
+
+      const result = filterDeal(deal, config);
+
+      // No price means we can't compare, so we pass
+      expect(result.passed).toBe(true);
+      expect(result.filterStatus).toBe('passed');
+    });
+
+    it('passes when deal has unparseable price and maxPrice is set', () => {
+      const deal = createDeal({ title: 'Test Product', price: 'Free' });
+      const config = createConfig({
+        searchTerm: 'Test',
+        maxPrice: 5000,
+      });
+
+      const result = filterDeal(deal, config);
+
+      // Unparseable price means we can't compare, so we pass
+      expect(result.passed).toBe(true);
+      expect(result.filterStatus).toBe('passed');
+    });
+
+    it('ignores maxPrice when not set', () => {
+      const deal = createDeal({ title: 'Test Product', price: '£1000.00' });
+      const config = createConfig({
+        searchTerm: 'Test',
+        maxPrice: undefined,
+      });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(true);
+      expect(result.filterStatus).toBe('passed');
+    });
+  });
+
+  describe('discount threshold (minDiscount)', () => {
+    it('passes when discount meets minDiscount threshold', () => {
+      const deal = createDeal({ title: 'Test Product', savingsPercentage: 40 });
+      const config = createConfig({
+        searchTerm: 'Test',
+        minDiscount: 30, // 30%
+      });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(true);
+      expect(result.filterStatus).toBe('passed');
+    });
+
+    it('passes when discount equals minDiscount threshold', () => {
+      const deal = createDeal({ title: 'Test Product', savingsPercentage: 30 });
+      const config = createConfig({
+        searchTerm: 'Test',
+        minDiscount: 30,
+      });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(true);
+      expect(result.filterStatus).toBe('passed');
+    });
+
+    it('filters out when discount is below minDiscount threshold', () => {
+      const deal = createDeal({ title: 'Test Product', savingsPercentage: 15 });
+      const config = createConfig({
+        searchTerm: 'Test',
+        minDiscount: 30,
+      });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(false);
+      expect(result.filterStatus).toBe('filtered_discount_too_low');
+      expect(result.filterReason).toContain('15%');
+      expect(result.filterReason).toContain('30%');
+    });
+
+    it('filters out when deal has no discount and minDiscount is set', () => {
+      const deal = createDeal({ title: 'Test Product', savingsPercentage: undefined });
+      const config = createConfig({
+        searchTerm: 'Test',
+        minDiscount: 30,
+      });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(false);
+      expect(result.filterStatus).toBe('filtered_discount_too_low');
+      expect(result.filterReason).toContain('No discount information');
+    });
+
+    it('ignores minDiscount when not set', () => {
+      const deal = createDeal({ title: 'Test Product', savingsPercentage: 5 });
+      const config = createConfig({
+        searchTerm: 'Test',
+        minDiscount: undefined,
+      });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(true);
+      expect(result.filterStatus).toBe('passed');
+    });
+  });
+
+  describe('combined filters with price thresholds', () => {
+    it('checks exclude keywords before price thresholds', () => {
+      const deal = createDeal({ title: 'Test Refurbished Product', price: '£25.00' });
+      const config = createConfig({
+        searchTerm: 'Test',
+        excludeKeywords: ['refurbished'],
+        maxPrice: 5000,
+      });
+
+      const result = filterDeal(deal, config);
+
+      // Should be filtered by exclude keyword, not price
+      expect(result.filterStatus).toBe('filtered_exclude');
+    });
+
+    it('checks include keywords before price thresholds', () => {
+      const deal = createDeal({ title: 'Test Product', price: '£25.00' });
+      const config = createConfig({
+        searchTerm: 'Test',
+        includeKeywords: ['OLED'],
+        maxPrice: 5000,
+      });
+
+      const result = filterDeal(deal, config);
+
+      // Should be filtered by missing include keyword, not price
+      expect(result.filterStatus).toBe('filtered_include');
+    });
+
+    it('checks maxPrice before minDiscount', () => {
+      const deal = createDeal({ title: 'Test Product', price: '£100.00', savingsPercentage: 10 });
+      const config = createConfig({
+        searchTerm: 'Test',
+        maxPrice: 5000, // £50.00
+        minDiscount: 30,
+      });
+
+      const result = filterDeal(deal, config);
+
+      // Should be filtered by price, not discount
+      expect(result.filterStatus).toBe('filtered_price_too_high');
+    });
+
+    it('passes when all thresholds are met', () => {
+      const deal = createDeal({ title: 'Test Product', price: '£25.00', savingsPercentage: 40 });
+      const config = createConfig({
+        searchTerm: 'Test',
+        maxPrice: 5000,
+        minDiscount: 30,
+      });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(true);
+      expect(result.filterStatus).toBe('passed');
     });
   });
 });
