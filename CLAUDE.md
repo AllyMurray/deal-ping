@@ -120,28 +120,35 @@ describe("MyComponent", () => {
 
 This project uses React Router v7 with data routers. Follow these patterns:
 
-**For client-side mutations (e.g., API calls from components):**
-- Use `useFetcher` hook instead of raw `fetch()` calls
-- Define an `action` function in a route file for the server-side handler
-- Submit to the action using `fetcher.submit(data, { method: "POST", action: "/api/route", encType: "application/json" })`
+**For mutations from components:**
+- Use `useFetcher` hook to submit to the current route's action
+- Use an `intent` field to distinguish between different actions
 - Access response via `fetcher.data` and loading state via `fetcher.state`
 
 ```typescript
-// In route file (app/routes/api/example.ts):
+// In route file action:
 export async function action({ request }: Route.ActionArgs) {
-  const data = await request.json();
-  // Process and return Response.json(result)
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "validate") {
+    // Handle validation
+    return { intent: "validate", valid: true };
+  }
+
+  // Handle main form submission
+  return redirect("/success");
 }
 
 // In component:
 const fetcher = useFetcher<ResponseType>();
-fetcher.submit({ data }, { method: "POST", action: "/api/example", encType: "application/json" });
+fetcher.submit({ intent: "validate", data: "value" }, { method: "POST" });
 // Use fetcher.state === "submitting" for loading, fetcher.data for result
 ```
 
 **Do NOT:**
 - Use raw `fetch()` for API calls from components - use `useFetcher` instead
-- Create separate API endpoints when you could use route actions
+- Create separate API endpoints when you could use the page's action with intents
 
 ## Key Features
 

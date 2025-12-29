@@ -255,7 +255,8 @@ Live validation of Discord webhook URLs before saving, ensuring webhooks are val
 - Validation is optional - users can still save without testing
 
 **Technical Details:**
-- Route action at `/api/webhooks/validate` (POST) with `useFetcher` hook on client
+- Uses `useFetcher` hook to submit to the page's action with `intent: "validate"`
+- Validation logic in `app/lib/webhook-validation.server.ts` (shared by new/edit routes)
 - Makes a GET request to the Discord webhook URL from the server
 - Discord returns webhook info (name, channel_id, etc.) for valid webhooks
 - Returns appropriate error messages for 404 (deleted), 401 (invalid), and other errors

@@ -9,7 +9,7 @@ const mockSubmit = vi.fn();
 
 // Create controllable fetcher state
 let mockFetcherState: "idle" | "submitting" | "loading" = "idle";
-let mockFetcherData: { valid: boolean; webhookName?: string; error?: string } | undefined;
+let mockFetcherData: { intent: string; valid: boolean; webhookName?: string; error?: string } | undefined;
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router");
@@ -187,26 +187,8 @@ describe("ChannelForm", () => {
       expect(screen.getByTestId("validate-webhook-button")).toBeEnabled();
     });
 
-    it("shows error for invalid webhook URL format", async () => {
-      const user = userEvent.setup();
-      render(<ChannelForm {...defaultProps} />);
-
-      const webhookInput = screen.getByTestId("webhook-url-input");
-      await user.type(webhookInput, "https://example.com/webhook");
-
-      const validateButton = screen.getByTestId("validate-webhook-button");
-      await user.click(validateButton);
-
-      expect(
-        screen.getByTestId("webhook-validation-error")
-      ).toBeInTheDocument();
-      expect(screen.getByText("Must be a valid Discord webhook URL")).toBeInTheDocument();
-      // Should not call fetcher.submit for invalid URL format
-      expect(mockSubmit).not.toHaveBeenCalled();
-    });
-
     it("shows success message for valid webhook", () => {
-      mockFetcherData = { valid: true, webhookName: "Test Webhook" };
+      mockFetcherData = { intent: "validate", valid: true, webhookName: "Test Webhook" };
 
       render(
         <ChannelForm
@@ -225,6 +207,7 @@ describe("ChannelForm", () => {
 
     it("shows error message for invalid webhook", () => {
       mockFetcherData = {
+        intent: "validate",
         valid: false,
         error: "Webhook not found. It may have been deleted.",
       };
@@ -246,7 +229,7 @@ describe("ChannelForm", () => {
       ).toBeInTheDocument();
     });
 
-    it("calls fetcher.submit with correct parameters", async () => {
+    it("calls fetcher.submit with intent and webhookUrl", async () => {
       const user = userEvent.setup();
       render(<ChannelForm {...defaultProps} />);
 
@@ -257,12 +240,8 @@ describe("ChannelForm", () => {
       await user.click(validateButton);
 
       expect(mockSubmit).toHaveBeenCalledWith(
-        { webhookUrl: "https://discord.com/api/webhooks/123/abc" },
-        {
-          method: "POST",
-          action: "/api/webhooks/validate",
-          encType: "application/json",
-        }
+        { intent: "validate", webhookUrl: "https://discord.com/api/webhooks/123/abc" },
+        { method: "POST" }
       );
     });
   });

@@ -7,8 +7,13 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { Form, useNavigation, useFetcher } from "react-router";
-import { useEffect, useState } from "react";
-import type { WebhookValidationResult } from "~/routes/api/webhooks/validate";
+
+export interface WebhookValidationResult {
+  intent: "validate";
+  valid: boolean;
+  webhookName?: string;
+  error?: string;
+}
 
 export interface ChannelFormValues {
   name: string;
@@ -30,34 +35,12 @@ export function ChannelForm({
   const isSubmitting = navigation.state === "submitting";
 
   const fetcher = useFetcher<WebhookValidationResult>();
-  const [clientError, setClientError] = useState<string | null>(null);
-
-  // Clear client error when fetcher starts loading
-  useEffect(() => {
-    if (fetcher.state === "submitting") {
-      setClientError(null);
-    }
-  }, [fetcher.state]);
-
-  const validateWebhook = (webhookUrl: string) => {
-    // Client-side validation before making request
-    if (!webhookUrl.includes("discord.com/api/webhooks/")) {
-      setClientError("Must be a valid Discord webhook URL");
-      return;
-    }
-
-    setClientError(null);
-    fetcher.submit(
-      { webhookUrl },
-      { method: "POST", action: "/api/webhooks/validate", encType: "application/json" }
-    );
-  };
 
   // Derive validation state from fetcher
   const isValidating = fetcher.state === "submitting" || fetcher.state === "loading";
-  const validationResult = fetcher.data;
+  const validationResult = fetcher.data?.intent === "validate" ? fetcher.data : undefined;
   const showSuccess = !isValidating && validationResult?.valid === true;
-  const showError = clientError || (!isValidating && validationResult?.valid === false);
+  const showError = !isValidating && validationResult?.valid === false;
 
   const form = useForm<ChannelFormValues>({
     initialValues: {
@@ -109,7 +92,12 @@ export function ChannelForm({
             <Button
               size="compact-xs"
               variant="light"
-              onClick={() => validateWebhook(form.values.webhookUrl)}
+              onClick={() => {
+                fetcher.submit(
+                  { intent: "validate", webhookUrl: form.values.webhookUrl },
+                  { method: "POST" }
+                );
+              }}
               loading={isValidating}
               disabled={!form.values.webhookUrl.trim()}
               data-testid="validate-webhook-button"
@@ -136,7 +124,7 @@ export function ChannelForm({
             variant="light"
             data-testid="webhook-validation-error"
           >
-            {clientError ?? validationResult?.error ?? "Invalid webhook"}
+            {validationResult?.error ?? "Invalid webhook"}
           </Alert>
         )}
 
