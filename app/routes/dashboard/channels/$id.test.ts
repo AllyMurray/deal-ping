@@ -110,6 +110,8 @@ describe("Channel Detail Route", () => {
           includeKeywords: ["pro", "max"],
           excludeKeywords: ["case"],
           caseSensitive: false,
+          maxPrice: null,
+          minDiscount: null,
         },
       ]);
       expect(result.deals).toEqual([]);
@@ -202,6 +204,8 @@ describe("Channel Detail Route", () => {
           includeKeywords: ["pro"],
           excludeKeywords: ["case"],
           caseSensitive: false,
+          maxPrice: undefined,
+          minDiscount: undefined,
         });
         expect(result).toEqual({ success: true });
       });

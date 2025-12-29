@@ -201,4 +201,84 @@ describe("ConfigForm", () => {
       expect(screen.getByText("Case Sensitive")).toBeInTheDocument();
     });
   });
+
+  describe("price threshold inputs", () => {
+    it("renders price threshold section", () => {
+      render(<ConfigForm {...defaultProps} />);
+      expect(screen.getByText("Price Thresholds")).toBeInTheDocument();
+      expect(
+        screen.getByText("Only receive notifications when deals meet these criteria")
+      ).toBeInTheDocument();
+    });
+
+    it("renders max price input", () => {
+      render(<ConfigForm {...defaultProps} />);
+      expect(screen.getByTestId("max-price-input")).toBeInTheDocument();
+      expect(screen.getByText("Maximum Price")).toBeInTheDocument();
+      expect(
+        screen.getByText("Only notify if price is under this amount")
+      ).toBeInTheDocument();
+    });
+
+    it("renders min discount input", () => {
+      render(<ConfigForm {...defaultProps} />);
+      expect(screen.getByTestId("min-discount-input")).toBeInTheDocument();
+      expect(screen.getByText("Minimum Discount")).toBeInTheDocument();
+      expect(
+        screen.getByText("Only notify if discount is at least this %")
+      ).toBeInTheDocument();
+    });
+
+    it("renders with initial price threshold values", () => {
+      render(
+        <ConfigForm
+          {...defaultProps}
+          initialValues={{
+            searchTerm: "test",
+            maxPrice: 50,
+            minDiscount: 30,
+          }}
+        />
+      );
+      // NumberInput includes prefix/suffix in value
+      expect(screen.getByTestId("max-price-input")).toHaveValue("£50");
+      expect(screen.getByTestId("min-discount-input")).toHaveValue("30%");
+    });
+
+    it("renders with null price threshold values", () => {
+      render(
+        <ConfigForm
+          {...defaultProps}
+          initialValues={{
+            searchTerm: "test",
+            maxPrice: null,
+            minDiscount: null,
+          }}
+        />
+      );
+      // NumberInput shows empty when value is null
+      expect(screen.getByTestId("max-price-input")).toHaveValue("");
+      expect(screen.getByTestId("min-discount-input")).toHaveValue("");
+    });
+
+    it("allows typing in max price input", async () => {
+      const user = userEvent.setup();
+      render(<ConfigForm {...defaultProps} />);
+
+      const maxPriceInput = screen.getByTestId("max-price-input");
+      await user.type(maxPriceInput, "75");
+
+      expect(maxPriceInput).toHaveValue("£75");
+    });
+
+    it("allows typing in min discount input", async () => {
+      const user = userEvent.setup();
+      render(<ConfigForm {...defaultProps} />);
+
+      const minDiscountInput = screen.getByTestId("min-discount-input");
+      await user.type(minDiscountInput, "25");
+
+      expect(minDiscountInput).toHaveValue("25%");
+    });
+  });
 });

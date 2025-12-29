@@ -55,7 +55,7 @@ Show when the last deal was sent for each channel.
 
 ### High Value - Medium Effort
 
-#### 4. Price Threshold Alerts
+#### ~~4. Price Threshold Alerts~~ (Implemented)
 Only notify when deal price is under a specified amount.
 
 **Configuration:**
@@ -142,6 +142,20 @@ Track which notifications were actually sent.
 - Display in dashboard
 
 ## Completed Features
+
+### Price Threshold Alerts (Implemented)
+Only notify when deal price is under a specified amount or discount meets minimum threshold.
+
+**Configuration:**
+- Per search term: Set maximum price (e.g., "Only notify if price < £50")
+- Per search term: Set minimum discount percentage (e.g., "Only notify if > 30% off")
+- Configure in the search term edit form
+
+**Behavior:**
+- Deals with price above maximum are filtered (filter status: `filtered_price_too_high`)
+- Deals with discount below minimum are filtered (filter status: `filtered_discount_too_low`)
+- Deal history page shows all deals with notification status and filter reasons
+- Each deal card displays whether notification was sent and why/why not
 
 ### Quiet Hours (Implemented)
 Account-level setting to pause notifications during specified hours. Deals are queued and sent when quiet hours end.

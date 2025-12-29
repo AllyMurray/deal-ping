@@ -45,6 +45,8 @@ export type UpsertConfigParams = {
   excludeKeywords?: string[];
   includeKeywords?: string[];
   caseSensitive?: boolean;
+  maxPrice?: number; // Maximum price threshold in pence
+  minDiscount?: number; // Minimum discount percentage
 };
 export type DeleteConfigParams = { channelId: string; searchTerm: string };
 export type DeleteConfigsByChannelParams = { channelId: string };
@@ -61,7 +63,7 @@ export type CreateDealParams = {
   price?: string;
   merchant?: string;
   matchDetails?: string; // Serialized JSON of MatchDetails
-  filterStatus: 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include';
+  filterStatus: 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include' | 'filtered_price_too_high' | 'filtered_discount_too_low';
   filterReason?: string;
   notified?: boolean;
 };
@@ -272,27 +274,53 @@ export async function upsertConfig(config: UpsertConfigParams): Promise<SearchTe
 
   if (existing) {
     // Update existing config - use patch to respect readOnly fields
+    const updates: {
+      enabled?: boolean;
+      excludeKeywords?: string[];
+      includeKeywords?: string[];
+      caseSensitive?: boolean;
+      maxPrice?: number;
+      minDiscount?: number;
+    } = {
+      enabled: config.enabled ?? existing.enabled,
+      excludeKeywords: config.excludeKeywords ?? existing.excludeKeywords,
+      includeKeywords: config.includeKeywords ?? existing.includeKeywords,
+      caseSensitive: config.caseSensitive ?? existing.caseSensitive,
+    };
+    // Only set price thresholds if provided (allows clearing by passing undefined)
+    if (config.maxPrice !== undefined) updates.maxPrice = config.maxPrice;
+    if (config.minDiscount !== undefined) updates.minDiscount = config.minDiscount;
+
     await HotUKDealsService.entities.searchTermConfig
       .patch({ channelId, searchTerm })
-      .set({
-        enabled: config.enabled ?? existing.enabled,
-        excludeKeywords: config.excludeKeywords ?? existing.excludeKeywords,
-        includeKeywords: config.includeKeywords ?? existing.includeKeywords,
-        caseSensitive: config.caseSensitive ?? existing.caseSensitive,
-      })
+      .set(updates)
       .go();
   } else {
     // Create new config
+    const newConfig: {
+      userId: string;
+      channelId: string;
+      searchTerm: string;
+      enabled: boolean;
+      excludeKeywords: string[];
+      includeKeywords: string[];
+      caseSensitive: boolean;
+      maxPrice?: number;
+      minDiscount?: number;
+    } = {
+      userId,
+      channelId,
+      searchTerm,
+      enabled: config.enabled ?? true,
+      excludeKeywords: config.excludeKeywords ?? [],
+      includeKeywords: config.includeKeywords ?? [],
+      caseSensitive: config.caseSensitive ?? false,
+    };
+    if (config.maxPrice !== undefined) newConfig.maxPrice = config.maxPrice;
+    if (config.minDiscount !== undefined) newConfig.minDiscount = config.minDiscount;
+
     await HotUKDealsService.entities.searchTermConfig
-      .put({
-        userId,
-        channelId,
-        searchTerm,
-        enabled: config.enabled ?? true,
-        excludeKeywords: config.excludeKeywords ?? [],
-        includeKeywords: config.includeKeywords ?? [],
-        caseSensitive: config.caseSensitive ?? false,
-      })
+      .put(newConfig)
       .go();
   }
 

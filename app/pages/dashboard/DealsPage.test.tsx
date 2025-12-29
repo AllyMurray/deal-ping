@@ -59,7 +59,7 @@ describe("DealsPage", () => {
     it("renders page description", () => {
       render(<DealsPage {...defaultProps} />);
       expect(
-        screen.getByText("View processed deals and notification history")
+        screen.getByText("View all processed deals with notification status and filter reasons")
       ).toBeInTheDocument();
     });
   });

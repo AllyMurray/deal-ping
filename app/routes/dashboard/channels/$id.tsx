@@ -52,6 +52,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       includeKeywords: c.includeKeywords || [],
       excludeKeywords: c.excludeKeywords || [],
       caseSensitive: c.caseSensitive ?? false,
+      maxPrice: c.maxPrice ? c.maxPrice / 100 : null, // Convert pence to pounds for display
+      minDiscount: c.minDiscount ?? null,
     })),
     deals: deals.map((d) => ({
       id: d.dealId,
@@ -64,6 +66,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       matchDetails: d.matchDetails,
       filterStatus: d.filterStatus,
       filterReason: d.filterReason,
+      notified: d.notified,
     })),
   };
 }
@@ -90,6 +93,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     );
     const caseSensitive = formData.get("caseSensitive") === "true";
 
+    // Parse price thresholds - convert from pounds to pence for storage
+    const maxPriceStr = formData.get("maxPrice") as string;
+    const minDiscountStr = formData.get("minDiscount") as string;
+    const maxPrice = maxPriceStr ? Math.round(parseFloat(maxPriceStr) * 100) : undefined;
+    const minDiscount = minDiscountStr ? parseInt(minDiscountStr, 10) : undefined;
+
     await upsertConfig({
       userId: user.id,
       channelId: params.id!,
@@ -98,6 +107,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       includeKeywords,
       excludeKeywords,
       caseSensitive,
+      maxPrice,
+      minDiscount,
     });
 
     return { success: true };
@@ -232,7 +243,12 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
     if (config) {
       setConfigModal({
         open: true,
-        config: { ...config, caseSensitive: false },
+        config: {
+          ...config,
+          caseSensitive: config.caseSensitive ?? false,
+          maxPrice: config.maxPrice ?? null,
+          minDiscount: config.minDiscount ?? null,
+        },
         isEditing: true,
       });
     }
@@ -254,17 +270,24 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
   };
 
   const handleSubmitConfig = (values: ConfigFormValues) => {
-    fetcher.submit(
-      {
-        intent: "upsertConfig",
-        searchTerm: values.searchTerm,
-        enabled: String(values.enabled),
-        includeKeywords: JSON.stringify(values.includeKeywords),
-        excludeKeywords: JSON.stringify(values.excludeKeywords),
-        caseSensitive: String(values.caseSensitive),
-      },
-      { method: "POST" }
-    );
+    const formData: Record<string, string> = {
+      intent: "upsertConfig",
+      searchTerm: values.searchTerm,
+      enabled: String(values.enabled),
+      includeKeywords: JSON.stringify(values.includeKeywords),
+      excludeKeywords: JSON.stringify(values.excludeKeywords),
+      caseSensitive: String(values.caseSensitive),
+    };
+
+    // Only include price thresholds if they have values
+    if (values.maxPrice !== null && values.maxPrice !== undefined) {
+      formData.maxPrice = String(values.maxPrice);
+    }
+    if (values.minDiscount !== null && values.minDiscount !== undefined) {
+      formData.minDiscount = String(values.minDiscount);
+    }
+
+    fetcher.submit(formData, { method: "POST" });
   };
 
   const handleConfirmDelete = () => {

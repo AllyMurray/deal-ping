@@ -101,6 +101,16 @@ describe("DealCard", () => {
       expect(screen.getByTestId("filter-status-badge")).toHaveTextContent("Missing Keywords");
     });
 
+    it("shows 'Price Too High' badge for filtered_price_too_high status", () => {
+      render(<DealCard {...defaultProps} filterStatus="filtered_price_too_high" />);
+      expect(screen.getByTestId("filter-status-badge")).toHaveTextContent("Price Too High");
+    });
+
+    it("shows 'Low Discount' badge for filtered_discount_too_low status", () => {
+      render(<DealCard {...defaultProps} filterStatus="filtered_discount_too_low" />);
+      expect(screen.getByTestId("filter-status-badge")).toHaveTextContent("Low Discount");
+    });
+
     it("applies reduced opacity to filtered deals", () => {
       render(<DealCard {...defaultProps} filterStatus="filtered_exclude" />);
       const card = screen.getByTestId("deal-card-deal-123");
@@ -111,6 +121,43 @@ describe("DealCard", () => {
       render(<DealCard {...defaultProps} filterStatus="passed" />);
       const card = screen.getByTestId("deal-card-deal-123");
       expect(card).toHaveStyle({ opacity: "1" });
+    });
+  });
+
+  describe("notification status", () => {
+    it("does not show notification badge when notified is undefined", () => {
+      render(<DealCard {...defaultProps} />);
+      expect(screen.queryByTestId("notification-status-badge")).not.toBeInTheDocument();
+    });
+
+    it("shows 'Notified' badge when notified is true", () => {
+      render(<DealCard {...defaultProps} notified={true} />);
+      const badge = screen.getByTestId("notification-status-badge");
+      expect(badge).toHaveTextContent("Notified");
+    });
+
+    it("shows 'Not Notified' badge when notified is false", () => {
+      render(<DealCard {...defaultProps} notified={false} />);
+      const badge = screen.getByTestId("notification-status-badge");
+      expect(badge).toHaveTextContent("Not Notified");
+    });
+
+    it("shows notification badge with filter reason as title when not notified", () => {
+      render(
+        <DealCard
+          {...defaultProps}
+          notified={false}
+          filterReason="Price £75.00 exceeds maximum £50.00"
+        />
+      );
+      const badge = screen.getByTestId("notification-status-badge");
+      expect(badge).toHaveAttribute("title", "Price £75.00 exceeds maximum £50.00");
+    });
+
+    it("shows notification badge with success title when notified", () => {
+      render(<DealCard {...defaultProps} notified={true} />);
+      const badge = screen.getByTestId("notification-status-badge");
+      expect(badge).toHaveAttribute("title", "Notification sent");
     });
   });
 

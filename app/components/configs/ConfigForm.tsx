@@ -5,6 +5,8 @@ import {
   Group,
   Switch,
   TagsInput,
+  NumberInput,
+  Text,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 
@@ -14,6 +16,8 @@ export interface ConfigFormValues {
   includeKeywords: string[];
   excludeKeywords: string[];
   caseSensitive: boolean;
+  maxPrice?: number | null; // Price in pounds (e.g., 50.00)
+  minDiscount?: number | null; // Discount percentage (e.g., 30)
 }
 
 export interface ConfigFormProps {
@@ -40,11 +44,21 @@ export function ConfigForm({
       includeKeywords: [],
       excludeKeywords: [],
       caseSensitive: false,
+      maxPrice: null,
+      minDiscount: null,
       ...initialValues,
     },
     validate: {
       searchTerm: (value) =>
         value.trim().length < 1 ? "Search term is required" : null,
+      maxPrice: (value) =>
+        value !== null && value !== undefined && value < 0
+          ? "Price must be positive"
+          : null,
+      minDiscount: (value) =>
+        value !== null && value !== undefined && (value < 0 || value > 100)
+          ? "Discount must be between 0 and 100"
+          : null,
     },
   });
 
@@ -89,6 +103,39 @@ export function ConfigForm({
           data-testid="case-sensitive-switch"
           {...form.getInputProps("caseSensitive", { type: "checkbox" })}
         />
+
+        <Text size="sm" fw={500} mt="md">
+          Price Thresholds
+        </Text>
+        <Text size="xs" c="dimmed" mb="xs">
+          Only receive notifications when deals meet these criteria
+        </Text>
+
+        <Group grow>
+          <NumberInput
+            label="Maximum Price"
+            placeholder="e.g., 50"
+            description="Only notify if price is under this amount"
+            prefix="£"
+            min={0}
+            decimalScale={2}
+            allowNegative={false}
+            data-testid="max-price-input"
+            {...form.getInputProps("maxPrice")}
+          />
+
+          <NumberInput
+            label="Minimum Discount"
+            placeholder="e.g., 30"
+            description="Only notify if discount is at least this %"
+            suffix="%"
+            min={0}
+            max={100}
+            allowNegative={false}
+            data-testid="min-discount-input"
+            {...form.getInputProps("minDiscount")}
+          />
+        </Group>
 
         <Group justify="flex-end" mt="md">
           <Button

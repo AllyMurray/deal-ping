@@ -42,6 +42,12 @@ export const SearchTermConfigEntity = new Entity({
       type: 'boolean',
       default: false,
     },
+    maxPrice: {
+      type: 'number', // Maximum price threshold in pence (e.g., 5000 = £50.00)
+    },
+    minDiscount: {
+      type: 'number', // Minimum discount percentage (e.g., 30 = 30% off)
+    },
     createdAt: {
       type: 'string',
       default: () => new Date().toISOString(),

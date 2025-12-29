@@ -3,7 +3,7 @@ import { Logger } from '@aws-lambda-powertools/logger';
 import { injectLambdaContext } from '@aws-lambda-powertools/logger/middleware';
 import middy from '@middy/core';
 import { request } from 'undici';
-import { fetchDeals, Deal } from './feed-parser';
+import { fetchDeals, type Deal } from './feed-parser';
 import {
   getEnabledConfigsGroupedByChannel,
   dealExists,
@@ -13,22 +13,21 @@ import {
   deleteQueuedDealsForChannel,
   getAllChannels,
   getAllowedUsers,
-  ChannelWithConfigs,
-  SearchTermConfig,
+  type ChannelWithConfigs,
 } from './db';
-import type { Channel, QueuedDeal, AllowedUser } from './db/schemas';
-import { DiscordEmbed, DiscordWebhookPayload } from './discord-types';
+import type { Channel, QueuedDeal, AllowedUser, SearchTermConfig } from './db/schemas';
+import type { DiscordEmbed, DiscordWebhookPayload } from './discord-types';
 import {
   computeMatchDetails,
   formatMatchSummary,
   serializeMatchDetails,
-  MatchDetails,
+  type MatchDetails,
 } from './match-details';
 import { isWithinQuietHours, didQuietHoursJustEnd } from './quiet-hours';
 
 const logger = new Logger({ serviceName: 'HotUKDealsNotifier' });
 
-export type FilterStatus = 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include';
+export type FilterStatus = 'passed' | 'filtered_no_match' | 'filtered_exclude' | 'filtered_include' | 'filtered_price_too_high' | 'filtered_discount_too_low';
 
 interface DealWithSearchTerm {
   id: string;
@@ -57,6 +56,23 @@ export interface FilterResult {
   filterReason?: string;
   matchDetails: MatchDetails;
 }
+
+// Helper function to parse price string to pence
+// Handles formats like "£50.00", "£50", "50.00", "£1,234.56"
+export const parsePriceToPence = (priceString?: string): number | null => {
+  if (!priceString) return null;
+
+  // Remove currency symbols and whitespace
+  const cleaned = priceString.replace(/[£$€\s,]/g, '');
+
+  // Try to parse as a number
+  const parsed = parseFloat(cleaned);
+
+  if (isNaN(parsed)) return null;
+
+  // Convert to pence (integer)
+  return Math.round(parsed * 100);
+};
 
 // Simple in-memory cache (optional optimization)
 let configCache: {
@@ -93,7 +109,7 @@ const getGroupedConfigs = async (): Promise<ChannelWithConfigs[]> => {
   }
 };
 
-// Filter deals based on include/exclude keywords and compute match details
+// Filter deals based on include/exclude keywords, price thresholds, and compute match details
 // Exported for testing
 export const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult => {
   const title = config.caseSensitive ? deal.title : deal.title.toLowerCase();
@@ -178,6 +194,53 @@ export const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult =
       return {
         passed: false,
         filterStatus: 'filtered_include',
+        filterReason,
+        matchDetails,
+      };
+    }
+  }
+
+  // Check price threshold (maxPrice is in pence)
+  if (config.maxPrice !== undefined && config.maxPrice !== null) {
+    const dealPriceInPence = parsePriceToPence(deal.price);
+    if (dealPriceInPence !== null && dealPriceInPence > config.maxPrice) {
+      const maxPriceFormatted = `£${(config.maxPrice / 100).toFixed(2)}`;
+      const filterReason = `Price ${deal.price} exceeds maximum ${maxPriceFormatted}`;
+      logger.debug('Deal filtered out by price threshold', {
+        dealTitle: deal.title,
+        dealPrice: deal.price,
+        dealPriceInPence,
+        maxPrice: config.maxPrice,
+        searchTerm: config.searchTerm,
+        matchDetails,
+      });
+      return {
+        passed: false,
+        filterStatus: 'filtered_price_too_high',
+        filterReason,
+        matchDetails,
+      };
+    }
+  }
+
+  // Check minimum discount threshold
+  if (config.minDiscount !== undefined && config.minDiscount !== null) {
+    const dealDiscount = deal.savingsPercentage;
+    // If deal has no discount info or discount is below threshold, filter it out
+    if (dealDiscount === undefined || dealDiscount < config.minDiscount) {
+      const filterReason = dealDiscount !== undefined
+        ? `Discount ${dealDiscount}% is below minimum ${config.minDiscount}%`
+        : `No discount information available (minimum ${config.minDiscount}% required)`;
+      logger.debug('Deal filtered out by discount threshold', {
+        dealTitle: deal.title,
+        dealDiscount,
+        minDiscount: config.minDiscount,
+        searchTerm: config.searchTerm,
+        matchDetails,
+      });
+      return {
+        passed: false,
+        filterStatus: 'filtered_discount_too_low',
         filterReason,
         matchDetails,
       };

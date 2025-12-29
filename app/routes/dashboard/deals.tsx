@@ -73,6 +73,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       matchDetails: d.matchDetails,
       filterStatus: d.filterStatus,
       filterReason: d.filterReason,
+      notified: d.notified,
     })),
     stats: {
       totalDeals: result.data.length,

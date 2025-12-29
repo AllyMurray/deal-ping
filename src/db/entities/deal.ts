@@ -46,7 +46,7 @@ export const DealEntity = new Entity({
       type: 'string', // Serialized JSON of MatchDetails
     },
     filterStatus: {
-      type: ['passed', 'filtered_no_match', 'filtered_exclude', 'filtered_include'] as const,
+      type: ['passed', 'filtered_no_match', 'filtered_exclude', 'filtered_include', 'filtered_price_too_high', 'filtered_discount_too_low'] as const,
       required: true,
       default: 'passed',
     },
