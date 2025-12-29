@@ -6,7 +6,7 @@ This document outlines potential features and UX improvements identified during 
 
 | Issue | Location | Impact | Priority |
 |-------|----------|--------|----------|
-| **"Deals Today" shows "Soon"** | Dashboard Home | Incomplete placeholder looks unfinished - should show actual data or be hidden | Medium |
+| ~~**"Deals Today" shows "Soon"**~~ | ~~Dashboard Home~~ | ~~Incomplete placeholder looks unfinished - should show actual data or be hidden~~ | ~~Medium~~ ✓ |
 | ~~**No sorting on Deals page**~~ | ~~DealsPage~~ | ~~Users can filter but can't sort by date, price, or search term~~ | ~~High~~ (Not implementing - see notes) |
 | ~~**No date range filter**~~ | ~~DealFilters~~ | ~~Users can't filter deals by time period (today, this week, etc.)~~ | ~~High~~ ✓ |
 | ~~**Search terms link to channels**~~ | ~~DashboardHomePage~~ | ~~Both stat cards link to `/dashboard/channels` - not intuitive for search terms~~ | ~~Low~~ ✓ |
@@ -312,6 +312,29 @@ Dedicated page showing all search terms across all channels, fixing the UX issue
 - Fetches all channels for the user, then all configs for each channel
 - Combines data into a flat list with channel names included
 - Uses existing repository functions (`getChannelsByUser`, `getConfigsByChannel`)
+
+### Deals Today Stat Card (Implemented)
+The "Deals Today" stat card on the dashboard home page now shows the actual count of deals found today instead of the placeholder "Soon" text.
+
+**Features:**
+- Shows real-time count of deals found today across all user's search terms
+- Clicking the stat card navigates to the deals page with "Today" filter pre-selected
+- Tooltip explains what the count represents
+
+**Location:**
+- Dashboard Home page stat cards
+
+**Behavior:**
+- Counts deals from all unique search terms configured by the user
+- Uses the start of the current day (midnight) as the time boundary
+- Queries are made in parallel for efficient loading
+- Shows "0" when no deals have been found today
+
+**Technical Details:**
+- Route loader: `app/routes/dashboard/index.tsx`
+- Page component: `app/pages/dashboard/DashboardHomePage.tsx`
+- Uses `getDealsBySearchTerm` with `startTime` parameter for efficient GSI queries
+- Deduplicates search terms to avoid querying the same term multiple times
 
 ## Implementation Priority
 

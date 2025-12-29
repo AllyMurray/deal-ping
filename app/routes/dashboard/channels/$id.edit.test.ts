@@ -49,16 +49,16 @@ describe("Channel Edit Route", () => {
         userId: "user-123",
         name: "Test Channel",
         webhookUrl: "https://webhook.example.com",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       const request = new Request("http://localhost/dashboard/channels/ch-1/edit");
-      const result = await loader({
+      const result = await loader(fromPartial({
         request,
         params: { id: "ch-1" },
         context: {},
-      });
+      }));
 
       expect(result.channel).toEqual({
         id: "ch-1",
@@ -79,7 +79,7 @@ describe("Channel Edit Route", () => {
       const request = new Request("http://localhost/dashboard/channels/ch-1/edit");
 
       await expect(
-        loader({ request, params: { id: "ch-1" }, context: {} })
+        loader(fromPartial({ request, params: { id: "ch-1" }, context: {} }))
       ).rejects.toThrow();
     });
 
@@ -95,14 +95,14 @@ describe("Channel Edit Route", () => {
         userId: "other-user",
         name: "Test Channel",
         webhookUrl: "https://webhook.example.com",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       const request = new Request("http://localhost/dashboard/channels/ch-1/edit");
 
       await expect(
-        loader({ request, params: { id: "ch-1" }, context: {} })
+        loader(fromPartial({ request, params: { id: "ch-1" }, context: {} }))
       ).rejects.toThrow();
     });
   });
@@ -120,11 +120,16 @@ describe("Channel Edit Route", () => {
         userId: "user-123",
         name: "Old Name",
         webhookUrl: "https://old-webhook.example.com",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
-      mockUpdateChannel.mockResolvedValue(undefined);
+      mockUpdateChannel.mockResolvedValue({
+        channelId: "ch-1",
+        userId: "user-123",
+        name: "Updated Channel",
+        webhookUrl: "https://new-webhook.example.com",
+      });
 
       const formData = new FormData();
       formData.append("name", "Updated Channel");
@@ -135,7 +140,7 @@ describe("Channel Edit Route", () => {
         body: formData,
       });
 
-      const result = await action({ request, params: { id: "ch-1" }, context: {} });
+      const result = await action(fromPartial({ request, params: { id: "ch-1" }, context: {} }));
 
       expect(mockUpdateChannel).toHaveBeenCalledWith({
         id: "ch-1",
@@ -166,7 +171,7 @@ describe("Channel Edit Route", () => {
       });
 
       await expect(
-        action({ request, params: { id: "ch-1" }, context: {} })
+        action(fromPartial({ request, params: { id: "ch-1" }, context: {} }))
       ).rejects.toThrow();
     });
 
@@ -182,8 +187,8 @@ describe("Channel Edit Route", () => {
         userId: "other-user",
         name: "Test Channel",
         webhookUrl: "https://webhook.example.com",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       const formData = new FormData();
@@ -196,7 +201,7 @@ describe("Channel Edit Route", () => {
       });
 
       await expect(
-        action({ request, params: { id: "ch-1" }, context: {} })
+        action(fromPartial({ request, params: { id: "ch-1" }, context: {} }))
       ).rejects.toThrow();
     });
 
@@ -212,8 +217,8 @@ describe("Channel Edit Route", () => {
         userId: "user-123",
         name: "Test Channel",
         webhookUrl: "https://webhook.example.com",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       mockUpdateChannel.mockRejectedValue(new Error("Database error"));
@@ -227,11 +232,11 @@ describe("Channel Edit Route", () => {
         body: formData,
       });
 
-      const result = await action({
+      const result = await action(fromPartial({
         request,
         params: { id: "ch-1" },
         context: {},
-      });
+      }));
 
       expect(result).toEqual({
         error: "Failed to update channel. Please try again.",

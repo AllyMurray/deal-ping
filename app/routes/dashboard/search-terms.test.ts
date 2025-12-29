@@ -69,7 +69,7 @@ describe("Search Terms Route", () => {
         ]);
 
       const request = new Request("http://localhost/dashboard/search-terms");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.searchTerms).toHaveLength(2);
       expect(result.searchTerms[0]).toEqual({
@@ -104,7 +104,7 @@ describe("Search Terms Route", () => {
       mockGetChannelsByUser.mockResolvedValue([]);
 
       const request = new Request("http://localhost/dashboard/search-terms");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.searchTerms).toEqual([]);
     });
@@ -123,7 +123,7 @@ describe("Search Terms Route", () => {
       mockGetConfigsByChannel.mockResolvedValue([]);
 
       const request = new Request("http://localhost/dashboard/search-terms");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.searchTerms).toEqual([]);
     });
@@ -138,7 +138,7 @@ describe("Search Terms Route", () => {
 
       const request = new Request("http://localhost/dashboard/search-terms");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
     });
 
     it("sorts search terms alphabetically", async () => {
@@ -159,7 +159,7 @@ describe("Search Terms Route", () => {
       ]);
 
       const request = new Request("http://localhost/dashboard/search-terms");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.searchTerms.map((t) => t.searchTerm)).toEqual([
         "apple",

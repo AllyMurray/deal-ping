@@ -49,6 +49,7 @@ describe("Admin Route", () => {
           isAdmin: false,
           addedBy: "admin-123",
           addedAt: new Date().toISOString(),
+          quietHoursEnabled: false,
         },
         {
           discordId: "admin-123",
@@ -57,11 +58,12 @@ describe("Admin Route", () => {
           isAdmin: true,
           addedBy: "system",
           addedAt: new Date().toISOString(),
+          quietHoursEnabled: false,
         },
       ]);
 
       const request = new Request("http://localhost/dashboard/admin");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.users).toHaveLength(2);
       expect(result.users[0]).toEqual({
@@ -85,7 +87,7 @@ describe("Admin Route", () => {
       mockGetAllowedUsers.mockResolvedValue([]);
 
       const request = new Request("http://localhost/dashboard/admin");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.users).toEqual([]);
       expect(result.currentUserId).toBe("admin-123");
@@ -101,7 +103,7 @@ describe("Admin Route", () => {
 
       const request = new Request("http://localhost/dashboard/admin");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
     });
 
     it("throws redirect when user is not admin", async () => {
@@ -114,7 +116,7 @@ describe("Admin Route", () => {
 
       const request = new Request("http://localhost/dashboard/admin");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
     });
   });
 });

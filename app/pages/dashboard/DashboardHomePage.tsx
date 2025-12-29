@@ -23,6 +23,7 @@ export interface DashboardStats {
   channelCount: number;
   configCount: number;
   enabledConfigCount: number;
+  dealsToday: number;
 }
 
 export interface DashboardHomePageProps {
@@ -171,10 +172,10 @@ export function DashboardHomePage({ stats }: DashboardHomePageProps) {
 
         <StatCard
           icon={<IconClock size={24} stroke={1.5} />}
-          value="Soon"
+          value={stats.dealsToday}
           label="Deals Today"
-          tooltip="Deal tracking statistics coming in a future update"
-          href="/dashboard/deals"
+          tooltip="Number of deals found today across all your search terms"
+          href="/dashboard/deals?dateRange=today"
           delay={0.2}
           testId="stat-deals-today"
         />

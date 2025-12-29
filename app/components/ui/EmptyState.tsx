@@ -32,10 +32,17 @@ export function EmptyState({
           {description}
         </Text>
       </Stack>
-      {actionLabel && (actionHref || onAction) && (
+      {actionLabel && actionHref && (
         <Button
-          component={actionHref ? Link : "button"}
+          component={Link}
           to={actionHref}
+          data-testid="empty-state-action"
+        >
+          {actionLabel}
+        </Button>
+      )}
+      {actionLabel && !actionHref && onAction && (
+        <Button
           onClick={onAction}
           data-testid="empty-state-action"
         >

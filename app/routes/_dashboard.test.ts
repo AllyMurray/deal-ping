@@ -45,7 +45,7 @@ describe("Dashboard Layout Route", () => {
       mockIsUserAdmin.mockResolvedValue(false);
 
       const request = new Request("http://localhost/dashboard");
-      const response = await loader({ request, params: {}, context: {} });
+      const response = await loader(fromPartial({ request, params: {}, context: {} }));
       const result = await response.json();
 
       expect(result.user).toEqual({ id: "user-123", username: "testuser" });
@@ -63,7 +63,7 @@ describe("Dashboard Layout Route", () => {
       mockIsUserAdmin.mockResolvedValue(true);
 
       const request = new Request("http://localhost/dashboard");
-      const response = await loader({ request, params: {}, context: {} });
+      const response = await loader(fromPartial({ request, params: {}, context: {} }));
       const result = await response.json();
 
       expect(result.user).toEqual({ id: "admin-123", username: "admin" });
@@ -82,7 +82,7 @@ describe("Dashboard Layout Route", () => {
       mockIsUserAdmin.mockResolvedValue(false);
 
       const request = new Request("http://localhost/dashboard");
-      const response = await loader({ request, params: {}, context: {} });
+      const response = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(response.headers.get("Set-Cookie")).toBe("refreshed-session");
     });
@@ -97,7 +97,7 @@ describe("Dashboard Layout Route", () => {
 
       const request = new Request("http://localhost/dashboard");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
     });
   });
 });

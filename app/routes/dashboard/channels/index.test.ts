@@ -58,33 +58,33 @@ describe("Channels Index Route", () => {
           userId: "user-123",
           name: "Channel 1",
           webhookUrl: "https://webhook1.example.com",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         },
         {
           channelId: "ch-2",
           userId: "user-123",
           name: "Channel 2",
           webhookUrl: "https://webhook2.example.com",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         },
       ]);
 
       // Channel 1 has 3 configs, 2 enabled
       mockGetConfigsByChannel.mockResolvedValueOnce([
-        fromPartial({ configId: "cfg-1", enabled: true }),
-        fromPartial({ configId: "cfg-2", enabled: true }),
-        fromPartial({ configId: "cfg-3", enabled: false }),
+        fromPartial({ enabled: true }),
+        fromPartial({ enabled: true }),
+        fromPartial({ enabled: false }),
       ]);
 
       // Channel 2 has 1 config, 1 enabled
       mockGetConfigsByChannel.mockResolvedValueOnce([
-        fromPartial({ configId: "cfg-4", enabled: true }),
+        fromPartial({ enabled: true }),
       ]);
 
       const request = new Request("http://localhost/dashboard/channels");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(mockRequireUser).toHaveBeenCalledWith(request);
       expect(mockGetChannelsByUser).toHaveBeenCalledWith({ userId: "user-123" });
@@ -116,7 +116,7 @@ describe("Channels Index Route", () => {
       mockGetChannelsByUser.mockResolvedValue([]);
 
       const request = new Request("http://localhost/dashboard/channels");
-      const result = await loader({ request, params: {}, context: {} });
+      const result = await loader(fromPartial({ request, params: {}, context: {} }));
 
       expect(result.channels).toEqual([]);
     });
@@ -131,7 +131,7 @@ describe("Channels Index Route", () => {
 
       const request = new Request("http://localhost/dashboard/channels");
 
-      await expect(loader({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(loader(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
     });
   });
 
@@ -149,8 +149,8 @@ describe("Channels Index Route", () => {
           userId: "user-123",
           name: "Channel 1",
           webhookUrl: "https://webhook.example.com",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
 
         mockDeleteChannel.mockResolvedValue(undefined);
@@ -164,7 +164,7 @@ describe("Channels Index Route", () => {
           body: formData,
         });
 
-        const result = await action({ request, params: {}, context: {} });
+        const result = await action(fromPartial({ request, params: {}, context: {} }));
 
         expect(mockGetChannel).toHaveBeenCalledWith({ id: "ch-1" });
         expect(mockDeleteChannel).toHaveBeenCalledWith({ id: "ch-1" });
@@ -189,7 +189,7 @@ describe("Channels Index Route", () => {
           body: formData,
         });
 
-        const result = await action({ request, params: {}, context: {} });
+        const result = await action(fromPartial({ request, params: {}, context: {} }));
 
         expect(mockDeleteChannel).not.toHaveBeenCalled();
         expect(result).toEqual({
@@ -210,8 +210,8 @@ describe("Channels Index Route", () => {
           userId: "other-user-456",
           name: "Other User Channel",
           webhookUrl: "https://webhook.example.com",
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
 
         const formData = new FormData();
@@ -223,7 +223,7 @@ describe("Channels Index Route", () => {
           body: formData,
         });
 
-        const result = await action({ request, params: {}, context: {} });
+        const result = await action(fromPartial({ request, params: {}, context: {} }));
 
         expect(mockDeleteChannel).not.toHaveBeenCalled();
         expect(result).toEqual({
@@ -249,7 +249,7 @@ describe("Channels Index Route", () => {
           body: formData,
         });
 
-        const result = await action({ request, params: {}, context: {} });
+        const result = await action(fromPartial({ request, params: {}, context: {} }));
 
         expect(result).toEqual({ success: false });
       });
@@ -268,7 +268,7 @@ describe("Channels Index Route", () => {
           body: formData,
         });
 
-        const result = await action({ request, params: {}, context: {} });
+        const result = await action(fromPartial({ request, params: {}, context: {} }));
 
         expect(result).toEqual({ success: false });
       });
@@ -291,7 +291,7 @@ describe("Channels Index Route", () => {
         body: formData,
       });
 
-      await expect(action({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(action(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
     });
   });
 });

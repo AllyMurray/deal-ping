@@ -47,8 +47,8 @@ describe("New Channel Route", () => {
         userId: "user-123",
         name: "New Channel",
         webhookUrl: "https://webhook.example.com",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       const formData = new FormData();
@@ -60,7 +60,7 @@ describe("New Channel Route", () => {
         body: formData,
       });
 
-      const result = await action({ request, params: {}, context: {} });
+      const result = await action(fromPartial({ request, params: {}, context: {} }));
 
       expect(mockCreateChannel).toHaveBeenCalledWith({
         userId: "user-123",
@@ -90,7 +90,7 @@ describe("New Channel Route", () => {
         body: formData,
       });
 
-      const result = await action({ request, params: {}, context: {} });
+      const result = await action(fromPartial({ request, params: {}, context: {} }));
 
       expect(result).toEqual({
         error: "Failed to create channel. Please try again.",
@@ -114,7 +114,7 @@ describe("New Channel Route", () => {
         body: formData,
       });
 
-      await expect(action({ request, params: {}, context: {} })).rejects.toThrow();
+      await expect(action(fromPartial({ request, params: {}, context: {} }))).rejects.toThrow();
     });
   });
 });
