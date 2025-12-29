@@ -6,8 +6,8 @@ import {
   Alert,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { Form, useNavigation } from "react-router";
-import { useState, useCallback } from "react";
+import { Form, useNavigation, useFetcher } from "react-router";
+import { useEffect, useState } from "react";
 import type { WebhookValidationResult } from "~/routes/api/webhooks/validate";
 
 export interface ChannelFormValues {
@@ -29,49 +29,35 @@ export function ChannelForm({
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
-  const [validationState, setValidationState] = useState<{
-    status: "idle" | "validating" | "success" | "error";
-    message?: string;
-  }>({ status: "idle" });
+  const fetcher = useFetcher<WebhookValidationResult>();
+  const [clientError, setClientError] = useState<string | null>(null);
 
-  const validateWebhook = useCallback(async (webhookUrl: string) => {
+  // Clear client error when fetcher starts loading
+  useEffect(() => {
+    if (fetcher.state === "submitting") {
+      setClientError(null);
+    }
+  }, [fetcher.state]);
+
+  const validateWebhook = (webhookUrl: string) => {
+    // Client-side validation before making request
     if (!webhookUrl.includes("discord.com/api/webhooks/")) {
-      setValidationState({
-        status: "error",
-        message: "Must be a valid Discord webhook URL",
-      });
+      setClientError("Must be a valid Discord webhook URL");
       return;
     }
 
-    setValidationState({ status: "validating" });
+    setClientError(null);
+    fetcher.submit(
+      { webhookUrl },
+      { method: "POST", action: "/api/webhooks/validate", encType: "application/json" }
+    );
+  };
 
-    try {
-      const response = await fetch("/api/webhooks/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ webhookUrl }),
-      });
-
-      const result: WebhookValidationResult = await response.json();
-
-      if (result.valid) {
-        setValidationState({
-          status: "success",
-          message: `Webhook verified: ${result.webhookName}`,
-        });
-      } else {
-        setValidationState({
-          status: "error",
-          message: result.error ?? "Invalid webhook",
-        });
-      }
-    } catch {
-      setValidationState({
-        status: "error",
-        message: "Failed to validate webhook. Please try again.",
-      });
-    }
-  }, []);
+  // Derive validation state from fetcher
+  const isValidating = fetcher.state === "submitting" || fetcher.state === "loading";
+  const validationResult = fetcher.data;
+  const showSuccess = !isValidating && validationResult?.valid === true;
+  const showError = clientError || (!isValidating && validationResult?.valid === false);
 
   const form = useForm<ChannelFormValues>({
     initialValues: {
@@ -124,7 +110,7 @@ export function ChannelForm({
               size="compact-xs"
               variant="light"
               onClick={() => validateWebhook(form.values.webhookUrl)}
-              loading={validationState.status === "validating"}
+              loading={isValidating}
               disabled={!form.values.webhookUrl.trim()}
               data-testid="validate-webhook-button"
             >
@@ -134,23 +120,23 @@ export function ChannelForm({
           rightSectionWidth={60}
         />
 
-        {validationState.status === "success" && (
+        {showSuccess && (
           <Alert
             color="green"
             variant="light"
             data-testid="webhook-validation-success"
           >
-            {validationState.message}
+            Webhook verified: {validationResult?.webhookName}
           </Alert>
         )}
 
-        {validationState.status === "error" && (
+        {showError && (
           <Alert
             color="red"
             variant="light"
             data-testid="webhook-validation-error"
           >
-            {validationState.message}
+            {clientError ?? validationResult?.error ?? "Invalid webhook"}
           </Alert>
         )}
 

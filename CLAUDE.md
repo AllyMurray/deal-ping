@@ -116,6 +116,33 @@ describe("MyComponent", () => {
 
 - `~/` maps to `./app/` (configured in tsconfig.json)
 
+### React Router Data Patterns
+
+This project uses React Router v7 with data routers. Follow these patterns:
+
+**For client-side mutations (e.g., API calls from components):**
+- Use `useFetcher` hook instead of raw `fetch()` calls
+- Define an `action` function in a route file for the server-side handler
+- Submit to the action using `fetcher.submit(data, { method: "POST", action: "/api/route", encType: "application/json" })`
+- Access response via `fetcher.data` and loading state via `fetcher.state`
+
+```typescript
+// In route file (app/routes/api/example.ts):
+export async function action({ request }: Route.ActionArgs) {
+  const data = await request.json();
+  // Process and return Response.json(result)
+}
+
+// In component:
+const fetcher = useFetcher<ResponseType>();
+fetcher.submit({ data }, { method: "POST", action: "/api/example", encType: "application/json" });
+// Use fetcher.state === "submitting" for loading, fetcher.data for result
+```
+
+**Do NOT:**
+- Use raw `fetch()` for API calls from components - use `useFetcher` instead
+- Create separate API endpoints when you could use route actions
+
 ## Key Features
 
 All features have associated tests and are documented in the README:

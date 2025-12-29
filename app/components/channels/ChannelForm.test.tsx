@@ -1,14 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "~/test-utils";
 import { ChannelForm } from "./ChannelForm";
+
+// Create a mock submit function we can track
+const mockSubmit = vi.fn();
+
+// Create controllable fetcher state
+let mockFetcherState: "idle" | "submitting" | "loading" = "idle";
+let mockFetcherData: { valid: boolean; webhookName?: string; error?: string } | undefined;
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router");
   return {
     ...actual,
     useNavigation: () => ({ state: "idle" }),
+    useFetcher: () => ({
+      state: mockFetcherState,
+      data: mockFetcherData,
+      submit: mockSubmit,
+    }),
     Form: ({
       children,
       ...props
@@ -18,10 +30,6 @@ vi.mock("react-router", async () => {
   };
 });
 
-// Mock global fetch
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
-
 const defaultProps = {
   onCancel: vi.fn(),
 };
@@ -29,7 +37,10 @@ const defaultProps = {
 describe("ChannelForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFetcherState = "idle";
+    mockFetcherData = undefined;
   });
+
   describe("rendering", () => {
     it("renders the form", () => {
       render(<ChannelForm {...defaultProps} />);
@@ -190,63 +201,52 @@ describe("ChannelForm", () => {
         screen.getByTestId("webhook-validation-error")
       ).toBeInTheDocument();
       expect(screen.getByText("Must be a valid Discord webhook URL")).toBeInTheDocument();
+      // Should not call fetcher.submit for invalid URL format
+      expect(mockSubmit).not.toHaveBeenCalled();
     });
 
-    it("shows success message for valid webhook", async () => {
-      mockFetch.mockResolvedValue({
-        json: async () => ({
-          valid: true,
-          webhookName: "Test Webhook",
-        }),
-      });
+    it("shows success message for valid webhook", () => {
+      mockFetcherData = { valid: true, webhookName: "Test Webhook" };
 
-      const user = userEvent.setup();
-      render(<ChannelForm {...defaultProps} />);
+      render(
+        <ChannelForm
+          {...defaultProps}
+          initialValues={{
+            webhookUrl: "https://discord.com/api/webhooks/123/abc",
+          }}
+        />
+      );
 
-      const webhookInput = screen.getByTestId("webhook-url-input");
-      await user.type(webhookInput, "https://discord.com/api/webhooks/123/abc");
-
-      const validateButton = screen.getByTestId("validate-webhook-button");
-      await user.click(validateButton);
-
-      await waitFor(() => {
-        expect(
-          screen.getByTestId("webhook-validation-success")
-        ).toBeInTheDocument();
-      });
+      expect(
+        screen.getByTestId("webhook-validation-success")
+      ).toBeInTheDocument();
       expect(screen.getByText("Webhook verified: Test Webhook")).toBeInTheDocument();
     });
 
-    it("shows error message for invalid webhook", async () => {
-      mockFetch.mockResolvedValue({
-        json: async () => ({
-          valid: false,
-          error: "Webhook not found. It may have been deleted.",
-        }),
-      });
+    it("shows error message for invalid webhook", () => {
+      mockFetcherData = {
+        valid: false,
+        error: "Webhook not found. It may have been deleted.",
+      };
 
-      const user = userEvent.setup();
-      render(<ChannelForm {...defaultProps} />);
+      render(
+        <ChannelForm
+          {...defaultProps}
+          initialValues={{
+            webhookUrl: "https://discord.com/api/webhooks/123/abc",
+          }}
+        />
+      );
 
-      const webhookInput = screen.getByTestId("webhook-url-input");
-      await user.type(webhookInput, "https://discord.com/api/webhooks/123/abc");
-
-      const validateButton = screen.getByTestId("validate-webhook-button");
-      await user.click(validateButton);
-
-      await waitFor(() => {
-        expect(
-          screen.getByTestId("webhook-validation-error")
-        ).toBeInTheDocument();
-      });
+      expect(
+        screen.getByTestId("webhook-validation-error")
+      ).toBeInTheDocument();
       expect(
         screen.getByText("Webhook not found. It may have been deleted.")
       ).toBeInTheDocument();
     });
 
-    it("shows error message when fetch fails", async () => {
-      mockFetch.mockRejectedValue(new Error("Network error"));
-
+    it("calls fetcher.submit with correct parameters", async () => {
       const user = userEvent.setup();
       render(<ChannelForm {...defaultProps} />);
 
@@ -256,39 +256,14 @@ describe("ChannelForm", () => {
       const validateButton = screen.getByTestId("validate-webhook-button");
       await user.click(validateButton);
 
-      await waitFor(() => {
-        expect(
-          screen.getByTestId("webhook-validation-error")
-        ).toBeInTheDocument();
-      });
-      expect(
-        screen.getByText("Failed to validate webhook. Please try again.")
-      ).toBeInTheDocument();
-    });
-
-    it("calls fetch with correct parameters", async () => {
-      mockFetch.mockResolvedValue({
-        json: async () => ({ valid: true, webhookName: "Test" }),
-      });
-
-      const user = userEvent.setup();
-      render(<ChannelForm {...defaultProps} />);
-
-      const webhookInput = screen.getByTestId("webhook-url-input");
-      await user.type(webhookInput, "https://discord.com/api/webhooks/123/abc");
-
-      const validateButton = screen.getByTestId("validate-webhook-button");
-      await user.click(validateButton);
-
-      await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith("/api/webhooks/validate", {
+      expect(mockSubmit).toHaveBeenCalledWith(
+        { webhookUrl: "https://discord.com/api/webhooks/123/abc" },
+        {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            webhookUrl: "https://discord.com/api/webhooks/123/abc",
-          }),
-        });
-      });
+          action: "/api/webhooks/validate",
+          encType: "application/json",
+        }
+      );
     });
   });
 });
