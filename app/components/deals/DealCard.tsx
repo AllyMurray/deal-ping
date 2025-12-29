@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Group, Text, Badge, Anchor, Box, Collapse, UnstyledButton } from "@mantine/core";
+import { Group, Text, Badge, Anchor, Box, Collapse, UnstyledButton, ActionIcon, Tooltip } from "@mantine/core";
 import {
   IconExternalLink,
   IconClock,
@@ -11,6 +11,8 @@ import {
   IconFilter,
   IconBell,
   IconBellOff,
+  IconBookmark,
+  IconBookmarkFilled,
 } from "@tabler/icons-react";
 import {
   deserializeMatchDetails,
@@ -33,6 +35,9 @@ export interface DealCardProps {
   filterStatus?: FilterStatus;
   filterReason?: string;
   notified?: boolean; // Whether a notification was sent
+  bookmarked?: boolean; // Whether the deal is bookmarked
+  onBookmarkToggle?: (id: string, bookmarked: boolean) => void; // Callback when bookmark is toggled
+  bookmarkLoading?: boolean; // Whether a bookmark operation is in progress
 }
 
 // Helper to get filter status display info
@@ -93,6 +98,9 @@ export function DealCard({
   filterStatus,
   filterReason,
   notified,
+  bookmarked,
+  onBookmarkToggle,
+  bookmarkLoading,
 }: DealCardProps) {
   const [showMatchDetails, setShowMatchDetails] = useState(false);
 
@@ -130,7 +138,7 @@ export function DealCard({
         position: 'relative',
       }}
     >
-      {/* Header with Title and Price */}
+      {/* Header with Title, Price, and Bookmark */}
       <Group justify="space-between" align="flex-start" gap="md" mb="sm">
         <Anchor
           href={link}
@@ -152,11 +160,34 @@ export function DealCard({
           />
         </Anchor>
 
-        {price && (
-          <Box className="badge-price" data-testid="deal-price">
-            {price}
-          </Box>
-        )}
+        <Group gap="xs" wrap="nowrap">
+          {price && (
+            <Box className="badge-price" data-testid="deal-price">
+              {price}
+            </Box>
+          )}
+
+          {onBookmarkToggle && (
+            <Tooltip label={bookmarked ? "Remove bookmark" : "Bookmark deal"}>
+              <ActionIcon
+                variant={bookmarked ? "filled" : "subtle"}
+                color={bookmarked ? "yellow" : "gray"}
+                size="md"
+                radius="md"
+                onClick={() => onBookmarkToggle(id, !bookmarked)}
+                loading={bookmarkLoading}
+                data-testid="bookmark-button"
+                aria-label={bookmarked ? "Remove bookmark" : "Bookmark deal"}
+              >
+                {bookmarked ? (
+                  <IconBookmarkFilled size={18} stroke={1.5} />
+                ) : (
+                  <IconBookmark size={18} stroke={1.5} />
+                )}
+              </ActionIcon>
+            </Tooltip>
+          )}
+        </Group>
       </Group>
 
       {/* Tags Row */}

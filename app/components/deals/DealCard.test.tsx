@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "~/test-utils";
@@ -213,6 +213,74 @@ describe("DealCard", () => {
       await user.click(screen.getByTestId("match-details-toggle"));
 
       expect(screen.getByText(/Required keywords found/)).toBeInTheDocument();
+    });
+  });
+
+  describe("bookmark functionality", () => {
+    it("does not show bookmark button when onBookmarkToggle is not provided", () => {
+      render(<DealCard {...defaultProps} />);
+      expect(screen.queryByTestId("bookmark-button")).not.toBeInTheDocument();
+    });
+
+    it("shows bookmark button when onBookmarkToggle is provided", () => {
+      const onBookmarkToggle = vi.fn();
+      render(<DealCard {...defaultProps} onBookmarkToggle={onBookmarkToggle} />);
+      expect(screen.getByTestId("bookmark-button")).toBeInTheDocument();
+    });
+
+    it("shows unfilled bookmark icon when not bookmarked", () => {
+      const onBookmarkToggle = vi.fn();
+      render(
+        <DealCard {...defaultProps} onBookmarkToggle={onBookmarkToggle} bookmarked={false} />
+      );
+      const button = screen.getByTestId("bookmark-button");
+      expect(button).toHaveAttribute("aria-label", "Bookmark deal");
+    });
+
+    it("shows filled bookmark icon when bookmarked", () => {
+      const onBookmarkToggle = vi.fn();
+      render(
+        <DealCard {...defaultProps} onBookmarkToggle={onBookmarkToggle} bookmarked={true} />
+      );
+      const button = screen.getByTestId("bookmark-button");
+      expect(button).toHaveAttribute("aria-label", "Remove bookmark");
+    });
+
+    it("calls onBookmarkToggle with deal id and true when bookmarking", async () => {
+      const user = userEvent.setup();
+      const onBookmarkToggle = vi.fn();
+      render(
+        <DealCard {...defaultProps} onBookmarkToggle={onBookmarkToggle} bookmarked={false} />
+      );
+
+      await user.click(screen.getByTestId("bookmark-button"));
+
+      expect(onBookmarkToggle).toHaveBeenCalledWith("deal-123", true);
+    });
+
+    it("calls onBookmarkToggle with deal id and false when unbookmarking", async () => {
+      const user = userEvent.setup();
+      const onBookmarkToggle = vi.fn();
+      render(
+        <DealCard {...defaultProps} onBookmarkToggle={onBookmarkToggle} bookmarked={true} />
+      );
+
+      await user.click(screen.getByTestId("bookmark-button"));
+
+      expect(onBookmarkToggle).toHaveBeenCalledWith("deal-123", false);
+    });
+
+    it("shows loading state on bookmark button when bookmarkLoading is true", () => {
+      const onBookmarkToggle = vi.fn();
+      render(
+        <DealCard
+          {...defaultProps}
+          onBookmarkToggle={onBookmarkToggle}
+          bookmarkLoading={true}
+        />
+      );
+      const button = screen.getByTestId("bookmark-button");
+      expect(button).toHaveAttribute("data-loading", "true");
     });
   });
 });

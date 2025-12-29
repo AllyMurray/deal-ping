@@ -20,6 +20,7 @@ import {
   IconWebhook,
   IconSearch,
   IconHistory,
+  IconBookmark,
   IconLogout,
   IconSun,
   IconMoon,
@@ -48,6 +49,7 @@ export function DashboardLayout({ user, children, isAdmin = false }: DashboardLa
     { href: "/dashboard/channels", label: "Channels", icon: IconWebhook },
     { href: "/dashboard/search-terms", label: "Search Terms", icon: IconSearch },
     { href: "/dashboard/deals", label: "Deal History", icon: IconHistory },
+    { href: "/dashboard/bookmarks", label: "Bookmarks", icon: IconBookmark },
     { href: "/dashboard/settings", label: "Settings", icon: IconSettings },
     ...(isAdmin
       ? [{ href: "/dashboard/admin", label: "Admin", icon: IconShield }]

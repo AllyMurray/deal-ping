@@ -1,5 +1,5 @@
 import { HotUKDealsService } from './service';
-import type { Channel, SearchTermConfig, Deal, AllowedUser, QueuedDeal } from './schemas';
+import type { Channel, SearchTermConfig, Deal, AllowedUser, QueuedDeal, BookmarkedDeal } from './schemas';
 import {
   parseChannel,
   parseChannels,
@@ -11,6 +11,8 @@ import {
   parseAllowedUsers,
   parseQueuedDeal,
   parseQueuedDeals,
+  parseBookmarkedDeal,
+  parseBookmarkedDeals,
 } from './schemas';
 
 // ============================================================================
@@ -788,4 +790,103 @@ export async function getQueuedDealsGroupedByChannel(): Promise<ChannelWithQueue
     channelId,
     deals,
   }));
+}
+
+// ============================================================================
+// BookmarkedDeal Repository
+// ============================================================================
+
+// BookmarkedDeal params
+export type CreateBookmarkParams = {
+  userId: string;
+  dealId: string;
+  title: string;
+  link: string;
+  price?: string;
+  merchant?: string;
+  searchTerm: string;
+};
+export type GetBookmarksByUserParams = { userId: string };
+export type GetBookmarkParams = { bookmarkId: string };
+export type IsBookmarkedParams = { userId: string; dealId: string };
+export type DeleteBookmarkParams = { bookmarkId: string };
+export type DeleteBookmarkByDealParams = { userId: string; dealId: string };
+
+/**
+ * Create a bookmark for a deal
+ */
+export async function createBookmark(params: CreateBookmarkParams): Promise<BookmarkedDeal> {
+  const result = await HotUKDealsService.entities.bookmarkedDeal
+    .put({
+      userId: params.userId,
+      dealId: params.dealId,
+      title: params.title,
+      link: params.link,
+      price: params.price,
+      merchant: params.merchant,
+      searchTerm: params.searchTerm,
+    })
+    .go();
+  return parseBookmarkedDeal(result.data);
+}
+
+/**
+ * Get all bookmarks for a user (sorted by bookmark time, newest first)
+ */
+export async function getBookmarksByUser({ userId }: GetBookmarksByUserParams): Promise<BookmarkedDeal[]> {
+  const result = await HotUKDealsService.entities.bookmarkedDeal.query
+    .byUser({ userId })
+    .go({ order: 'desc' });
+  return parseBookmarkedDeals(result.data);
+}
+
+/**
+ * Get a bookmark by ID
+ */
+export async function getBookmark({ bookmarkId }: GetBookmarkParams): Promise<BookmarkedDeal | null> {
+  const result = await HotUKDealsService.entities.bookmarkedDeal.query
+    .byBookmarkId({ bookmarkId })
+    .go();
+  const data = result.data[0];
+  return data ? parseBookmarkedDeal(data) : null;
+}
+
+/**
+ * Check if a deal is bookmarked by a user
+ */
+export async function isBookmarked({ userId, dealId }: IsBookmarkedParams): Promise<boolean> {
+  const result = await HotUKDealsService.entities.bookmarkedDeal.query
+    .byUserDeal({ userId, dealId })
+    .go();
+  return result.data.length > 0;
+}
+
+/**
+ * Get a bookmark by user and deal ID (for removing bookmarks)
+ */
+export async function getBookmarkByUserDeal({ userId, dealId }: IsBookmarkedParams): Promise<BookmarkedDeal | null> {
+  const result = await HotUKDealsService.entities.bookmarkedDeal.query
+    .byUserDeal({ userId, dealId })
+    .go();
+  const data = result.data[0];
+  return data ? parseBookmarkedDeal(data) : null;
+}
+
+/**
+ * Delete a bookmark by ID
+ */
+export async function deleteBookmark({ bookmarkId }: DeleteBookmarkParams): Promise<void> {
+  await HotUKDealsService.entities.bookmarkedDeal
+    .delete({ bookmarkId })
+    .go();
+}
+
+/**
+ * Delete a bookmark by user and deal ID (toggle off)
+ */
+export async function deleteBookmarkByDeal({ userId, dealId }: DeleteBookmarkByDealParams): Promise<void> {
+  const bookmark = await getBookmarkByUserDeal({ userId, dealId });
+  if (bookmark) {
+    await deleteBookmark({ bookmarkId: bookmark.bookmarkId });
+  }
 }

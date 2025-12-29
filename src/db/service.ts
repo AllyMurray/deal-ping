@@ -1,7 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Service } from 'electrodb';
 import type { EntityConfiguration } from 'electrodb';
-import { ChannelEntity, SearchTermConfigEntity, DealEntity, AllowedUserEntity, QueuedDealEntity } from './entities';
+import { ChannelEntity, SearchTermConfigEntity, DealEntity, AllowedUserEntity, QueuedDealEntity, BookmarkedDealEntity } from './entities';
 
 // Create DynamoDB client
 const client = new DynamoDBClient({});
@@ -23,12 +23,13 @@ export const HotUKDealsService = new Service(
     deal: DealEntity,
     allowedUser: AllowedUserEntity,
     queuedDeal: QueuedDealEntity,
+    bookmarkedDeal: BookmarkedDealEntity,
   },
   configuration
 );
 
 // Re-export entities for direct access if needed
-export { ChannelEntity, SearchTermConfigEntity, DealEntity, AllowedUserEntity, QueuedDealEntity };
+export { ChannelEntity, SearchTermConfigEntity, DealEntity, AllowedUserEntity, QueuedDealEntity, BookmarkedDealEntity };
 
 // Type exports from Zod schemas
-export type { Channel, SearchTermConfig, Deal, AllowedUser, QueuedDeal } from './schemas';
+export type { Channel, SearchTermConfig, Deal, AllowedUser, QueuedDeal, BookmarkedDeal } from './schemas';
