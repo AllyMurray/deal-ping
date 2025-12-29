@@ -18,6 +18,8 @@ export default [
     route("dashboard/deals", "routes/dashboard/deals.tsx"),
     // Admin (allowlist management)
     route("dashboard/admin", "routes/dashboard/admin.tsx"),
+    // Settings
+    route("dashboard/settings", "routes/dashboard/settings.tsx"),
   ]),
   // API routes
   route("api/channels", "routes/api/channels/index.ts"),
