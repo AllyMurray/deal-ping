@@ -77,7 +77,7 @@ Show what the Discord message will look like before saving.
 - Create Discord embed preview component
 - Render sample deal with current config
 
-#### 6. Duplicate Search Term Detection
+#### ~~6. Duplicate Search Term Detection~~ (Implemented)
 Warn when adding search terms that exist in other channels.
 
 **Behavior:**
@@ -190,6 +190,24 @@ Show what the Discord message will look like before saving, helping users unders
 - When price thresholds are configured, shows which filters are active
 - Updates dynamically based on the channel's search term settings
 
+### Duplicate Search Term Detection (Implemented)
+Warn when adding search terms that already exist in other channels, helping users avoid unintentional duplicate notifications.
+
+**Features:**
+- Real-time duplicate detection as you type
+- Shows which channels already use the same search term
+- Non-blocking warning that allows you to proceed if desired
+
+**Location:**
+- Available in the Add Search Term form (ConfigForm modal)
+
+**Behavior:**
+- When typing a search term, the system checks if it's already used in your other channels
+- If duplicates are found, shows a yellow warning: "This search term is already used in: [Channel Name]. You can still add it, but you may receive duplicate notifications."
+- The warning is debounced (300ms) to avoid excessive API calls while typing
+- Duplicate detection only runs when adding new search terms, not when editing existing ones
+- Users can still proceed with adding the duplicate term if they choose to
+
 ## Implementation Priority
 
 ### Phase 1 (Quick Wins)
@@ -200,7 +218,7 @@ Show what the Discord message will look like before saving, helping users unders
 ### Phase 2 (User Experience)
 4. ~~Price threshold alerts~~ ✓
 5. ~~Notification preview~~ ✓
-6. Duplicate detection
+6. ~~Duplicate detection~~ ✓
 
 ### Phase 3 (Power Features)
 7. Onboarding tutorial

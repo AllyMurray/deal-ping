@@ -1,8 +1,11 @@
-import { describe, it, expect, vi } from "vitest";
-import { screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "~/test-utils";
 import { ConfigForm } from "./ConfigForm";
+
+// Mock fetch for duplicate detection
+const mockFetch = vi.fn();
 
 const defaultProps = {
   onSubmit: vi.fn(),
@@ -279,6 +282,154 @@ describe("ConfigForm", () => {
       await user.type(minDiscountInput, "25");
 
       expect(minDiscountInput).toHaveValue("25%");
+    });
+  });
+
+  describe("duplicate search term detection", () => {
+    beforeEach(() => {
+      vi.stubGlobal("fetch", mockFetch);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      mockFetch.mockReset();
+    });
+
+    it("does not show duplicate warning initially", () => {
+      render(<ConfigForm {...defaultProps} />);
+      expect(screen.queryByTestId("duplicate-warning")).not.toBeInTheDocument();
+    });
+
+    it("shows duplicate warning when duplicates are found", async () => {
+      const user = userEvent.setup();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          duplicates: [{ channelId: "ch1", channelName: "Gaming Deals" }],
+        }),
+      });
+
+      render(<ConfigForm {...defaultProps} channelId="ch2" />);
+
+      const searchTermInput = screen.getByTestId("search-term-input");
+      await user.type(searchTermInput, "ps5");
+
+      await waitFor(() => {
+        expect(screen.getByTestId("duplicate-warning")).toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/Gaming Deals/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/This search term is already used in/)
+      ).toBeInTheDocument();
+    });
+
+    it("shows multiple channel names when multiple duplicates exist", async () => {
+      const user = userEvent.setup();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          duplicates: [
+            { channelId: "ch1", channelName: "Gaming Deals" },
+            { channelId: "ch3", channelName: "Tech Bargains" },
+          ],
+        }),
+      });
+
+      render(<ConfigForm {...defaultProps} channelId="ch2" />);
+
+      const searchTermInput = screen.getByTestId("search-term-input");
+      await user.type(searchTermInput, "ps5");
+
+      await waitFor(() => {
+        expect(screen.getByTestId("duplicate-warning")).toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/Gaming Deals/)).toBeInTheDocument();
+      expect(screen.getByText(/Tech Bargains/)).toBeInTheDocument();
+    });
+
+    it("does not show warning when no duplicates found", async () => {
+      const user = userEvent.setup();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ duplicates: [] }),
+      });
+
+      render(<ConfigForm {...defaultProps} channelId="ch1" />);
+
+      const searchTermInput = screen.getByTestId("search-term-input");
+      await user.type(searchTermInput, "unique-term");
+
+      // Wait for debounce and fetch
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalled();
+      });
+
+      expect(screen.queryByTestId("duplicate-warning")).not.toBeInTheDocument();
+    });
+
+    it("does not check for duplicates when editing existing config", async () => {
+      const user = userEvent.setup();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          duplicates: [{ channelId: "ch1", channelName: "Gaming Deals" }],
+        }),
+      });
+
+      render(
+        <ConfigForm
+          {...defaultProps}
+          channelId="ch1"
+          isEditing={true}
+          initialValues={{ searchTerm: "ps5" }}
+        />
+      );
+
+      // Even though this would find duplicates, we shouldn't check when editing
+      // Wait a bit to ensure no fetch is made
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(screen.queryByTestId("duplicate-warning")).not.toBeInTheDocument();
+    });
+
+    it("passes channelId to duplicate check API", async () => {
+      const user = userEvent.setup();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ duplicates: [] }),
+      });
+
+      render(<ConfigForm {...defaultProps} channelId="test-channel-123" />);
+
+      const searchTermInput = screen.getByTestId("search-term-input");
+      await user.type(searchTermInput, "ps5");
+
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith(
+          expect.stringContaining("channelId=test-channel-123")
+        );
+      });
+    });
+
+    it("handles fetch errors gracefully", async () => {
+      const user = userEvent.setup();
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
+
+      render(<ConfigForm {...defaultProps} channelId="ch1" />);
+
+      const searchTermInput = screen.getByTestId("search-term-input");
+      await user.type(searchTermInput, "ps5");
+
+      // Wait for debounce and fetch
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalled();
+      });
+
+      // Should not show warning and not throw error
+      expect(screen.queryByTestId("duplicate-warning")).not.toBeInTheDocument();
     });
   });
 });

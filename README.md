@@ -9,6 +9,7 @@ A Discord bot that monitors HotUKDeals and sends deal notifications to Discord c
 - 🎯 **Smart Filtering**: Include/exclude deals based on keywords to avoid unwanted results
 - 💷 **Price Thresholds**: Only notify when deals are under a maximum price or meet a minimum discount percentage
 - 🌙 **Quiet Hours**: Account-level setting to pause notifications during specified hours (deals are queued and sent when quiet hours end)
+- ⚠️ **Duplicate Detection**: Warns when adding search terms that already exist in other channels
 - 💰 **Deal Information**: Extract prices, merchant details, and direct links
 - 🔧 **Channel Management**: Organize webhooks with friendly names
 - 📊 **Grouped Messages**: Combine multiple search results into organized Discord messages

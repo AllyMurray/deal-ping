@@ -8,6 +8,7 @@ export interface ConfigFormModalProps {
   initialValues?: Partial<ConfigFormValues>;
   isSubmitting?: boolean;
   isEditing?: boolean;
+  channelId?: string;
 }
 
 export function ConfigFormModal({
@@ -17,6 +18,7 @@ export function ConfigFormModal({
   initialValues,
   isSubmitting,
   isEditing,
+  channelId,
 }: ConfigFormModalProps) {
   return (
     <Modal
@@ -34,6 +36,7 @@ export function ConfigFormModal({
         isSubmitting={isSubmitting}
         submitLabel={isEditing ? "Save Changes" : "Add Search Term"}
         isEditing={isEditing}
+        channelId={channelId}
       />
     </Modal>
   );

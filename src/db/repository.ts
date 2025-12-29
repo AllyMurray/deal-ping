@@ -263,6 +263,53 @@ export async function getAllConfigsForSearchTerm({ term }: GetConfigBySearchTerm
   return parseSearchTermConfigs(result.data);
 }
 
+// Types for duplicate detection
+export interface DuplicateSearchTermInfo {
+  channelId: string;
+  channelName: string;
+}
+
+export type FindDuplicateSearchTermsParams = {
+  searchTerm: string;
+  excludeChannelId?: string;
+  userId: string;
+};
+
+/**
+ * Find channels that already use the same search term (for duplicate detection)
+ * Returns list of channels with the same search term, excluding the current channel
+ */
+export async function findDuplicateSearchTerms({
+  searchTerm,
+  excludeChannelId,
+  userId,
+}: FindDuplicateSearchTermsParams): Promise<DuplicateSearchTermInfo[]> {
+  // Get all configs with this search term
+  const configs = await getAllConfigsForSearchTerm({ term: searchTerm });
+
+  // Filter to only this user's configs and exclude the current channel
+  const userConfigs = configs.filter(
+    (c) => c.userId === userId && c.channelId !== excludeChannelId
+  );
+
+  if (userConfigs.length === 0) {
+    return [];
+  }
+
+  // Get channel names for the duplicates
+  const channelIds = [...new Set(userConfigs.map((c) => c.channelId))];
+  const channels = await Promise.all(
+    channelIds.map((id) => getChannel({ id }))
+  );
+
+  return channels
+    .filter((c): c is Channel => c !== null)
+    .map((c) => ({
+      channelId: c.channelId,
+      channelName: c.name,
+    }));
+}
+
 /**
  * Create or update a search term config
  */
