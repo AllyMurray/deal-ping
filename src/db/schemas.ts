@@ -45,6 +45,7 @@ export const Channel = z.object({
   userId: z.string(),
   name: z.string(),
   webhookUrl: z.string(),
+  lastNotificationAt: z.string().optional(), // ISO timestamp of last notification sent
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });

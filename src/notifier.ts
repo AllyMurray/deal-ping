@@ -13,6 +13,7 @@ import {
   deleteQueuedDealsForChannel,
   getAllChannels,
   getAllowedUsers,
+  updateChannelLastNotification,
   type ChannelWithConfigs,
 } from './db';
 import type { Channel, QueuedDeal, AllowedUser, SearchTermConfig, DealFilterStatus } from './db/schemas';
@@ -392,7 +393,7 @@ const processChannelFeeds = async (
           );
         } else {
           // Send notifications immediately
-          await sendCombinedDiscordMessage(channel.webhookUrl, passedDeals);
+          await sendCombinedDiscordMessage(channel.webhookUrl, passedDeals, channel.channelId);
         }
       }
 
@@ -575,7 +576,8 @@ const createLockScreenContent = (deals: DealWithSearchTerm[]): string => {
 // Send combined Discord message for all new deals using rich embeds
 const sendCombinedDiscordMessage = async (
   webhookUrl: string,
-  deals: DealWithSearchTerm[]
+  deals: DealWithSearchTerm[],
+  channelId: string
 ): Promise<void> => {
   try {
     const totalDeals = deals.length;
@@ -613,6 +615,9 @@ const sendCombinedDiscordMessage = async (
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
+
+    // Update channel's last notification timestamp
+    await updateChannelLastNotification({ id: channelId });
 
     logger.info('Enhanced Discord message sent successfully', {
       webhookUrl: webhookUrl.substring(0, 50) + '...',
@@ -691,7 +696,7 @@ const processQueuedDeals = async (
       const dealsToSend = queuedDealsToDealWithSearchTerm(queuedDeals);
 
       // Send the queued deals
-      await sendCombinedDiscordMessage(channel.webhookUrl, dealsToSend);
+      await sendCombinedDiscordMessage(channel.webhookUrl, dealsToSend, channel.channelId);
 
       // Delete the queued deals after successful send
       await deleteQueuedDealsForChannel({ channelId: channel.channelId });

@@ -11,7 +11,7 @@ This document outlines potential features and UX improvements identified during 
 | **No date range filter** | DealFilters | Users can't filter deals by time period (today, this week, etc.) | High |
 | **Search terms link to channels** | DashboardHomePage | Both stat cards link to `/dashboard/channels` - not intuitive for search terms | Low |
 | **No webhook validation** | ChannelForm | No live check if webhook URL is valid before saving | Medium |
-| **Channel has no activity indicator** | ChannelCard | No "last notification" timestamp to show if channel is active | Medium |
+| ~~**Channel has no activity indicator**~~ | ~~ChannelCard~~ | ~~No "last notification" timestamp to show if channel is active~~ | ~~Medium~~ ✓ |
 
 ## Missing Features
 
@@ -42,7 +42,7 @@ Allow sorting deals by different criteria.
 - Add sort dropdown to `DealFilters` component
 - Sort in loader or client-side depending on data size
 
-#### 3. Last Notification Timestamp on Channel Cards
+#### ~~3. Last Notification Timestamp on Channel Cards~~ (Implemented)
 Show when the last deal was sent for each channel.
 
 **Display:**
@@ -208,12 +208,32 @@ Warn when adding search terms that already exist in other channels, helping user
 - Duplicate detection only runs when adding new search terms, not when editing existing ones
 - Users can still proceed with adding the duplicate term if they choose to
 
+### Last Notification Timestamp (Implemented)
+Show when each channel last sent a notification, helping users see if their channels are active and receiving deals.
+
+**Features:**
+- Displays relative time since last notification (e.g., "2 hours ago", "3 days ago")
+- Shows "No notifications yet" for channels that haven't sent any notifications
+- Automatically updated each time a notification is successfully sent
+
+**Location:**
+- Displayed on each Channel Card in the Channels list page
+
+**Behavior:**
+- The `lastNotificationAt` timestamp is stored on the Channel entity in DynamoDB
+- When a Discord notification is sent successfully (either immediately or after quiet hours end), the timestamp is updated
+- The timestamp is displayed as relative time using a user-friendly format:
+  - "just now" for notifications within the last minute
+  - "X minutes ago" / "X hours ago" / "X days ago" / "X weeks ago" for recent notifications
+  - Actual date (e.g., "15 Feb") for notifications more than a month old
+  - Year included for notifications from previous years (e.g., "15 Jun 2023")
+
 ## Implementation Priority
 
 ### Phase 1 (Quick Wins)
 1. Date range filter
 2. Sorting options
-3. Last notification timestamp
+3. ~~Last notification timestamp~~ ✓
 
 ### Phase 2 (User Experience)
 4. ~~Price threshold alerts~~ ✓

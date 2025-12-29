@@ -25,6 +25,7 @@ export type UpdateChannelParams = {
   name?: string;
   webhookUrl?: string;
 };
+export type UpdateChannelLastNotificationParams = { id: string };
 export type DeleteChannelParams = { id: string };
 export type CreateChannelParams = {
   userId: string;
@@ -174,6 +175,18 @@ export async function updateChannel({
     .set(updates)
     .go();
   return parseChannel(result.data);
+}
+
+/**
+ * Update a channel's last notification timestamp
+ */
+export async function updateChannelLastNotification({
+  id,
+}: UpdateChannelLastNotificationParams): Promise<void> {
+  await HotUKDealsService.entities.channel
+    .patch({ channelId: id })
+    .set({ lastNotificationAt: new Date().toISOString() })
+    .go();
 }
 
 /**
