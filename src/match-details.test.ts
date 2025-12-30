@@ -8,33 +8,32 @@ import {
 
 describe('match-details', () => {
   describe('computeMatchDetails', () => {
-    it('finds search term words in title', () => {
+    it('finds entire search term in title', () => {
       const result = computeMatchDetails('NiteCore NB10000 Power Bank', 'Amazon', {
         searchTerm: 'NiteCore NB10000',
       });
 
-      expect(result.searchTermMatches).toContain('NiteCore');
-      expect(result.searchTermMatches).toContain('NB10000');
+      expect(result.searchTermMatches).toContain('NiteCore NB10000');
+      expect(result.searchTermMatches).toHaveLength(1);
       expect(result.matchedSegments.length).toBeGreaterThan(0);
     });
 
-    it('matches search term words found in title', () => {
+    it('does not match when only partial search term found in title', () => {
       const result = computeMatchDetails('NiteCore Power Bank with 10000mAh Battery', 'Amazon', {
         searchTerm: 'NiteCore NB10000',
       });
 
-      // Should find "NiteCore" as it appears in the title
-      // "NB10000" won't match because it's not a substring of any word in title
-      expect(result.searchTermMatches).toContain('NiteCore');
+      // Full search term "NiteCore NB10000" is not present in the title
+      expect(result.searchTermMatches).toHaveLength(0);
     });
 
     it('handles case insensitive matching by default', () => {
-      const result = computeMatchDetails('NITECORE nb10000 power bank', undefined, {
+      const result = computeMatchDetails('NITECORE NB10000 power bank', undefined, {
         searchTerm: 'NiteCore NB10000',
       });
 
-      expect(result.searchTermMatches).toContain('NiteCore');
-      expect(result.searchTermMatches).toContain('NB10000');
+      expect(result.searchTermMatches).toContain('NiteCore NB10000');
+      expect(result.searchTermMatches).toHaveLength(1);
     });
 
     it('respects case sensitive flag', () => {
@@ -43,9 +42,8 @@ describe('match-details', () => {
         caseSensitive: true,
       });
 
-      // Should not find matches when case doesn't match
-      expect(result.searchTermMatches).not.toContain('NiteCore');
-      expect(result.searchTermMatches).not.toContain('NB10000');
+      // Should not find match when case doesn't match
+      expect(result.searchTermMatches).toHaveLength(0);
     });
 
     it('tracks include keyword matches', () => {

@@ -81,14 +81,24 @@ describe('filterDeal', () => {
       expect(result.filterStatus).toBe('passed');
     });
 
-    it('passes when any search term word is found in title', () => {
-      const deal = createDeal({ title: 'NiteCore Power Bank' });
+    it('passes when entire search term is found in title', () => {
+      const deal = createDeal({ title: 'NiteCore NB10000 Power Bank' });
       const config = createConfig({ searchTerm: 'NiteCore NB10000' });
 
       const result = filterDeal(deal, config);
 
       expect(result.passed).toBe(true);
       expect(result.filterStatus).toBe('passed');
+    });
+
+    it('filters out when only partial search term is found', () => {
+      const deal = createDeal({ title: 'NiteCore Power Bank' });
+      const config = createConfig({ searchTerm: 'NiteCore NB10000' });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(false);
+      expect(result.filterStatus).toBe('filtered_no_match');
     });
 
     it('passes when search term word is found in merchant', () => {
@@ -101,7 +111,7 @@ describe('filterDeal', () => {
       expect(result.filterStatus).toBe('passed');
     });
 
-    it('filters out when no search term words found', () => {
+    it('filters out when search term not found', () => {
       const deal = createDeal({ title: 'Birdsong Wall Clock' });
       const config = createConfig({ searchTerm: 'sonos' });
 
@@ -109,8 +119,9 @@ describe('filterDeal', () => {
 
       expect(result.passed).toBe(false);
       expect(result.filterStatus).toBe('filtered_no_match');
-      expect(result.filterReason).toContain('No words from search term');
+      expect(result.filterReason).toContain('Search term');
       expect(result.filterReason).toContain('sonos');
+      expect(result.filterReason).toContain('not found');
     });
 
     it('is case insensitive by default', () => {

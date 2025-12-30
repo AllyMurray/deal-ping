@@ -128,21 +128,19 @@ export const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult =
     caseSensitive: config.caseSensitive,
   });
 
-  // Check that at least one search term word appears in the deal
-  // This filters out HotUKDeals' fuzzy matches that don't actually contain any search words
-  const searchTermWords = config.searchTerm.split(/\s+/).filter((w) => w.length > 0);
-  const normalizedSearchTermWords = config.caseSensitive
-    ? searchTermWords
-    : searchTermWords.map((w) => w.toLowerCase());
+  // Check that the entire search term appears in the deal (case-insensitive by default)
+  // This filters out HotUKDeals' fuzzy matches that don't actually contain the search term
+  const normalizedSearchTerm = config.caseSensitive
+    ? config.searchTerm
+    : config.searchTerm.toLowerCase();
 
-  const hasSearchTermMatch = normalizedSearchTermWords.some((word) => searchText.includes(word));
+  const hasSearchTermMatch = searchText.includes(normalizedSearchTerm);
 
   if (!hasSearchTermMatch) {
-    const filterReason = `No words from search term "${config.searchTerm}" found in deal`;
-    logger.debug('Deal filtered out - no search term words found in deal', {
+    const filterReason = `Search term "${config.searchTerm}" not found in deal`;
+    logger.debug('Deal filtered out - search term not found in deal', {
       dealTitle: deal.title,
       searchTerm: config.searchTerm,
-      searchTermWords,
       matchDetails,
     });
     return {

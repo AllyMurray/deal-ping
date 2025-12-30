@@ -38,26 +38,22 @@ function extractSegment(
 }
 
 /**
- * Finds all matching terms from a search query in the deal text
+ * Checks if the entire search term is found in the deal text
+ * Returns an array with the search term if found, empty array otherwise
  */
 function findSearchTermMatches(
   dealText: string,
   searchTerm: string,
   caseSensitive: boolean
 ): string[] {
-  const searchWords = searchTerm.split(/\s+/).filter((w) => w.length > 0);
   const textToSearch = caseSensitive ? dealText : dealText.toLowerCase();
+  const termToFind = caseSensitive ? searchTerm : searchTerm.toLowerCase();
 
-  const matches: string[] = [];
-
-  for (const word of searchWords) {
-    const wordToFind = caseSensitive ? word : word.toLowerCase();
-    if (textToSearch.includes(wordToFind)) {
-      matches.push(word);
-    }
+  if (textToSearch.includes(termToFind)) {
+    return [searchTerm];
   }
 
-  return matches;
+  return [];
 }
 
 /**
