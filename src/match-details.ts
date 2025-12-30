@@ -38,22 +38,41 @@ function extractSegment(
 }
 
 /**
- * Checks if the entire search term is found in the deal text
- * Returns an array with the search term if found, empty array otherwise
+ * Finds matching terms from a search query in the deal text
+ * When fuzzyMatch is true, returns all matching words from the search term
+ * When fuzzyMatch is false (default), returns the search term if the entire phrase is found
  */
 function findSearchTermMatches(
   dealText: string,
   searchTerm: string,
-  caseSensitive: boolean
+  caseSensitive: boolean,
+  fuzzyMatch: boolean = false
 ): string[] {
   const textToSearch = caseSensitive ? dealText : dealText.toLowerCase();
-  const termToFind = caseSensitive ? searchTerm : searchTerm.toLowerCase();
 
-  if (textToSearch.includes(termToFind)) {
-    return [searchTerm];
+  if (fuzzyMatch) {
+    // Fuzzy match: find all matching words
+    const searchWords = searchTerm.split(/\s+/).filter((w) => w.length > 0);
+    const matches: string[] = [];
+
+    for (const word of searchWords) {
+      const wordToFind = caseSensitive ? word : word.toLowerCase();
+      if (textToSearch.includes(wordToFind)) {
+        matches.push(word);
+      }
+    }
+
+    return matches;
+  } else {
+    // Exact phrase match: entire search term must be present
+    const termToFind = caseSensitive ? searchTerm : searchTerm.toLowerCase();
+
+    if (textToSearch.includes(termToFind)) {
+      return [searchTerm];
+    }
+
+    return [];
   }
-
-  return [];
 }
 
 /**
@@ -65,11 +84,12 @@ export function computeMatchDetails(
   config: MatchFilterConfig
 ): MatchDetails {
   const caseSensitive = config.caseSensitive ?? false;
+  const fuzzyMatch = config.fuzzyMatch ?? false;
   const searchText = `${title} ${merchant || ''}`.trim();
   const normalizedSearchText = caseSensitive ? searchText : searchText.toLowerCase();
 
   const matchedSegments: MatchSegment[] = [];
-  const searchTermMatches = findSearchTermMatches(searchText, config.searchTerm, caseSensitive);
+  const searchTermMatches = findSearchTermMatches(searchText, config.searchTerm, caseSensitive, fuzzyMatch);
   const includeKeywordMatches: string[] = [];
 
   // Find segments matching search term words

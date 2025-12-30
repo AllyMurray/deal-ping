@@ -46,6 +46,37 @@ describe('match-details', () => {
       expect(result.searchTermMatches).toHaveLength(0);
     });
 
+    it('matches individual words when fuzzyMatch is enabled', () => {
+      const result = computeMatchDetails('NiteCore Power Bank with 10000mAh Battery', 'Amazon', {
+        searchTerm: 'NiteCore NB10000',
+        fuzzyMatch: true,
+      });
+
+      // Should find "NiteCore" as it appears in the title
+      expect(result.searchTermMatches).toContain('NiteCore');
+      expect(result.searchTermMatches).toHaveLength(1);
+    });
+
+    it('matches all words when fuzzyMatch is enabled and all present', () => {
+      const result = computeMatchDetails('NiteCore NB10000 Power Bank', 'Amazon', {
+        searchTerm: 'NiteCore NB10000',
+        fuzzyMatch: true,
+      });
+
+      expect(result.searchTermMatches).toContain('NiteCore');
+      expect(result.searchTermMatches).toContain('NB10000');
+      expect(result.searchTermMatches).toHaveLength(2);
+    });
+
+    it('defaults to exact phrase matching when fuzzyMatch is not specified', () => {
+      const result = computeMatchDetails('NiteCore Power Bank with 10000mAh Battery', 'Amazon', {
+        searchTerm: 'NiteCore NB10000',
+      });
+
+      // Full phrase not present, so no match
+      expect(result.searchTermMatches).toHaveLength(0);
+    });
+
     it('tracks include keyword matches', () => {
       const result = computeMatchDetails('NiteCore NB10000 Power Bank Pro', undefined, {
         searchTerm: 'NiteCore',

@@ -9,8 +9,9 @@ import {
   NumberInput,
   Text,
   Alert,
+  Tooltip,
 } from "@mantine/core";
-import { IconAlertTriangle } from "@tabler/icons-react";
+import { IconAlertTriangle, IconInfoCircle } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useFetcher } from "react-router";
@@ -27,6 +28,7 @@ export interface ConfigFormValues {
   includeKeywords: string[];
   excludeKeywords: string[];
   caseSensitive: boolean;
+  fuzzyMatch: boolean;
   maxPrice?: number | null; // Price in pounds (e.g., 50.00)
   minDiscount?: number | null; // Discount percentage (e.g., 30)
 }
@@ -58,6 +60,7 @@ export function ConfigForm({
       includeKeywords: [],
       excludeKeywords: [],
       caseSensitive: false,
+      fuzzyMatch: false,
       maxPrice: null,
       minDiscount: null,
       ...initialValues,
@@ -160,6 +163,27 @@ export function ConfigForm({
           data-testid="case-sensitive-switch"
           {...form.getInputProps("caseSensitive", { type: "checkbox" })}
         />
+
+        <Group gap="xs" align="flex-start">
+          <Switch
+            label="Fuzzy Match"
+            description="Match if any word from the search term is found"
+            data-testid="fuzzy-match-switch"
+            {...form.getInputProps("fuzzyMatch", { type: "checkbox" })}
+          />
+          <Tooltip
+            label="When enabled, deals will match if any word from your search term is found. When disabled (default), the entire search term must appear in the deal title or merchant."
+            multiline
+            w={300}
+            withArrow
+          >
+            <IconInfoCircle
+              size={16}
+              style={{ marginTop: 4, cursor: "help", opacity: 0.6 }}
+              data-testid="fuzzy-match-tooltip-icon"
+            />
+          </Tooltip>
+        </Group>
 
         <Text size="sm" fw={500} mt="md">
           Price Thresholds

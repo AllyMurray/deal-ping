@@ -31,6 +31,16 @@ describe("ConfigForm", () => {
       expect(screen.getByTestId("case-sensitive-switch")).not.toBeChecked();
     });
 
+    it("renders fuzzy match switch as unchecked by default", () => {
+      render(<ConfigForm {...defaultProps} />);
+      expect(screen.getByTestId("fuzzy-match-switch")).not.toBeChecked();
+    });
+
+    it("renders fuzzy match tooltip icon", () => {
+      render(<ConfigForm {...defaultProps} />);
+      expect(screen.getByTestId("fuzzy-match-tooltip-icon")).toBeInTheDocument();
+    });
+
     it("renders with initial values when provided", () => {
       render(
         <ConfigForm
@@ -119,6 +129,13 @@ describe("ConfigForm", () => {
         screen.getByText("Match keywords with exact case")
       ).toBeInTheDocument();
     });
+
+    it("has description text for fuzzy match switch", () => {
+      render(<ConfigForm {...defaultProps} />);
+      expect(
+        screen.getByText("Match if any word from the search term is found")
+      ).toBeInTheDocument();
+    });
   });
 
   describe("interactions", () => {
@@ -170,6 +187,20 @@ describe("ConfigForm", () => {
       await user.click(caseSensitiveSwitch);
       expect(caseSensitiveSwitch).not.toBeChecked();
     });
+
+    it("allows toggling fuzzy match switch", async () => {
+      const user = userEvent.setup();
+      render(<ConfigForm {...defaultProps} />);
+
+      const fuzzyMatchSwitch = screen.getByTestId("fuzzy-match-switch");
+      expect(fuzzyMatchSwitch).not.toBeChecked();
+
+      await user.click(fuzzyMatchSwitch);
+      expect(fuzzyMatchSwitch).toBeChecked();
+
+      await user.click(fuzzyMatchSwitch);
+      expect(fuzzyMatchSwitch).not.toBeChecked();
+    });
   });
 
   describe("submitting state", () => {
@@ -199,6 +230,11 @@ describe("ConfigForm", () => {
     it("has correct label for case sensitive switch", () => {
       render(<ConfigForm {...defaultProps} />);
       expect(screen.getByText("Case Sensitive")).toBeInTheDocument();
+    });
+
+    it("has correct label for fuzzy match switch", () => {
+      render(<ConfigForm {...defaultProps} />);
+      expect(screen.getByText("Fuzzy Match")).toBeInTheDocument();
     });
   });
 

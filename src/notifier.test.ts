@@ -144,6 +144,57 @@ describe('filterDeal', () => {
     });
   });
 
+  describe('fuzzy matching', () => {
+    it('matches any word from search term when fuzzyMatch is enabled', () => {
+      const deal = createDeal({ title: 'NiteCore Power Bank' });
+      const config = createConfig({ searchTerm: 'NiteCore NB10000', fuzzyMatch: true });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(true);
+      expect(result.filterStatus).toBe('passed');
+    });
+
+    it('requires entire search term when fuzzyMatch is disabled (default)', () => {
+      const deal = createDeal({ title: 'NiteCore Power Bank' });
+      const config = createConfig({ searchTerm: 'NiteCore NB10000', fuzzyMatch: false });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(false);
+      expect(result.filterStatus).toBe('filtered_no_match');
+    });
+
+    it('defaults to exact phrase matching when fuzzyMatch is not specified', () => {
+      const deal = createDeal({ title: 'NiteCore Power Bank' });
+      const config = createConfig({ searchTerm: 'NiteCore NB10000' });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(false);
+      expect(result.filterStatus).toBe('filtered_no_match');
+    });
+
+    it('passes with fuzzyMatch when any word matches in merchant', () => {
+      const deal = createDeal({ title: 'Power Bank', merchant: 'NiteCore Store' });
+      const config = createConfig({ searchTerm: 'NiteCore NB10000', fuzzyMatch: true });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(true);
+    });
+
+    it('shows appropriate filter reason for fuzzy match failure', () => {
+      const deal = createDeal({ title: 'Random Product' });
+      const config = createConfig({ searchTerm: 'NiteCore NB10000', fuzzyMatch: true });
+
+      const result = filterDeal(deal, config);
+
+      expect(result.passed).toBe(false);
+      expect(result.filterReason).toContain('No words from search term');
+    });
+  });
+
   describe('exclude keywords', () => {
     it('filters out when excluded keyword is found', () => {
       const deal = createDeal({ title: 'NiteCore Power Bank Refurbished' });
