@@ -135,6 +135,22 @@ export const QueuedDeal = z.object({
 
 export type QueuedDeal = z.infer<typeof QueuedDeal>;
 
+// BookmarkedDeal - deals saved by users for later reference
+export const BookmarkedDeal = z.object({
+  bookmarkId: z.string(),
+  userId: z.string(),
+  dealId: z.string(),
+  title: z.string(),
+  link: z.string(),
+  price: z.string().optional(),
+  merchant: z.string().optional(),
+  searchTerm: z.string(),
+  bookmarkedAt: z.number().optional(),
+  createdAt: z.string().optional(),
+});
+
+export type BookmarkedDeal = z.infer<typeof BookmarkedDeal>;
+
 // Parse functions with defaults applied
 export function parseChannel(data: unknown): Channel {
   return Channel.parse(data);
@@ -156,6 +172,10 @@ export function parseQueuedDeal(data: unknown): QueuedDeal {
   return QueuedDeal.parse(data);
 }
 
+export function parseBookmarkedDeal(data: unknown): BookmarkedDeal {
+  return BookmarkedDeal.parse(data);
+}
+
 // Safe parse functions for arrays
 export function parseChannels(data: unknown[]): Channel[] {
   return data.map((item) => Channel.parse(item));
@@ -175,4 +195,8 @@ export function parseAllowedUsers(data: unknown[]): AllowedUser[] {
 
 export function parseQueuedDeals(data: unknown[]): QueuedDeal[] {
   return data.map((item) => QueuedDeal.parse(item));
+}
+
+export function parseBookmarkedDeals(data: unknown[]): BookmarkedDeal[] {
+  return data.map((item) => BookmarkedDeal.parse(item));
 }

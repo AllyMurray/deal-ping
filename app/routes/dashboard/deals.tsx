@@ -1,10 +1,17 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router";
+import { useSearchParams, useFetcher } from "react-router";
 import type { Route } from "./+types/deals";
 import { DealsPage } from "~/pages/dashboard";
 import { RouteErrorBoundary } from "~/components/ui";
 import { requireUser } from "~/lib/auth";
-import { getConfigsByUser, getDealsBySearchTerm } from "~/db/repository.server";
+import {
+  getConfigsByUser,
+  getDealsBySearchTerm,
+  getBookmarksByUser,
+  createBookmark,
+  deleteBookmarkByDeal,
+  getDeal,
+} from "~/db/repository.server";
 import type { DateRange } from "~/components/deals";
 
 /**
@@ -38,9 +45,14 @@ export async function loader({ request }: Route.LoaderArgs) {
   const dateRange: DateRange = dateRangeParam || "7days";
   const limit = 50;
 
-  // Get unique search terms for THIS user only
-  const configs = await getConfigsByUser({ userId: user.id });
+  // Get unique search terms for THIS user only and bookmarked deal IDs in parallel
+  const [configs, bookmarks] = await Promise.all([
+    getConfigsByUser({ userId: user.id }),
+    getBookmarksByUser({ userId: user.id }),
+  ]);
+
   const allSearchTerms = [...new Set(configs.map((c) => c.searchTerm))];
+  const bookmarkedDealIds = bookmarks.map((b) => b.dealId);
 
   // Determine which search terms to query
   const searchTermsToQuery = searchTermFilter
@@ -113,7 +125,42 @@ export async function loader({ request }: Route.LoaderArgs) {
     searchTerms: allSearchTerms,
     dateRange,
     hasMore,
+    bookmarkedDealIds,
   };
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  const { user } = await requireUser(request);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+  const dealId = formData.get("dealId") as string;
+
+  if (intent === "bookmark") {
+    // Get the deal to bookmark
+    const deal = await getDeal({ id: dealId });
+    if (!deal) {
+      return { error: "Deal not found" };
+    }
+
+    await createBookmark({
+      userId: user.id,
+      dealId: deal.dealId,
+      title: deal.title,
+      link: deal.link,
+      price: deal.price,
+      merchant: deal.merchant,
+      searchTerm: deal.searchTerm,
+    });
+
+    return { success: true, bookmarked: true, dealId };
+  }
+
+  if (intent === "unbookmark") {
+    await deleteBookmarkByDeal({ userId: user.id, dealId });
+    return { success: true, bookmarked: false, dealId };
+  }
+
+  return { error: "Invalid intent" };
 }
 
 export default function Deals({ loaderData }: Route.ComponentProps) {
@@ -121,6 +168,26 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
   const searchTerm = searchParams.get("searchTerm");
   const [searchQuery, setSearchQuery] = useState("");
   const [showFiltered, setShowFiltered] = useState(false);
+  const bookmarkFetcher = useFetcher();
+
+  // Track bookmarked deal IDs with optimistic updates
+  const bookmarkedDealIds = new Set(loaderData.bookmarkedDealIds);
+
+  // Apply optimistic update if a bookmark operation is in progress
+  if (bookmarkFetcher.formData) {
+    const dealId = bookmarkFetcher.formData.get("dealId") as string;
+    const intent = bookmarkFetcher.formData.get("intent") as string;
+    if (intent === "bookmark") {
+      bookmarkedDealIds.add(dealId);
+    } else if (intent === "unbookmark") {
+      bookmarkedDealIds.delete(dealId);
+    }
+  }
+
+  // Get the deal ID currently being processed
+  const bookmarkLoadingId = bookmarkFetcher.state !== "idle"
+    ? (bookmarkFetcher.formData?.get("dealId") as string)
+    : undefined;
 
   // Filter deals client-side for search query
   const filteredDeals = loaderData.deals.filter((deal) => {
@@ -150,6 +217,13 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
     setSearchParams(newParams);
   };
 
+  const handleBookmarkToggle = (dealId: string, bookmark: boolean) => {
+    bookmarkFetcher.submit(
+      { intent: bookmark ? "bookmark" : "unbookmark", dealId },
+      { method: "POST" }
+    );
+  };
+
   return (
     <DealsPage
       deals={filteredDeals}
@@ -168,6 +242,9 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
       }}
       showFiltered={showFiltered}
       onShowFilteredChange={setShowFiltered}
+      bookmarkedDealIds={bookmarkedDealIds}
+      onBookmarkToggle={handleBookmarkToggle}
+      bookmarkLoadingId={bookmarkLoadingId}
     />
   );
 }

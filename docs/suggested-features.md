@@ -110,7 +110,7 @@ Guide new users through setup process.
 - Create guided tour component
 - Show on first login or empty dashboard
 
-#### 8. Deal Bookmarking
+#### ~~8. Deal Bookmarking~~ (Implemented)
 Save interesting deals for later reference.
 
 **Features:**
@@ -336,6 +336,43 @@ The "Deals Today" stat card on the dashboard home page now shows the actual coun
 - Uses `getDealsBySearchTerm` with `startTime` parameter for efficient GSI queries
 - Deduplicates search terms to avoid querying the same term multiple times
 
+### Deal Bookmarking (Implemented)
+Save interesting deals for later reference, allowing users to build a collection of deals they want to track or purchase later.
+
+**Features:**
+- Bookmark button on each deal card in the Deal History page
+- Dedicated Bookmarks page showing all saved deals
+- Search/filter bookmarks by title, merchant, or search term
+- Remove bookmarks individually
+
+**Location:**
+- Bookmark button: Available on each deal card in the Deal History page
+- Bookmarks page: `/dashboard/bookmarks` (accessible via sidebar navigation)
+
+**Behavior:**
+- Click the bookmark icon on any deal card to save it
+- Bookmarked deals show a filled yellow bookmark icon
+- Click again to remove the bookmark
+- Bookmarks page shows all saved deals sorted by bookmark date (newest first)
+- Search bar allows filtering bookmarks by title, merchant, or search term
+- Each bookmark card shows the deal title, price, merchant, search term, and when it was bookmarked
+
+**Technical Details:**
+- Entity: `BookmarkedDeal` in `src/db/entities/bookmarked-deal.ts`
+- Schema: Defined in `src/db/schemas.ts` with Zod validation
+- Repository functions in `src/db/repository.ts`:
+  - `createBookmark`: Save a deal as a bookmark
+  - `getBookmarksByUser`: Get all bookmarks for a user (sorted by date)
+  - `isBookmarked`: Check if a deal is bookmarked
+  - `deleteBookmarkByDeal`: Remove a bookmark by deal ID
+- Uses optimistic UI updates for instant feedback when bookmarking/unbookmarking
+- DynamoDB indexes:
+  - Primary: `byBookmarkId` for direct bookmark access
+  - GSI1: `byUser` for listing user's bookmarks sorted by time
+  - GSI2: `byUserDeal` for efficient bookmark existence checks
+- Route: `app/routes/dashboard/bookmarks.tsx`
+- Page component: `app/pages/dashboard/BookmarksPage.tsx`
+
 ## Implementation Priority
 
 ### Phase 1 (Quick Wins)
@@ -350,7 +387,7 @@ The "Deals Today" stat card on the dashboard home page now shows the actual coun
 
 ### Phase 3 (Power Features)
 7. Onboarding tutorial
-8. Deal bookmarking
+8. ~~Deal bookmarking~~ ✓
 9. Export to CSV
 10. Notification history
 

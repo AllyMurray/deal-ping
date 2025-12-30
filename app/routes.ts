@@ -18,6 +18,8 @@ export default [
     route("dashboard/search-terms", "routes/dashboard/search-terms.tsx"),
     // Deal history
     route("dashboard/deals", "routes/dashboard/deals.tsx"),
+    // Bookmarks
+    route("dashboard/bookmarks", "routes/dashboard/bookmarks.tsx"),
     // Admin (allowlist management)
     route("dashboard/admin", "routes/dashboard/admin.tsx"),
     // Settings

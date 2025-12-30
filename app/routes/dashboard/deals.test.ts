@@ -20,19 +20,26 @@ vi.mock("~/lib/auth", () => ({
 vi.mock("~/db/repository.server", () => ({
   getConfigsByUser: vi.fn(),
   getDealsBySearchTerm: vi.fn(),
+  getBookmarksByUser: vi.fn(),
+  createBookmark: vi.fn(),
+  deleteBookmarkByDeal: vi.fn(),
+  getDeal: vi.fn(),
 }));
 
 // Import mocks for assertions
 import { requireUser } from "~/lib/auth";
-import { getConfigsByUser, getDealsBySearchTerm } from "~/db/repository.server";
+import { getConfigsByUser, getDealsBySearchTerm, getBookmarksByUser } from "~/db/repository.server";
 
 const mockRequireUser = vi.mocked(requireUser);
 const mockGetConfigsByUser = vi.mocked(getConfigsByUser);
 const mockGetDealsBySearchTerm = vi.mocked(getDealsBySearchTerm);
+const mockGetBookmarksByUser = vi.mocked(getBookmarksByUser);
 
 describe("Deals Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default mock for bookmarks (empty list)
+    mockGetBookmarksByUser.mockResolvedValue([]);
   });
 
   describe("loader", () => {

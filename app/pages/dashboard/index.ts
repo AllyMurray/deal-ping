@@ -21,3 +21,6 @@ export type { SearchTermsPageProps, SearchTermWithChannel } from "./SearchTermsP
 
 export { SettingsPage } from "./SettingsPage";
 export type { SettingsPageProps, SettingsFormValues } from "./SettingsPage";
+
+export { BookmarksPage } from "./BookmarksPage";
+export type { BookmarksPageProps, BookmarkCardProps } from "./BookmarksPage";

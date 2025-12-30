@@ -37,6 +37,14 @@ export {
   seedAdminUser,
   // Grouped helpers
   getEnabledConfigsGroupedByChannel,
+  // Bookmark functions
+  createBookmark,
+  getBookmarksByUser,
+  getBookmark,
+  isBookmarked,
+  getBookmarkByUserDeal,
+  deleteBookmark,
+  deleteBookmarkByDeal,
 } from "../../src/db/repository";
 
 // Re-export types
@@ -45,6 +53,7 @@ export type {
   SearchTermConfig,
   Deal,
   AllowedUser,
+  BookmarkedDeal,
 } from "../../src/db/schemas";
 
 export type { DuplicateSearchTermInfo } from "../../src/db/repository";

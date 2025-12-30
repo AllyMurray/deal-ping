@@ -21,6 +21,9 @@ export interface DealsPageProps {
   isLoadingMore?: boolean;
   showFiltered?: boolean;
   onShowFilteredChange?: (value: boolean) => void;
+  bookmarkedDealIds?: Set<string>;
+  onBookmarkToggle?: (dealId: string, bookmark: boolean) => void;
+  bookmarkLoadingId?: string;
 }
 
 export function DealsPage({
@@ -38,6 +41,9 @@ export function DealsPage({
   isLoadingMore,
   showFiltered = false,
   onShowFilteredChange,
+  bookmarkedDealIds,
+  onBookmarkToggle,
+  bookmarkLoadingId,
 }: DealsPageProps) {
   // Count filtered deals using stored filter status
   const filteredCount = deals.filter(
@@ -103,7 +109,13 @@ export function DealsPage({
       ) : (
         <Stack gap="md" data-testid="deals-list">
           {displayedDeals.map((deal) => (
-            <DealCard key={deal.id} {...deal} />
+            <DealCard
+              key={deal.id}
+              {...deal}
+              bookmarked={bookmarkedDealIds?.has(deal.id)}
+              onBookmarkToggle={onBookmarkToggle}
+              bookmarkLoading={bookmarkLoadingId === deal.id}
+            />
           ))}
 
           {hasMore && (
