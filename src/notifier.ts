@@ -126,23 +126,37 @@ export const filterDeal = (deal: Deal, config: SearchTermConfig): FilterResult =
     includeKeywords: config.includeKeywords,
     excludeKeywords: config.excludeKeywords,
     caseSensitive: config.caseSensitive,
+    fuzzyMatch: config.fuzzyMatch,
   });
 
-  // Check that at least one search term word appears in the deal
-  // This filters out HotUKDeals' fuzzy matches that don't actually contain any search words
-  const searchTermWords = config.searchTerm.split(/\s+/).filter((w) => w.length > 0);
-  const normalizedSearchTermWords = config.caseSensitive
-    ? searchTermWords
-    : searchTermWords.map((w) => w.toLowerCase());
+  // Check that the search term appears in the deal
+  // When fuzzyMatch is enabled, match if any word from the search term is found
+  // When fuzzyMatch is disabled (default), the entire search term must be present
+  let hasSearchTermMatch: boolean;
 
-  const hasSearchTermMatch = normalizedSearchTermWords.some((word) => searchText.includes(word));
+  if (config.fuzzyMatch) {
+    // Fuzzy match: any word from the search term matches
+    const searchTermWords = config.searchTerm.split(/\s+/).filter((w) => w.length > 0);
+    const normalizedSearchTermWords = config.caseSensitive
+      ? searchTermWords
+      : searchTermWords.map((w) => w.toLowerCase());
+    hasSearchTermMatch = normalizedSearchTermWords.some((word) => searchText.includes(word));
+  } else {
+    // Exact phrase match: entire search term must be present
+    const normalizedSearchTerm = config.caseSensitive
+      ? config.searchTerm
+      : config.searchTerm.toLowerCase();
+    hasSearchTermMatch = searchText.includes(normalizedSearchTerm);
+  }
 
   if (!hasSearchTermMatch) {
-    const filterReason = `No words from search term "${config.searchTerm}" found in deal`;
-    logger.debug('Deal filtered out - no search term words found in deal', {
+    const filterReason = config.fuzzyMatch
+      ? `No words from search term "${config.searchTerm}" found in deal`
+      : `Search term "${config.searchTerm}" not found in deal`;
+    logger.debug('Deal filtered out - search term not found in deal', {
       dealTitle: deal.title,
       searchTerm: config.searchTerm,
-      searchTermWords,
+      fuzzyMatch: config.fuzzyMatch,
       matchDetails,
     });
     return {

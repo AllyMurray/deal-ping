@@ -42,6 +42,10 @@ export const SearchTermConfigEntity = new Entity({
       type: 'boolean',
       default: false,
     },
+    fuzzyMatch: {
+      type: 'boolean',
+      default: false,
+    },
     maxPrice: {
       type: 'number', // Maximum price threshold in pence (e.g., 5000 = £50.00)
     },

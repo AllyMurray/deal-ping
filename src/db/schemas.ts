@@ -31,6 +31,7 @@ export const MatchFilterConfig = z.object({
   includeKeywords: z.array(z.string()).optional(),
   excludeKeywords: z.array(z.string()).optional(),
   caseSensitive: z.boolean().optional(),
+  fuzzyMatch: z.boolean().optional(),
 });
 
 export type MatchFilterConfig = z.infer<typeof MatchFilterConfig>;
@@ -61,6 +62,7 @@ export const SearchTermConfig = z.object({
   excludeKeywords: z.array(z.string()).default([]),
   includeKeywords: z.array(z.string()).default([]),
   caseSensitive: z.boolean().default(false),
+  fuzzyMatch: z.boolean().default(false), // When true, match any word from search term; when false, match entire phrase
   maxPrice: z.number().optional(), // Maximum price threshold in pence (e.g., 5000 = £50.00)
   minDiscount: z.number().optional(), // Minimum discount percentage (e.g., 30 = 30% off)
   createdAt: z.string().optional(),

@@ -7,6 +7,7 @@ A Discord bot that monitors HotUKDeals and sends deal notifications to Discord c
 - 🔍 **Multiple Search Terms**: Monitor multiple keywords per Discord channel
 - 📢 **Discord Notifications**: Send real-time deal notifications to Discord channels
 - 🎯 **Smart Filtering**: Include/exclude deals based on keywords to avoid unwanted results
+- 🔤 **Flexible Matching**: Choose between exact phrase matching (default) or fuzzy word-based matching
 - 💷 **Price Thresholds**: Only notify when deals are under a maximum price or meet a minimum discount percentage
 - 🌙 **Quiet Hours**: Account-level setting to pause notifications during specified hours (deals are queued and sent when quiet hours end)
 - ⚠️ **Duplicate Detection**: Warns when adding search terms that already exist in other channels
@@ -230,6 +231,7 @@ export const SearchTermConfig = z.object({
   excludeKeywords: z.array(z.string()).default([]),
   includeKeywords: z.array(z.string()).default([]),
   caseSensitive: z.boolean().default(false),
+  fuzzyMatch: z.boolean().default(false), // When true, match any word; when false, match entire phrase
   maxPrice: z.number().optional(),     // Max price in pence (e.g., 5000 = £50.00)
   minDiscount: z.number().optional(),  // Min discount percentage (e.g., 30 = 30% off)
   createdAt: z.string().optional(),
