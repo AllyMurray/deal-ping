@@ -61,7 +61,7 @@ export function DashboardLayout({ user, children, isAdmin = false }: DashboardLa
     return location.pathname.startsWith(href);
   };
 
-  const NavItems = ({ onNavigate, showLabel = true, animate = true }: { onNavigate?: () => void; showLabel?: boolean; animate?: boolean }) => (
+  const NavItems = ({ onNavigate, showLabel = true }: { onNavigate?: () => void; showLabel?: boolean }) => (
     <Stack gap={4}>
       {showLabel && (
         <Text
@@ -77,7 +77,7 @@ export function DashboardLayout({ user, children, isAdmin = false }: DashboardLa
         </Text>
       )}
 
-      {navItems.map((item, index) => (
+      {navItems.map((item) => (
         <NavLink
           key={item.href}
           component={Link}
@@ -96,10 +96,6 @@ export function DashboardLayout({ user, children, isAdmin = false }: DashboardLa
           }
           active={isActive(item.href, item.exact)}
           data-testid={`nav-${item.label.toLowerCase().replace(" ", "-")}`}
-          style={animate ? {
-            animation: `slideInLeft 0.3s ease-out ${index * 0.05}s forwards`,
-            opacity: 0,
-          } : undefined}
         />
       ))}
     </Stack>
@@ -259,7 +255,7 @@ export function DashboardLayout({ user, children, isAdmin = false }: DashboardLa
         }}
       >
         <ScrollArea>
-          <NavItems onNavigate={closeDrawer} showLabel={false} animate={false} />
+          <NavItems onNavigate={closeDrawer} showLabel={false} />
 
           <Box mt="xl">
             <Divider my="md" />
