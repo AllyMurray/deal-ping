@@ -301,11 +301,11 @@ const processChannelFeeds = async (
       return;
     }
 
-    // Batch check existence for all deals
+    // Batch check existence for all deals (per-channel deduplication)
     const existenceChecks = await Promise.all(
       allDealsWithConfig.map(async ({ deal }) => ({
         dealId: deal.id,
-        exists: await dealExists({ id: deal.id }),
+        exists: await dealExists({ channelId: channel.channelId, id: deal.id }),
       }))
     );
 
@@ -364,6 +364,7 @@ const processChannelFeeds = async (
       await Promise.all(
         allNewDeals.map((deal) =>
           createDeal({
+            channelId: channel.channelId,
             id: deal.id,
             searchTerm: deal.searchTerm,
             title: deal.title,

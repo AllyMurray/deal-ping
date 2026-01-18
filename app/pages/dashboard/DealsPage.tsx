@@ -22,7 +22,7 @@ export interface DealsPageProps {
   showFiltered?: boolean;
   onShowFilteredChange?: (value: boolean) => void;
   bookmarkedDealIds?: Set<string>;
-  onBookmarkToggle?: (dealId: string, bookmark: boolean) => void;
+  onBookmarkToggle?: (dealId: string, channelId: string, bookmark: boolean) => void;
   bookmarkLoadingId?: string;
 }
 

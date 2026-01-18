@@ -86,6 +86,7 @@ export type DealFilterStatus = z.infer<typeof DealFilterStatus>;
 // Deal
 export const Deal = z.object({
   dealId: z.string(),
+  channelId: z.string(), // Channel this deal belongs to (for per-channel deduplication)
   searchTerm: z.string(),
   title: z.string(),
   link: z.string(),

@@ -6,6 +6,7 @@ import { DealCard } from "./DealCard";
 
 const defaultProps = {
   id: "deal-123",
+  channelId: "channel-abc",
   title: "Steam Deck OLED 1TB - Best Price",
   link: "https://hotukdeals.com/deal/123",
   price: "£529.99",
@@ -246,7 +247,7 @@ describe("DealCard", () => {
       expect(button).toHaveAttribute("aria-label", "Remove bookmark");
     });
 
-    it("calls onBookmarkToggle with deal id and true when bookmarking", async () => {
+    it("calls onBookmarkToggle with deal id, channel id, and true when bookmarking", async () => {
       const user = userEvent.setup();
       const onBookmarkToggle = vi.fn();
       render(
@@ -255,10 +256,10 @@ describe("DealCard", () => {
 
       await user.click(screen.getByTestId("bookmark-button"));
 
-      expect(onBookmarkToggle).toHaveBeenCalledWith("deal-123", true);
+      expect(onBookmarkToggle).toHaveBeenCalledWith("deal-123", "channel-abc", true);
     });
 
-    it("calls onBookmarkToggle with deal id and false when unbookmarking", async () => {
+    it("calls onBookmarkToggle with deal id, channel id, and false when unbookmarking", async () => {
       const user = userEvent.setup();
       const onBookmarkToggle = vi.fn();
       render(
@@ -267,7 +268,7 @@ describe("DealCard", () => {
 
       await user.click(screen.getByTestId("bookmark-button"));
 
-      expect(onBookmarkToggle).toHaveBeenCalledWith("deal-123", false);
+      expect(onBookmarkToggle).toHaveBeenCalledWith("deal-123", "channel-abc", false);
     });
 
     it("shows loading state on bookmark button when bookmarkLoading is true", () => {

@@ -25,6 +25,7 @@ export type FilterStatus = 'passed' | 'filtered_no_match' | 'filtered_exclude' |
 
 export interface DealCardProps {
   id: string;
+  channelId?: string; // Channel this deal belongs to
   title: string;
   link: string;
   price?: string;
@@ -36,7 +37,7 @@ export interface DealCardProps {
   filterReason?: string;
   notified?: boolean; // Whether a notification was sent
   bookmarked?: boolean; // Whether the deal is bookmarked
-  onBookmarkToggle?: (id: string, bookmarked: boolean) => void; // Callback when bookmark is toggled
+  onBookmarkToggle?: (id: string, channelId: string, bookmarked: boolean) => void; // Callback when bookmark is toggled
   bookmarkLoading?: boolean; // Whether a bookmark operation is in progress
 }
 
@@ -88,6 +89,7 @@ function getFilterStatusInfo(filterStatus?: FilterStatus, filterReason?: string)
 
 export function DealCard({
   id,
+  channelId,
   title,
   link,
   price,
@@ -167,14 +169,14 @@ export function DealCard({
             </Box>
           )}
 
-          {onBookmarkToggle && (
+          {onBookmarkToggle && channelId && (
             <Tooltip label={bookmarked ? "Remove bookmark" : "Bookmark deal"}>
               <ActionIcon
                 variant={bookmarked ? "filled" : "subtle"}
                 color={bookmarked ? "yellow" : "gray"}
                 size="md"
                 radius="md"
-                onClick={() => onBookmarkToggle(id, !bookmarked)}
+                onClick={() => onBookmarkToggle(id, channelId, !bookmarked)}
                 loading={bookmarkLoading}
                 data-testid="bookmark-button"
                 aria-label={bookmarked ? "Remove bookmark" : "Bookmark deal"}

@@ -17,8 +17,8 @@ import {
   upsertConfig,
   deleteConfig,
   findDuplicateSearchTerms,
+  getDealsBySearchTerm,
 } from "~/db/repository.server";
-import { HotUKDealsService } from "../../../../src/db/service";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
@@ -29,16 +29,23 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 
   const configs = await getConfigsByChannel({ channelId: params.id! });
-  const searchTerms = configs.map((c) => c.searchTerm);
 
-  // Fetch deals for this channel's search terms
-  const result = await HotUKDealsService.entities.deal.scan.go({ limit: 500 });
-  let deals = result.data.filter((d) => searchTerms.includes(d.searchTerm));
+  // Fetch deals for this channel's search terms using per-channel queries
+  const dealResults = await Promise.all(
+    configs.map((config) =>
+      getDealsBySearchTerm({
+        channelId: params.id!,
+        searchTerm: config.searchTerm,
+        limit: 100,
+      })
+    )
+  );
+  let deals = dealResults.flat();
 
   // Sort by timestamp descending
   deals.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-  // Limit to 100 deals
+  // Limit to 100 deals total
   deals = deals.slice(0, 100);
 
   return {
@@ -58,6 +65,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     })),
     deals: deals.map((d) => ({
       id: d.dealId,
+      channelId: d.channelId,
       title: d.title,
       link: d.link,
       price: d.price,

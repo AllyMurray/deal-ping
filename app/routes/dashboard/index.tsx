@@ -20,14 +20,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   startOfDay.setHours(0, 0, 0, 0);
   const startOfDayTime = startOfDay.getTime();
 
-  // Get unique search terms for this user
-  const searchTerms = [...new Set(configs.map((c) => c.searchTerm))];
-
-  // Fetch deals from today for all search terms in parallel
+  // Fetch deals from today for all channel+searchTerm combinations in parallel
+  // Deals are now stored per-channel, so we query each config separately
   const dealResults = await Promise.all(
-    searchTerms.map((term) =>
+    configs.map((config) =>
       getDealsBySearchTerm({
-        searchTerm: term,
+        channelId: config.channelId,
+        searchTerm: config.searchTerm,
         startTime: startOfDayTime,
         limit: 100,
       })

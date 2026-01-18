@@ -55,15 +55,17 @@ export type DeleteConfigParams = { channelId: string; searchTerm: string };
 export type DeleteConfigsByChannelParams = { channelId: string };
 
 // Deal params
-export type DealExistsParams = { id: string };
-export type GetDealParams = { id: string };
+export type DealExistsParams = { channelId: string; id: string };
+export type GetDealParams = { channelId: string; id: string };
 export type GetDealsBySearchTermParams = {
+  channelId: string;
   searchTerm: string;
   limit?: number;
   startTime?: number; // Filter deals from this timestamp (inclusive)
   endTime?: number; // Filter deals until this timestamp (inclusive)
 };
 export type CreateDealParams = {
+  channelId: string;
   id: string;
   searchTerm: string;
   title: string;
@@ -431,33 +433,34 @@ export async function deleteConfigsByChannel({ channelId }: DeleteConfigsByChann
 // ============================================================================
 
 /**
- * Check if a deal exists by ID
+ * Check if a deal exists for a specific channel
  */
-export async function dealExists({ id }: DealExistsParams): Promise<boolean> {
+export async function dealExists({ channelId, id }: DealExistsParams): Promise<boolean> {
   const result = await HotUKDealsService.entities.deal.query
-    .byDealId({ dealId: id })
+    .byChannelDeal({ channelId, dealId: id })
     .go();
   return result.data.length > 0;
 }
 
 /**
- * Get a deal by ID
+ * Get a deal by channel ID and deal ID
  */
-export async function getDeal({ id }: GetDealParams): Promise<Deal | null> {
+export async function getDeal({ channelId, id }: GetDealParams): Promise<Deal | null> {
   const result = await HotUKDealsService.entities.deal.query
-    .byDealId({ dealId: id })
+    .byChannelDeal({ channelId, dealId: id })
     .go();
   const data = result.data[0];
   return data ? parseDeal(data) : null;
 }
 
 /**
- * Create a new deal record
+ * Create a new deal record for a specific channel
  */
 export async function createDeal(deal: CreateDealParams): Promise<Deal> {
   const result = await HotUKDealsService.entities.deal
     .put({
       dealId: deal.id,
+      channelId: deal.channelId,
       searchTerm: deal.searchTerm,
       title: deal.title,
       link: deal.link,
@@ -474,18 +477,19 @@ export async function createDeal(deal: CreateDealParams): Promise<Deal> {
 }
 
 /**
- * Get deals by search term (for displaying on channel page)
+ * Get deals by channel and search term (for displaying on channel page)
  *
- * Uses the bySearchTerm GSI which has timestamp in the sort key,
+ * Uses the byChannelSearchTerm GSI which has timestamp in the sort key,
  * allowing efficient date range filtering without table scans.
  */
 export async function getDealsBySearchTerm({
+  channelId,
   searchTerm,
   limit = 50,
   startTime,
   endTime,
 }: GetDealsBySearchTermParams): Promise<Deal[]> {
-  const query = HotUKDealsService.entities.deal.query.bySearchTerm({ searchTerm });
+  const query = HotUKDealsService.entities.deal.query.byChannelSearchTerm({ channelId, searchTerm });
 
   // Apply date range filter on sort key if provided
   // ElectroDB translates these to DynamoDB KeyConditionExpression

@@ -54,19 +54,21 @@ export async function loader({ request }: Route.LoaderArgs) {
   const allSearchTerms = [...new Set(configs.map((c) => c.searchTerm))];
   const bookmarkedDealIds = bookmarks.map((b) => b.dealId);
 
-  // Determine which search terms to query
-  const searchTermsToQuery = searchTermFilter
-    ? [searchTermFilter]
-    : allSearchTerms;
-
   // Calculate date range for efficient queries
   const startTime = getDateRangeStartTime(dateRange);
 
+  // Build channel+searchTerm pairs to query
+  // Each config has both channelId and searchTerm, and deals are stored per-channel
+  const configsToQuery = searchTermFilter
+    ? configs.filter((c) => c.searchTerm === searchTermFilter)
+    : configs;
+
   // Query deals using efficient GSI queries (no table scan!)
-  // Each search term query uses the bySearchTerm GSI with timestamp in sort key
-  const dealPromises = searchTermsToQuery.map((term) =>
+  // Each query uses the byChannelSearchTerm GSI with timestamp in sort key
+  const dealPromises = configsToQuery.map((config) =>
     getDealsBySearchTerm({
-      searchTerm: term,
+      channelId: config.channelId,
+      searchTerm: config.searchTerm,
       startTime,
       limit: 100, // Get more per term, we'll trim after merging
     })
@@ -106,6 +108,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return {
     deals: deals.map((d) => ({
       id: d.dealId,
+      channelId: d.channelId,
       title: d.title,
       link: d.link,
       price: d.price,
@@ -134,10 +137,14 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const intent = formData.get("intent");
   const dealId = formData.get("dealId") as string;
+  const channelId = formData.get("channelId") as string;
 
   if (intent === "bookmark") {
+    if (!channelId) {
+      return { error: "Channel ID required" };
+    }
     // Get the deal to bookmark
-    const deal = await getDeal({ id: dealId });
+    const deal = await getDeal({ channelId, id: dealId });
     if (!deal) {
       return { error: "Deal not found" };
     }
@@ -217,9 +224,9 @@ export default function Deals({ loaderData }: Route.ComponentProps) {
     setSearchParams(newParams);
   };
 
-  const handleBookmarkToggle = (dealId: string, bookmark: boolean) => {
+  const handleBookmarkToggle = (dealId: string, channelId: string, bookmark: boolean) => {
     bookmarkFetcher.submit(
-      { intent: bookmark ? "bookmark" : "unbookmark", dealId },
+      { intent: bookmark ? "bookmark" : "unbookmark", dealId, channelId },
       { method: "POST" }
     );
   };
