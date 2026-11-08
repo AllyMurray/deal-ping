@@ -1,0 +1,13 @@
+title = "DealPing secret scanning"
+betterleaksMinVersion = "v1.10.0"
+
+# Keep the complete upstream ruleset and add coverage for webhook credentials.
+[extend]
+useDefault = true
+
+[[rules]]
+id = "discord-webhook-url"
+description = "Discord webhook URL containing an authentication token"
+confidence = "high"
+keywords = ["discord.com", "discordapp.com"]
+regex = '''(?i)https?://(?:(?:canary|ptb)\.)?discord(?:app)?\.com/api(?:/v[0-9]+)?/webhooks/[0-9]+/[a-z0-9_-]{30,}'''

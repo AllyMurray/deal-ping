@@ -182,7 +182,7 @@ export async function updateChannel({
   const result = await HotUKDealsService.entities.channel
     .patch({ channelId: id })
     .set(updates)
-    .go();
+    .go({ response: 'all_new' });
   return parseChannel(result.data);
 }
 

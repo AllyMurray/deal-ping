@@ -190,3 +190,11 @@ npx sst deploy --stage prod # Deploy to production
 ```
 
 Production deployments are protected and retained. Non-production deployments are automatically removed.
+
+## Secret handling
+
+- Never hardcode or print live credentials, including Discord webhook URLs.
+- Use synthetic test data and channel IDs in logs. Keep local secrets out of Git.
+- Run `bun run secrets:setup` when setting up a clone and `bun run secrets:scan` before committing.
+- `.betterleaks.toml` extends upstream detection rules with Discord webhook detection.
+- Investigate scanner findings; do not add broad exclusions or bypass scanning to commit a secret.

@@ -6,7 +6,7 @@ import { AdminPage } from "./AdminPage";
 
 const mockUsers = [
   {
-    discordId: "123456789012345678",
+    discordId: "test-admin-id",
     username: "AdminUser",
     avatar: "https://cdn.discordapp.com/avatars/123/abc.png",
     isAdmin: true,
@@ -14,18 +14,18 @@ const mockUsers = [
     addedAt: "2024-01-15T10:00:00Z",
   },
   {
-    discordId: "987654321098765432",
+    discordId: "test-user-id",
     username: "RegularUser",
     avatar: undefined,
     isAdmin: false,
-    addedBy: "123456789012345678",
+    addedBy: "test-admin-id",
     addedAt: "2024-02-20T15:30:00Z",
   },
 ];
 
 const defaultProps = {
   users: mockUsers,
-  currentUserId: "123456789012345678",
+  currentUserId: "test-admin-id",
 };
 
 describe("AdminPage", () => {
@@ -88,10 +88,10 @@ describe("AdminPage", () => {
     it("renders user rows for each user", () => {
       render(<AdminPage {...defaultProps} />);
       expect(
-        screen.getByTestId("user-row-123456789012345678")
+        screen.getByTestId("user-row-test-admin-id")
       ).toBeInTheDocument();
       expect(
-        screen.getByTestId("user-row-987654321098765432")
+        screen.getByTestId("user-row-test-user-id")
       ).toBeInTheDocument();
     });
 
@@ -103,19 +103,19 @@ describe("AdminPage", () => {
 
     it("displays discord IDs", () => {
       render(<AdminPage {...defaultProps} />);
-      expect(screen.getByText("123456789012345678")).toBeInTheDocument();
-      expect(screen.getByText("987654321098765432")).toBeInTheDocument();
+      expect(screen.getByText("test-admin-id")).toBeInTheDocument();
+      expect(screen.getByText("test-user-id")).toBeInTheDocument();
     });
 
     it("shows Admin badge for admin users", () => {
       render(<AdminPage {...defaultProps} />);
-      const adminRow = screen.getByTestId("user-row-123456789012345678");
+      const adminRow = screen.getByTestId("user-row-test-admin-id");
       expect(adminRow).toHaveTextContent("Admin");
     });
 
     it("shows User badge for non-admin users", () => {
       render(<AdminPage {...defaultProps} />);
-      const userRow = screen.getByTestId("user-row-987654321098765432");
+      const userRow = screen.getByTestId("user-row-test-user-id");
       expect(userRow).toHaveTextContent("User");
     });
 
@@ -129,21 +129,21 @@ describe("AdminPage", () => {
     it("shows delete button for other users", () => {
       render(<AdminPage {...defaultProps} />);
       expect(
-        screen.getByTestId("delete-user-987654321098765432")
+        screen.getByTestId("delete-user-test-user-id")
       ).toBeInTheDocument();
     });
 
     it("does not show delete button for current user", () => {
       render(<AdminPage {...defaultProps} />);
       expect(
-        screen.queryByTestId("delete-user-123456789012345678")
+        screen.queryByTestId("delete-user-test-admin-id")
       ).not.toBeInTheDocument();
     });
 
     it("opens delete confirmation modal when delete clicked", async () => {
       const user = userEvent.setup();
       render(<AdminPage {...defaultProps} />);
-      await user.click(screen.getByTestId("delete-user-987654321098765432"));
+      await user.click(screen.getByTestId("delete-user-test-user-id"));
       expect(
         await screen.findByText(/Are you sure you want to remove this user/i)
       ).toBeInTheDocument();
@@ -152,7 +152,7 @@ describe("AdminPage", () => {
     it("shows cancel and remove buttons in delete modal", async () => {
       const user = userEvent.setup();
       render(<AdminPage {...defaultProps} />);
-      await user.click(screen.getByTestId("delete-user-987654321098765432"));
+      await user.click(screen.getByTestId("delete-user-test-user-id"));
       // Wait for modal to appear
       await screen.findByText(/Are you sure you want to remove this user/i);
       // Check for Cancel button - there may be one already, get all and check for the modal one
@@ -164,7 +164,7 @@ describe("AdminPage", () => {
     it("has cancel button that can be clicked in modal", async () => {
       const user = userEvent.setup();
       render(<AdminPage {...defaultProps} />);
-      await user.click(screen.getByTestId("delete-user-987654321098765432"));
+      await user.click(screen.getByTestId("delete-user-test-user-id"));
       // Wait for modal to appear
       await screen.findByText(/Are you sure you want to remove this user/i);
       // Find the cancel button in the modal
@@ -179,40 +179,40 @@ describe("AdminPage", () => {
     it("does not allow deleting the only admin", () => {
       const singleAdminUsers = [
         {
-          discordId: "123456789012345678",
+          discordId: "test-admin-id",
           username: "OnlyAdmin",
           isAdmin: true,
           addedBy: "system",
         },
       ];
       render(
-        <AdminPage users={singleAdminUsers} currentUserId="123456789012345678" />
+        <AdminPage users={singleAdminUsers} currentUserId="test-admin-id" />
       );
       expect(
-        screen.queryByTestId("delete-user-123456789012345678")
+        screen.queryByTestId("delete-user-test-admin-id")
       ).not.toBeInTheDocument();
     });
 
     it("allows deleting admin when multiple admins exist", () => {
       const multiAdminUsers = [
         {
-          discordId: "123456789012345678",
+          discordId: "test-admin-id",
           username: "Admin1",
           isAdmin: true,
           addedBy: "system",
         },
         {
-          discordId: "987654321098765432",
+          discordId: "test-user-id",
           username: "Admin2",
           isAdmin: true,
           addedBy: "system",
         },
       ];
       render(
-        <AdminPage users={multiAdminUsers} currentUserId="123456789012345678" />
+        <AdminPage users={multiAdminUsers} currentUserId="test-admin-id" />
       );
       expect(
-        screen.getByTestId("delete-user-987654321098765432")
+        screen.getByTestId("delete-user-test-user-id")
       ).toBeInTheDocument();
     });
   });

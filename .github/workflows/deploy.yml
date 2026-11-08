@@ -28,6 +28,11 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
+      - name: Set up Bun for secret scanning
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -36,6 +41,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Scan source for secrets
+        run: bun run secrets:scan
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4

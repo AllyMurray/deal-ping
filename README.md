@@ -36,6 +36,30 @@ A Discord bot that monitors HotUKDeals and sends deal notifications to Discord c
    npx sst deploy
    ```
 
+## Secret scanning
+
+Run `bun run secrets:setup` after cloning to install the local pre-commit hook.
+The scanner downloads Betterleaks v1.10.0 into ignored `.tools/` and verifies
+its release checksum. macOS and Linux on ARM64 and x64 are supported; Bun,
+curl, tar, and a SHA-256 utility are required.
+
+- `bun run secrets:scan`: scan tracked and untracked source files, respecting Git ignore rules.
+- `bun run secrets:staged`: scan staged changes, also run automatically by the commit hook.
+- `bun run secrets:history`: audit all local Git history, including merge changes.
+- `bun run secrets:test`: verify webhook detection, upstream rules, staged scanning, and redaction.
+
+Rules live in `.betterleaks.toml`. It extends the complete upstream ruleset
+with a Discord webhook URL rule, including legacy domains and versioned API paths.
+All commands redact findings and disable live credential validation.
+Ignored local data is excluded from source scans; history scans still report old
+committed credentials, including revoked ones. Do not commit scanner reports.
+
+The Secret scanning workflow checks source files and new commits on pull requests
+and pushes to main. Both deployment workflows scan source before obtaining AWS
+credentials. Configure the **Secret scanning / Scan secrets** check as required
+in GitHub branch rules to prevent merges when scanning fails. Local hooks must be
+installed per clone and can be bypassed; CI provides an independent check.
+
 ## Configuration Management
 
 The CLI tool provides a comprehensive interface for managing channels, search terms, and filters.

@@ -13,7 +13,12 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "feed-parser": "npx tsx scripts/run-feed-parser.ts",
-    "manage-config": "npx tsx scripts/manage-config.ts"
+    "manage-config": "npx tsx scripts/manage-config.ts",
+    "secrets:scan": "bun scripts/scan-secrets.ts files",
+    "secrets:staged": "bun scripts/scan-secrets.ts staged",
+    "secrets:history": "bun scripts/scan-secrets.ts history",
+    "secrets:setup": "sh scripts/betterleaks.sh config check && git config --local core.hooksPath .githooks",
+    "secrets:test": "bun scripts/test-secret-scanning.ts"
   },
   "repository": {
     "type": "git",
