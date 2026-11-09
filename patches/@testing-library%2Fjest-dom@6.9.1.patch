@@ -1,0 +1,19 @@
+diff --git a/package.json b/package.json
+index 815065b97fd4a7a706eb2a029242f37092e4259b..10b66ef8319346a9877f804ff4fc180a4ac41476 100644
+--- a/package.json
++++ b/package.json
+@@ -148,5 +148,13 @@
+   "bugs": {
+     "url": "https://github.com/testing-library/jest-dom/issues"
+   },
+-  "homepage": "https://github.com/testing-library/jest-dom#readme"
++  "homepage": "https://github.com/testing-library/jest-dom#readme",
++  "peerDependencies": {
++    "vitest": "*"
++  },
++  "peerDependenciesMeta": {
++    "vitest": {
++      "optional": true
++    }
++  }
+ }

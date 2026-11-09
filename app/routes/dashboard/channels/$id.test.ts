@@ -23,6 +23,7 @@ vi.mock("~/db/repository.server", () => ({
   getConfig: vi.fn(),
   upsertConfig: vi.fn(),
   deleteConfig: vi.fn(),
+  getDealsBySearchTerm: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("../../../../src/db/service", () => ({
@@ -85,6 +86,7 @@ describe("Channel Detail Route", () => {
           includeKeywords: ["pro", "max"],
           excludeKeywords: ["case"],
           caseSensitive: false,
+          fuzzyMatch: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
@@ -109,6 +111,7 @@ describe("Channel Detail Route", () => {
           includeKeywords: ["pro", "max"],
           excludeKeywords: ["case"],
           caseSensitive: false,
+          fuzzyMatch: true,
           maxPrice: null,
           minDiscount: null,
         },
@@ -182,6 +185,7 @@ describe("Channel Detail Route", () => {
           excludeKeywords: ["case"],
           includeKeywords: ["pro"],
           caseSensitive: false,
+          fuzzyMatch: true,
         });
 
         const formData = new FormData();
@@ -191,6 +195,7 @@ describe("Channel Detail Route", () => {
         formData.append("includeKeywords", '["pro"]');
         formData.append("excludeKeywords", '["case"]');
         formData.append("caseSensitive", "false");
+        formData.append("fuzzyMatch", "true");
 
         const request = new Request("http://localhost/dashboard/channels/ch-1", {
           method: "POST",
@@ -211,6 +216,7 @@ describe("Channel Detail Route", () => {
           includeKeywords: ["pro"],
           excludeKeywords: ["case"],
           caseSensitive: false,
+          fuzzyMatch: true,
           maxPrice: undefined,
           minDiscount: undefined,
         });
@@ -293,6 +299,7 @@ describe("Channel Detail Route", () => {
           excludeKeywords: [],
           includeKeywords: [],
           caseSensitive: false,
+          fuzzyMatch: true,
         });
 
         const formData = new FormData();

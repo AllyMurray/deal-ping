@@ -25,10 +25,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Set up Bun for secret scanning
+      - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.3
@@ -37,10 +34,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Scan source for secrets
         run: bun run secrets:scan
@@ -52,4 +48,4 @@ jobs:
           aws-region: eu-west-1
 
       - name: Deploy to ${{ inputs.stage }}
-        run: npx sst deploy --stage ${{ inputs.stage }}
+        run: bunx sst deploy --stage ${{ inputs.stage }}

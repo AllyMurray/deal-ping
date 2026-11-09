@@ -129,7 +129,7 @@ describe("Dashboard Index Route", () => {
       expect(mockGetConfigsByUser).toHaveBeenCalledWith({ userId: "user-123" });
     });
 
-    it("fetches deals for each unique search term", async () => {
+    it("fetches deals separately for each channel and search term", async () => {
       mockRequireUser.mockResolvedValue(
         fromPartial({
           user: { id: "user-123", username: "testuser" },
@@ -138,22 +138,25 @@ describe("Dashboard Index Route", () => {
 
       mockGetChannelsByUser.mockResolvedValue([]);
       mockGetConfigsByUser.mockResolvedValue([
-        fromPartial({ searchTerm: "laptops" }),
-        fromPartial({ searchTerm: "laptops" }), // duplicate
-        fromPartial({ searchTerm: "phones" }),
+        fromPartial({ channelId: "channel-1", searchTerm: "laptops" }),
+        fromPartial({ channelId: "channel-2", searchTerm: "laptops" }),
+        fromPartial({ channelId: "channel-1", searchTerm: "phones" }),
       ]);
       mockGetDealsBySearchTerm.mockResolvedValue([]);
 
       const request = new Request("http://localhost/dashboard");
       await loader(fromPartial({ request, params: {}, context: {} }));
 
-      // Should only call once per unique search term
-      expect(mockGetDealsBySearchTerm).toHaveBeenCalledTimes(2);
+      // The same search term in two channels has separate stored deals.
+      expect(mockGetDealsBySearchTerm).toHaveBeenCalledTimes(3);
       expect(mockGetDealsBySearchTerm).toHaveBeenCalledWith(
-        expect.objectContaining({ searchTerm: "laptops" })
+        expect.objectContaining({ channelId: "channel-1", searchTerm: "laptops" })
       );
       expect(mockGetDealsBySearchTerm).toHaveBeenCalledWith(
-        expect.objectContaining({ searchTerm: "phones" })
+        expect.objectContaining({ channelId: "channel-2", searchTerm: "laptops" })
+      );
+      expect(mockGetDealsBySearchTerm).toHaveBeenCalledWith(
+        expect.objectContaining({ channelId: "channel-1", searchTerm: "phones" })
       );
     });
   });

@@ -60,6 +60,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       includeKeywords: c.includeKeywords || [],
       excludeKeywords: c.excludeKeywords || [],
       caseSensitive: c.caseSensitive ?? false,
+      fuzzyMatch: c.fuzzyMatch ?? false,
       maxPrice: c.maxPrice ? c.maxPrice / 100 : null, // Convert pence to pounds for display
       minDiscount: c.minDiscount ?? null,
     })),
@@ -101,6 +102,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       (formData.get("excludeKeywords") as string) || "[]"
     );
     const caseSensitive = formData.get("caseSensitive") === "true";
+    const fuzzyMatch = formData.get("fuzzyMatch") === "true";
 
     // Parse price thresholds - convert from pounds to pence for storage
     const maxPriceStr = formData.get("maxPrice") as string;
@@ -116,6 +118,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       includeKeywords,
       excludeKeywords,
       caseSensitive,
+      fuzzyMatch,
       maxPrice,
       minDiscount,
     });
@@ -302,6 +305,7 @@ export default function ChannelDetail({ loaderData }: Route.ComponentProps) {
       includeKeywords: JSON.stringify(values.includeKeywords),
       excludeKeywords: JSON.stringify(values.excludeKeywords),
       caseSensitive: String(values.caseSensitive),
+      fuzzyMatch: String(values.fuzzyMatch),
     };
 
     // Only include price thresholds if they have values

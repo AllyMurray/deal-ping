@@ -28,12 +28,12 @@ A Discord bot that monitors HotUKDeals and sends deal notifications to Discord c
 
 1. **Install dependencies:**
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. **Deploy to AWS:**
    ```bash
-   npx sst deploy
+   bunx sst deploy
    ```
 
 ## Secret scanning
@@ -70,42 +70,42 @@ Channels group search terms under a friendly name with their Discord webhook URL
 
 ```bash
 # Create a new channel
-pnpm run manage-config channel create "Gaming Deals" "https://discord.com/api/webhooks/..."
+bun run manage-config channel create "Gaming Deals" "https://discord.com/api/webhooks/..."
 
 # List all channels
-pnpm run manage-config channel list
+bun run manage-config channel list
 
 # Update a channel name or webhook
-pnpm run manage-config channel update "Gaming Deals" --name "PC Gaming"
-pnpm run manage-config channel update "Gaming Deals" --webhook "https://discord.com/api/webhooks/new-url"
+bun run manage-config channel update "Gaming Deals" --name "PC Gaming"
+bun run manage-config channel update "Gaming Deals" --webhook "https://discord.com/api/webhooks/new-url"
 
 # Delete a channel (also removes all its search terms)
-pnpm run manage-config channel delete "Gaming Deals"
+bun run manage-config channel delete "Gaming Deals"
 ```
 
 ### Search Term Management
 
 ```bash
 # Add a search term to a channel
-pnpm run manage-config add "Gaming Deals" steam-deck
+bun run manage-config add "Gaming Deals" steam-deck
 
 # Add multiple search terms
-pnpm run manage-config add-multiple "Gaming Deals" steam-deck ps5 xbox
+bun run manage-config add-multiple "Gaming Deals" steam-deck ps5 xbox
 
 # Add in disabled state
-pnpm run manage-config add "Gaming Deals" nintendo --disabled
+bun run manage-config add "Gaming Deals" nintendo --disabled
 
 # List all configurations
-pnpm run manage-config list
+bun run manage-config list
 
 # List grouped by channel
-pnpm run manage-config list-grouped
+bun run manage-config list-grouped
 
 # Remove a search term from a channel
-pnpm run manage-config remove "Gaming Deals" steam-deck
+bun run manage-config remove "Gaming Deals" steam-deck
 
 # Toggle enable/disable
-pnpm run manage-config toggle "Gaming Deals" steam-deck
+bun run manage-config toggle "Gaming Deals" steam-deck
 ```
 
 ### Filtering System
@@ -114,19 +114,19 @@ Filter deals to get more relevant results.
 
 ```bash
 # Exclude deals containing specific keywords
-pnpm run manage-config add-filter "Gaming Deals" steam --exclude "washing,iron,kettle"
+bun run manage-config add-filter "Gaming Deals" steam --exclude "washing,iron,kettle"
 
 # Only include deals containing ALL specified keywords
-pnpm run manage-config add-filter "Gaming Deals" laptop --include "gaming,rtx"
+bun run manage-config add-filter "Gaming Deals" laptop --include "gaming,rtx"
 
 # Combine include and exclude filters
-pnpm run manage-config add-filter "Gaming Deals" phone --exclude "case,screen protector" --include "iphone"
+bun run manage-config add-filter "Gaming Deals" phone --exclude "case,screen protector" --include "iphone"
 
 # Enable case-sensitive filtering
-pnpm run manage-config add-filter "Gaming Deals" steam --exclude "keywords" --case-sensitive
+bun run manage-config add-filter "Gaming Deals" steam --exclude "keywords" --case-sensitive
 
 # Remove specific filters
-pnpm run manage-config remove-filter "Gaming Deals" steam --exclude "washing,iron"
+bun run manage-config remove-filter "Gaming Deals" steam --exclude "washing,iron"
 ```
 
 ## Common Usage Examples
@@ -134,66 +134,66 @@ pnpm run manage-config remove-filter "Gaming Deals" steam --exclude "washing,iro
 ### 1. Gaming Setup
 ```bash
 # Create a gaming channel
-pnpm run manage-config channel create "Gaming Deals" "$DISCORD_WEBHOOK"
+bun run manage-config channel create "Gaming Deals" "$DISCORD_WEBHOOK"
 
 # Add gaming-related search terms
-pnpm run manage-config add-multiple "Gaming Deals" steam-deck ps5 xbox nintendo-switch
+bun run manage-config add-multiple "Gaming Deals" steam-deck ps5 xbox nintendo-switch
 
 # Filter out non-gaming steam results
-pnpm run manage-config add-filter "Gaming Deals" steam --exclude "washing,iron,kettle,boiler"
+bun run manage-config add-filter "Gaming Deals" steam --exclude "washing,iron,kettle,boiler"
 ```
 
 ### 2. Tech Deals Setup
 ```bash
 # Create a tech channel
-pnpm run manage-config channel create "Tech Deals" "$TECH_WEBHOOK"
+bun run manage-config channel create "Tech Deals" "$TECH_WEBHOOK"
 
 # Monitor various tech categories
-pnpm run manage-config add-multiple "Tech Deals" laptop phone tablet headphones
+bun run manage-config add-multiple "Tech Deals" laptop phone tablet headphones
 
 # Filter laptop deals to exclude refurbished items
-pnpm run manage-config add-filter "Tech Deals" laptop --exclude "refurbished,used,second hand"
+bun run manage-config add-filter "Tech Deals" laptop --exclude "refurbished,used,second hand"
 ```
 
 ### 3. Multiple Discord Channels
 ```bash
 # Gaming channel
-pnpm run manage-config channel create "Gaming" "$GAMING_WEBHOOK"
-pnpm run manage-config add-multiple "Gaming" steam-deck ps5 xbox nintendo
+bun run manage-config channel create "Gaming" "$GAMING_WEBHOOK"
+bun run manage-config add-multiple "Gaming" steam-deck ps5 xbox nintendo
 
 # Tech channel
-pnpm run manage-config channel create "Tech" "$TECH_WEBHOOK"
-pnpm run manage-config add-multiple "Tech" laptop phone tablet
+bun run manage-config channel create "Tech" "$TECH_WEBHOOK"
+bun run manage-config add-multiple "Tech" laptop phone tablet
 
 # Home appliances channel
-pnpm run manage-config channel create "Home" "$HOME_WEBHOOK"
-pnpm run manage-config add-multiple "Home" washing-machine dishwasher
+bun run manage-config channel create "Home" "$HOME_WEBHOOK"
+bun run manage-config add-multiple "Home" washing-machine dishwasher
 ```
 
 ### 4. View Your Setup
 ```bash
 # See all channels
-pnpm run manage-config channel list
+bun run manage-config channel list
 
 # See all configurations grouped by channel
-pnpm run manage-config list-grouped
+bun run manage-config list-grouped
 
 # See individual configurations with filters
-pnpm run manage-config list
+bun run manage-config list
 ```
 
 ## CLI Help
 
 ```bash
 # Show all available commands
-pnpm run manage-config --help
+bun run manage-config --help
 
 # Show usage examples
-pnpm run manage-config examples
+bun run manage-config examples
 
 # Get help for a specific command
-pnpm run manage-config channel --help
-pnpm run manage-config add --help
+bun run manage-config channel --help
+bun run manage-config add --help
 ```
 
 ## Feed Parser (Development)
@@ -202,9 +202,9 @@ For testing and development, you can use the feed parser directly:
 
 ```bash
 # Search for deals by keyword
-pnpm run feed-parser laptop
-pnpm run feed-parser "gaming chair"
-pnpm run feed-parser phone
+bun run feed-parser laptop
+bun run feed-parser "gaming chair"
+bun run feed-parser phone
 ```
 
 ## Configuration Structure

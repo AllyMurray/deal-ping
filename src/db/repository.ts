@@ -48,6 +48,7 @@ export type UpsertConfigParams = {
   excludeKeywords?: string[];
   includeKeywords?: string[];
   caseSensitive?: boolean;
+  fuzzyMatch?: boolean;
   maxPrice?: number; // Maximum price threshold in pence
   minDiscount?: number; // Minimum discount percentage
 };
@@ -348,6 +349,7 @@ export async function upsertConfig(config: UpsertConfigParams): Promise<SearchTe
       excludeKeywords?: string[];
       includeKeywords?: string[];
       caseSensitive?: boolean;
+      fuzzyMatch?: boolean;
       maxPrice?: number;
       minDiscount?: number;
     } = {
@@ -355,6 +357,7 @@ export async function upsertConfig(config: UpsertConfigParams): Promise<SearchTe
       excludeKeywords: config.excludeKeywords ?? existing.excludeKeywords,
       includeKeywords: config.includeKeywords ?? existing.includeKeywords,
       caseSensitive: config.caseSensitive ?? existing.caseSensitive,
+      fuzzyMatch: config.fuzzyMatch ?? existing.fuzzyMatch ?? false,
     };
     // Only set price thresholds if provided (allows clearing by passing undefined)
     if (config.maxPrice !== undefined) updates.maxPrice = config.maxPrice;
@@ -374,6 +377,7 @@ export async function upsertConfig(config: UpsertConfigParams): Promise<SearchTe
       excludeKeywords: string[];
       includeKeywords: string[];
       caseSensitive: boolean;
+      fuzzyMatch: boolean;
       maxPrice?: number;
       minDiscount?: number;
     } = {
@@ -384,6 +388,7 @@ export async function upsertConfig(config: UpsertConfigParams): Promise<SearchTe
       excludeKeywords: config.excludeKeywords ?? [],
       includeKeywords: config.includeKeywords ?? [],
       caseSensitive: config.caseSensitive ?? false,
+      fuzzyMatch: config.fuzzyMatch ?? false,
     };
     if (config.maxPrice !== undefined) newConfig.maxPrice = config.maxPrice;
     if (config.minDiscount !== undefined) newConfig.minDiscount = config.minDiscount;

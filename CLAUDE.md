@@ -58,20 +58,20 @@ docs/                   # Documentation
 
 ```bash
 # Development
-pnpm install            # Install dependencies
-pnpm dev                # Start SST dev mode (runs Lambda + web app locally)
+bun install            # Install dependencies
+bun run dev                # Start SST dev mode (runs Lambda + web app locally)
 
 # Testing
-pnpm test               # Run tests in watch mode
-pnpm test:run           # Run tests once
-pnpm test:coverage      # Run tests with coverage
+bun run test               # Run tests in watch mode
+bun run test:run           # Run tests once
+bun run test:coverage      # Run tests with coverage
 
 # Type checking
-pnpm typecheck          # Run TypeScript type checking
+bun run typecheck          # Run TypeScript type checking
 
 # CLI tools
-pnpm feed-parser <term> # Test the deal scraper
-pnpm manage-config      # CLI for managing configurations
+bun run feed-parser <term> # Test the deal scraper
+bun run manage-config      # CLI for managing configurations
 ```
 
 ## Code Conventions
@@ -185,8 +185,8 @@ Required for deployment (configured via SST secrets):
 ## Deployment
 
 ```bash
-npx sst deploy              # Deploy to default stage
-npx sst deploy --stage prod # Deploy to production
+bunx sst deploy              # Deploy to default stage
+bunx sst deploy --stage prod # Deploy to production
 ```
 
 Production deployments are protected and retained. Non-production deployments are automatically removed.

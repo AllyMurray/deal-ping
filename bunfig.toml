@@ -1,0 +1,3 @@
+[install]
+globalStore = true
+linker = "isolated"

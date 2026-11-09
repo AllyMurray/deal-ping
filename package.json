@@ -8,12 +8,12 @@
     "build": "react-router build",
     "dev": "sst dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc -p tsconfig.app.json",
+    "typecheck": "react-router typegen && bun --check --tsconfig-override tsconfig.app.json",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "feed-parser": "npx tsx scripts/run-feed-parser.ts",
-    "manage-config": "npx tsx scripts/manage-config.ts",
+    "feed-parser": "bunx tsx scripts/run-feed-parser.ts",
+    "manage-config": "bunx tsx scripts/manage-config.ts",
     "secrets:scan": "bun scripts/scan-secrets.ts files",
     "secrets:staged": "bun scripts/scan-secrets.ts staged",
     "secrets:history": "bun scripts/scan-secrets.ts history",
@@ -84,5 +84,15 @@
     "vite-tsconfig-paths": "^6.0.3",
     "vitest": "^4.0.16"
   },
-  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
+  "packageManager": "bun@1.4.3",
+  "trustedDependencies": [
+    "esbuild"
+  ],
+  "workspaces": [
+    "."
+  ],
+  "patchedDependencies": {
+    "@testing-library/jest-dom@6.9.1": "patches/@testing-library%2Fjest-dom@6.9.1.patch",
+    "react-router@7.11.0": "patches/react-router@7.11.0.patch"
+  }
 }
